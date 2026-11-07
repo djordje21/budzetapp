@@ -6,6 +6,7 @@ import { renderPregled } from './views/pregled.js';
 import { renderPlan } from './views/plan.js';
 import { renderIstorija } from './views/istorija.js';
 import { renderVise } from './views/vise.js';
+import { renderIzvestaji } from './views/izvestaji.js';
 import { openEntrySheet } from './views/entry.js';
 import { renderLogin } from './views/login.js';
 import * as Sync from './sync.js';
@@ -14,6 +15,7 @@ const views = {
   pregled: { render: renderPregled, title: 'Pregled' },
   plan: { render: renderPlan, title: 'Plan' },
   istorija: { render: renderIstorija, title: 'Istorija' },
+  izvestaji: { render: renderIzvestaji, title: 'Izveštaji' },
   vise: { render: renderVise, title: 'Više' },
 };
 
@@ -35,7 +37,8 @@ function render() {
   const who = $('#who-btn');
   who.textContent = me ? me.short : '?';
   who.style.setProperty('--c', me ? me.color : '#64748b');
-  document.querySelector('.topbar').classList.toggle('hide-month', ctx.route === 'vise');
+  document.querySelector('.topbar').classList.toggle('hide-month', ctx.route === 'vise' || ctx.route === 'izvestaji');
+  document.querySelector('.topbar').dataset.title = ctx.route === 'izvestaji' ? 'Izveštaji' : ctx.route === 'vise' ? 'Podešavanja' : '';
 
   document.querySelectorAll('.tabbar [data-route]').forEach((a) => a.classList.toggle('on', a.dataset.route === ctx.route));
   const view = $('#view');
@@ -104,7 +107,7 @@ function enableSwipe() {
   const v = $('#view');
   v.addEventListener('touchstart', (e) => { x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; }, { passive: true });
   v.addEventListener('touchend', (e) => {
-    if (x0 === null || ctx.route === 'vise') return;
+    if (x0 === null || ctx.route === 'vise' || ctx.route === 'izvestaji') return;
     if (e.target.closest('input, textarea, select, .chips')) { x0 = null; return; }
     const dx = e.changedTouches[0].clientX - x0, dy = e.changedTouches[0].clientY - y0;
     x0 = null;

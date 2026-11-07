@@ -516,3 +516,47 @@ textarea.input.note { height: auto; min-height: 90px; padding: 12px 14px; resize
 
 .due-extra { display: none; }
 .show-all .due-extra { display: flex; }
+
+/* Naslov u gornjoj traci kad nema izbora meseca */
+.topbar[data-title]:not([data-title=""])::before {
+  content: attr(data-title); position: absolute; left: 20px; bottom: 18px;
+  font-size: 20px; font-weight: 800; letter-spacing: -.4px;
+}
+
+/* ===== Izveštaji ===== */
+.period-chips { margin-top: 4px; }
+.period-nav { display: flex; align-items: center; gap: 6px; margin: 10px 0 10px; }
+.period-nav .icon-btn { font-size: 22px; }
+.period-label { flex: 1; height: 40px; border-radius: 12px; font-weight: 700; font-size: 15px; }
+.period-label:active { background: var(--surface-2); }
+.kpi-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+.tag-good { background: var(--green-soft); color: var(--green); }
+
+.chart-card { position: relative; padding: 12px 8px 8px; }
+.chart svg { display: block; width: 100%; height: auto; overflow: visible; }
+.chart .grid { stroke: var(--border); stroke-width: 1; }
+.chart .grid.base { stroke: var(--faint); }
+.chart .ax { fill: var(--muted); font-size: 10px; font-family: inherit; }
+.chart .bar-mark { fill: var(--accent); transition: opacity .15s; }
+.chart .bar-mark.dim { opacity: .35; }
+.chart .plan-tick { stroke: var(--text); stroke-width: 2; stroke-linecap: round; opacity: .75; }
+.chart .ref { stroke: var(--text); stroke-width: 1.5; stroke-dasharray: 4 4; opacity: .55; }
+.chart .hit { fill: transparent; cursor: pointer; }
+.chart .hit.on { fill: color-mix(in srgb, var(--accent) 10%, transparent); }
+.chart-tip {
+  position: absolute; top: 2px; transform: translateX(-50%);
+  padding: 5px 10px; border-radius: 8px; background: var(--text); color: var(--bg);
+  font-size: 12px; font-weight: 600; white-space: nowrap; pointer-events: none;
+}
+.chart-note { font-size: 12px; color: var(--muted); padding: 4px 8px 2px; }
+.legend { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); }
+.legend i { display: inline-block; }
+.lg-bar { width: 10px; height: 10px; border-radius: 3px; background: var(--accent); }
+.lg-tick { width: 12px; height: 2px; background: var(--text); margin-left: 6px; }
+.lg-dash { width: 14px; height: 0; border-top: 2px dashed var(--text); opacity: .6; margin-left: 6px; }
+.bar-plan { position: absolute; top: -3px; bottom: -3px; width: 2px; margin-left: -1px; border-radius: 2px; background: var(--text); opacity: .6; }
+.person-sub { font-size: 13px; color: var(--muted); margin-top: 3px; }
+.insight { display: flex; gap: 10px; padding: 11px 14px; font-size: 14px; line-height: 1.45; animation: fadeUp .35s ease-out both; }
+.insight:nth-child(2) { animation-delay: .06s; } .insight:nth-child(3) { animation-delay: .12s; } .insight:nth-child(4) { animation-delay: .18s; } .insight:nth-child(5) { animation-delay: .24s; }
+.ins-bad { background: var(--red-soft); }
+.ins-good { background: var(--green-soft); }

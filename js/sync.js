@@ -158,14 +158,18 @@ export async function pull() {
     if (queue.length) { scheduleFlush(0); return; } // korisnik je nešto menjao u međuvremenu
     const planMap = {};
     for (const r of plans) (planMap[r.month] ||= []).push(planFromRow(r));
+    const needDefaults = S.missingDefaults(cats);
     S.replaceData({
       categories: cats.map(catFromRow).sort((a, b) => catRank(a) - catRank(b) || a.name.localeCompare(b.name, 'sr')),
       plans: planMap,
       transactions: txs.map(txFromRow),
       notes: Object.fromEntries(notes.map((n) => [n.month, n.text])),
     });
-    shadow = toJSONMap(rowsFromState(S.getState()));
+    // Shadow = ono što baza zaista ima; dopunjene kategorije se zatim šalju kao lokalna izmena.
+    const remoteState = { ...S.getState(), categories: cats.map(catFromRow) };
+    shadow = toJSONMap(rowsFromState(remoteState));
     save(SHKEY, shadow);
+    if (needDefaults) onLocalChange();
     lastPull = Date.now();
     setStatus('synced');
   } catch (e) {

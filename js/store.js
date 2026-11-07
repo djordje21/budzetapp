@@ -29,6 +29,8 @@ export const DEFAULT_CATEGORIES = [
   { id: 'dom', name: 'Kuća i domaćinstvo', kind: 'expense', icon: '🏠', color: '#14b8a6' },
   { id: 'odeca', name: 'Odeća i nega', kind: 'expense', icon: '👕', color: '#6366f1' },
   { id: 'pokloni', name: 'Pokloni', kind: 'expense', icon: '🎁', color: '#f43f5e' },
+  { id: 'licno-dj', name: 'Džeparac – Đorđe', kind: 'expense', icon: '🧔', color: '#8b5cf6', personal: 'dj' },
+  { id: 'licno-m', name: 'Džeparac – Maksijana', kind: 'expense', icon: '👩', color: '#ec4899', personal: 'm' },
   { id: 'ostalo', name: 'Ostalo', kind: 'expense', icon: '📦', color: '#94a3b8' },
   { id: 'plata', name: 'Plata', kind: 'income', icon: '💼', color: '#22c55e' },
   { id: 'dodatno', name: 'Dodatni prihod', kind: 'income', icon: '💵', color: '#10b981' },
@@ -47,13 +49,26 @@ function emptyState() {
   };
 }
 
+// Kategorije dodate u novijim verzijama — dopunjuju se postojećim podacima.
+const ADDED_LATER = ['licno-dj', 'licno-m'];
+function withNewDefaults(cats) {
+  const out = [...cats];
+  for (const id of ADDED_LATER) {
+    if (out.some((c) => c.id === id)) continue;
+    const d = DEFAULT_CATEGORIES.find((c) => c.id === id);
+    const at = out.findIndex((c) => c.id === 'ostalo');
+    out.splice(at < 0 ? out.length : at, 0, structuredClone(d));
+  }
+  return out;
+}
+
 function normalize(s) {
   const e = emptyState();
   return {
     ...e,
     ...s,
     settings: { ...e.settings, ...(s.settings || {}) },
-    categories: s.categories?.length ? s.categories : e.categories,
+    categories: s.categories?.length ? withNewDefaults(s.categories) : e.categories,
     plans: s.plans || {},
     transactions: s.transactions || [],
     notes: s.notes || {},
@@ -99,6 +114,8 @@ export function replaceData({ categories, plans, transactions, notes }) {
   state = normalize({ ...state, categories, plans, transactions, notes });
   persist({ fromRemote: true });
 }
+// Posle preuzimanja iz baze: ako su dopunjene nove kategorije, pošalji ih.
+export const missingDefaults = (cats) => cats.length > 0 && ADDED_LATER.some((id) => !cats.some((c) => c.id === id));
 
 export const getState = () => state;
 export const subscribe = (fn) => {
