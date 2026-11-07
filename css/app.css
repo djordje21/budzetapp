@@ -262,7 +262,28 @@ b { font-weight: 700; }
 .tool-row.archived { opacity: .55; }
 .sync-row { display: flex; gap: 12px; padding: 12px 14px; align-items: flex-start; font-size: 14px; }
 .dot { width: 10px; height: 10px; border-radius: 50%; margin-top: 5px; flex-shrink: 0; }
-.dot-local { background: var(--amber); box-shadow: 0 0 0 4px var(--amber-soft); }
+.dot-pending { background: var(--amber); box-shadow: 0 0 0 4px var(--amber-soft); }
+.dot-ok { background: var(--green); box-shadow: 0 0 0 4px var(--green-soft); }
+.dot-error { background: var(--red); box-shadow: 0 0 0 4px var(--red-soft); }
+.who-lg { width: 36px; height: 36px; font-size: 15px; }
+
+/* Tačkica statusa sinhronizacije na avataru */
+.avatar { position: relative; }
+.avatar[data-sync]:not([data-sync=""])::after {
+  content: ''; position: absolute; right: -1px; bottom: -1px; width: 11px; height: 11px; border-radius: 50%;
+  border: 2px solid var(--bg); background: var(--green);
+}
+.avatar[data-sync="pending"]::after, .avatar[data-sync="offline"]::after { background: var(--amber); }
+.avatar[data-sync="error"]::after { background: var(--red); }
+
+/* Prijava */
+body.auth .topbar, body.auth .tabbar { display: none; }
+.login { min-height: 90dvh; display: flex; flex-direction: column; justify-content: center; padding: 24px 8px; text-align: center; animation: fadeUp .4s ease-out; }
+.login-logo { width: 72px; height: 72px; margin: 0 auto 14px; border-radius: 20px; box-shadow: 0 12px 30px color-mix(in srgb, var(--accent) 40%, transparent); }
+.login h1 { font-size: 28px; letter-spacing: -.6px; }
+.login-form { text-align: left; margin-top: 24px; }
+.login-error { color: var(--red); font-size: 14px; min-height: 20px; margin-top: 10px; }
+.btn:disabled { opacity: .6; }
 
 /* ===== Prazna stanja ===== */
 .empty { padding: 28px 20px; text-align: center; margin-top: 8px; }

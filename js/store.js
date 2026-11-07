@@ -76,13 +76,28 @@ function load() {
 let state = load();
 const subs = new Set();
 
-function persist({ silent = false } = {}) {
+// Sinhronizacija se kači ovde: posle svake lokalne izmene računa razliku i šalje je u bazu.
+let syncHook = null;
+export const setSyncHook = (fn) => (syncHook = fn);
+
+function persist({ silent = false, fromRemote = false } = {}) {
   try {
     localStorage.setItem(KEY, JSON.stringify(state));
   } catch (e) {
     console.warn('Čuvanje nije uspelo', e);
   }
+  if (!fromRemote) syncHook?.();
   if (!silent) subs.forEach((fn) => fn());
+}
+
+// Izmene koje stižu iz baze (ne šalju se nazad).
+export function applyRemote(fn) {
+  fn(state);
+  persist({ fromRemote: true });
+}
+export function replaceData({ categories, plans, transactions, notes }) {
+  state = normalize({ ...state, categories, plans, transactions, notes });
+  persist({ fromRemote: true });
 }
 
 export const getState = () => state;

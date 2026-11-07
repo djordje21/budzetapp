@@ -7,6 +7,8 @@ import { renderPlan } from './views/plan.js';
 import { renderIstorija } from './views/istorija.js';
 import { renderVise } from './views/vise.js';
 import { openEntrySheet } from './views/entry.js';
+import { renderLogin } from './views/login.js';
+import * as Sync from './sync.js';
 
 const views = {
   pregled: { render: renderPregled, title: 'Pregled' },
@@ -110,6 +112,12 @@ function enableSwipe() {
   }, { passive: true });
 }
 
+function paintSync(st = Sync.getStatus()) {
+  const who = $('#who-btn');
+  who.dataset.sync = !Sync.enabled ? '' : st.state === 'error' ? 'error' : st.state === 'offline' ? 'offline' : st.pending ? 'pending' : 'ok';
+  if (ctx.route === 'vise') document.querySelector('[data-sync-text]') && render();
+}
+
 function init() {
   $('#prev-month').onclick = () => setMonth(addMonths(ctx.month, -1));
   $('#next-month').onclick = () => setMonth(addMonths(ctx.month, 1));
@@ -123,9 +131,27 @@ function init() {
   window.addEventListener('hashchange', onRoute);
   window.matchMedia('(prefers-color-scheme: dark)').addEventListener?.('change', render);
   S.subscribe(render);
+  Sync.onStatus(paintSync);
   enableSwipe();
   onRoute();
-  if (!S.getState().settings.currentUser) askWho();
+  paintSync();
+  if (!Sync.enabled && !S.getState().settings.currentUser) askWho();
 }
 
-init();
+async function boot() {
+  if (Sync.enabled) {
+    const session = await Sync.init().catch(() => null);
+    if (!session) {
+      renderLogin($('#view'), init);
+      return;
+    }
+    // Odmah prikaži sačuvane podatke, a uskladi sa bazom u pozadini.
+    init();
+    Sync.start().catch(async (e) => {
+      if (String(e?.message) === 'NOT_MEMBER') location.reload();
+      else console.warn(e);
+    });
+  } else init();
+}
+
+boot();
