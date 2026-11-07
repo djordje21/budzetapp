@@ -8,20 +8,20 @@ import { suggestCategory } from '../suggest.js';
 const ICONS = ['📌', '☕', '🍕', '🎬', '✈️', '🐶', '👶', '📚', '💊', '🎮', '🔧', '💇'];
 const COLORS = ['#0ea5e9', '#d946ef', '#f97316', '#22c55e', '#6366f1', '#f43f5e', '#14b8a6', '#eab308'];
 
-export function openEntrySheet({ tx = null, kind = 'expense', date = null } = {}) {
+export function openEntrySheet({ tx = null, kind = 'expense', date = null, categoryId = null } = {}) {
   const st = S.getState();
   const isEdit = !!tx;
   const v = {
-    kind: tx?.kind || kind,
-    categoryId: tx?.categoryId || null,
+    kind: tx?.kind || (categoryId ? S.cat(categoryId).kind : kind),
+    categoryId: tx?.categoryId || categoryId || null,
     amount: tx ? String(Math.round(tx.amount)) : '',
     date: tx?.date || date || todayISO(),
     note: tx?.note || '',
     by: tx?.by || st.settings.currentUser || 'dj',
     showFixed: false,
-    picked: isEdit, // korisnik je sam izabrao kategoriju → predlog je ne menja
+    picked: isEdit || !!categoryId, // korisnik je sam izabrao kategoriju → predlog je ne menja
   };
-  if (isEdit && S.cat(v.categoryId).fixed) v.showFixed = true;
+  if (v.categoryId && S.cat(v.categoryId).fixed) v.showFixed = true;
   const yesterday = (() => { const d = new Date(); d.setDate(d.getDate() - 1); return isoOf(d); })();
 
   const body = `

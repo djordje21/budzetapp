@@ -133,12 +133,12 @@ function planHint(sum) {
   return `<div class="hint">Štednja je ${Math.round(rate * 100)}% prihoda.</div>`;
 }
 
-function openPlanItemSheet(key, item, kind = null) {
-  kind = item ? S.cat(item.categoryId).kind : kind;
+export function openPlanItemSheet(key, item, kind = null, presetCat = null) {
+  kind = item ? S.cat(item.categoryId).kind : presetCat ? S.cat(presetCat).kind : kind;
   const cats = S.categoriesOf(kind);
   const v = {
     name: item?.name || '',
-    categoryId: item?.categoryId || cats[0]?.id,
+    categoryId: item?.categoryId || presetCat || cats[0]?.id,
     amount: item ? String(Math.round(item.amount)) : '',
     owner: item?.owner || 'zaj',
   };

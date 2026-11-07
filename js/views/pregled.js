@@ -6,6 +6,7 @@ import { countUp, animateBars, pct, toast } from '../ui.js';
 import { openEntrySheet } from './entry.js';
 import { txRow } from './istorija.js';
 import { isPayable, paidTx, payItem, PAY_LABELS } from '../pay.js';
+import { openCategoryDetail } from './category-detail.js';
 
 export function renderPregled(el, ctx) {
   const key = ctx.month;
@@ -84,6 +85,7 @@ export function renderPregled(el, ctx) {
     e.target.closest('.list').classList.add('show-all');
     e.target.remove();
   });
+  el.querySelectorAll('[data-cat]').forEach((r) => (r.onclick = () => openCategoryDetail(key, r.dataset.cat)));
   el.querySelector('#note').oninput = (e) => S.setNote(key, e.target.value);
   el.querySelector('#first-entry')?.addEventListener('click', () => openEntrySheet());
   el.querySelectorAll('[data-tx]').forEach((r) => (r.onclick = () => {
@@ -132,13 +134,14 @@ function catRow(r) {
   if (r.plan === 0) note = '<span class="tag tag-warn">van plana</span>';
   else if (over > 0) note = `<span class="tag tag-red">+${fmtNum(over)} preko</span>`;
   else if (r.cat.fixed && r.actual === 0) note = '<span class="tag">nije plaćeno</span>';
-  return `<div class="cat-row">
+  return `<div class="cat-row clickable" role="button" tabindex="0" data-cat="${r.cat.id}">
     <span class="cat-ico" style="--c:${r.cat.color}">${r.cat.icon}</span>
     <div class="cat-main">
       <div class="cat-top"><span class="cat-name">${esc(r.cat.name)}</span>${note}
         <span class="cat-amt"><b>${fmtNum(r.actual)}</b><span class="muted"> / ${fmtNum(r.plan)}</span></span></div>
       <div class="bar bar-sm"><div class="bar-fill ${over > 0 || r.plan === 0 ? 'is-over' : ''}" style="--c:${r.cat.color}" data-w="${pct(r.actual, r.plan)}"></div></div>
     </div>
+    <span class="chev">›</span>
   </div>`;
 }
 
