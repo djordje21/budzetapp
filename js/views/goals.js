@@ -1,10 +1,10 @@
 // Ciljevi štednje: kartice na Pregledu, detalj, forma, proslava.
-import * as S from '../store.js?v=20261107213453';
-import * as Sync from '../sync.js?v=20261107213453';
-import { esc, fmt, fmtNum, digitsOnly, currentMonthKey, monthLabel, MONTH_GEN } from '../util.js?v=20261107213453';
-import { openSheet, toast, confirmSheet, animateBars, pct } from '../ui.js?v=20261107213453';
-import { txRow } from './istorija.js?v=20261107213453';
-import { openEntrySheet } from './entry.js?v=20261107213453';
+import * as S from '../store.js?v=20261107214139';
+import * as Sync from '../sync.js?v=20261107214139';
+import { esc, fmt, fmtNum, digitsOnly, currentMonthKey, monthLabel, MONTH_GEN } from '../util.js?v=20261107214139';
+import { openSheet, toast, confirmSheet, animateBars, pct } from '../ui.js?v=20261107214139';
+import { txRow } from './istorija.js?v=20261107214139';
+import { openEntrySheet } from './entry.js?v=20261107214139';
 
 const ICONS = ['🎯', '🏖️', '✈️', '🚗', '🏠', '💍', '👶', '🎓', '💻', '🛋️', '🩺', '🎁'];
 
@@ -28,7 +28,7 @@ const dueText = (due) => due ? `${MONTH_GEN[Number(due.slice(5)) - 1]} ${due.sli
 // ---- Blok na Pregledu ----
 export function goalsBlock() {
   const goals = S.goalsOf();
-  const warn = Sync.enabled && !Sync.goalsAvailable
+  const warn = Sync.enabled && !Sync.isAvailable('goals')
     ? '<div class="hint hint-warn">Ciljevi se za sada čuvaju samo na ovom telefonu. Za zajedničko čuvanje pokreni SQL iz <b>supabase/migrations/003_goals.sql</b>.</div>' : '';
   return `
     <div class="section-head"><h3>Ciljevi štednje</h3>${goals.length ? '<button class="link" data-goal-new>+ Novi</button>' : ''}</div>

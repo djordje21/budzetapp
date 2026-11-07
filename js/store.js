@@ -1,7 +1,7 @@
 // Skladište podataka. Za sada lokalno (localStorage); kasnije se ovde uključuje Supabase
 // bez menjanja ekrana — svi ekrani koriste samo funkcije iz ovog fajla.
 
-import { uid, addMonths } from './util.js?v=20261107213453';
+import { uid, addMonths } from './util.js?v=20261107214139';
 
 const KEY = 'budzetapp_v2';
 
@@ -46,6 +46,8 @@ function emptyState() {
     transactions: [], // { id, date, kind, categoryId, amount, note, by, createdAt }
     notes: {}, // 'YYYY-MM' -> text
     goals: [], // { id, name, icon, target, startAmount, due:'YYYY-MM'|null, archived, createdAt }
+    balanceChecks: [], // { id, account:'dj'|'m'|'kes', amount, at: ISO, by }
+    transfers: [], // { id, date, from, to, amount, note, by, createdAt }
     settings: { currentUser: null, theme: 'auto' },
   };
 }
@@ -74,6 +76,8 @@ function normalize(s) {
     transactions: s.transactions || [],
     notes: s.notes || {},
     goals: s.goals || [],
+    balanceChecks: s.balanceChecks || [],
+    transfers: s.transfers || [],
   };
 }
 
@@ -112,8 +116,8 @@ export function applyRemote(fn) {
   fn(state);
   persist({ fromRemote: true });
 }
-export function replaceData({ categories, plans, transactions, notes, goals }) {
-  state = normalize({ ...state, categories, plans, transactions, notes, goals: goals || state.goals });
+export function replaceData(data) {
+  state = normalize({ ...state, ...data });
   persist({ fromRemote: true });
 }
 // Posle preuzimanja iz baze: ako su dopunjene nove kategorije, pošalji ih.
@@ -232,6 +236,61 @@ export async function deleteGoal(id) {
 }
 // Koliko je uplaćeno na cilj (početni iznos + uplate štednje vezane za cilj).
 export const goalSaved = (g) => (Number(g.startAmount) || 0) + state.transactions.filter((t) => t.goalId === g.id).reduce((s, t) => s + (t.kind === 'saving' ? 1 : -1) * Number(t.amount), 0);
+
+// ---- Računi i stanje ----
+export const ACCOUNTS = [
+  { id: 'dj', name: 'Đorđe', bank: 'OTP tekući', icon: '💳', color: '#8b5cf6' },
+  { id: 'm', name: 'Maksijana', bank: 'OTP tekući', icon: '💳', color: '#ec4899' },
+  { id: 'kes', name: 'Keš', bank: 'gotovina', icon: '💵', color: '#16a34a' },
+];
+export const account = (id) => ACCOUNTS.find((a) => a.id === id) || ACCOUNTS[0];
+// Stari unosi bez računa: račun osobe koja je unela.
+export const accountOf = (t) => t.account || (t.by === 'm' ? 'm' : 'dj');
+
+const ms = (iso) => Date.parse(iso) || 0;
+const localDate = (iso) => { const d = new Date(iso); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
+
+export const lastCheck = (acc) =>
+  (state.balanceChecks || []).filter((c) => c.account === acc).sort((a, b) => ms(a.at) - ms(b.at)).at(-1) || null;
+
+// Procena = poslednje upisano stanje + sve što je uneto posle toga.
+export function balanceOf(acc) {
+  const chk = lastCheck(acc);
+  if (!chk) return null;
+  const day = localDate(chk.at), t0 = ms(chk.at);
+  const after = (date, createdAt) => date > day || (date === day && ms(createdAt) > t0);
+  let delta = 0, count = 0;
+  for (const t of state.transactions) {
+    if (accountOf(t) !== acc || !after(t.date, t.createdAt)) continue;
+    delta += (t.kind === 'income' ? 1 : -1) * Number(t.amount);
+    count++;
+  }
+  for (const x of state.transfers || []) {
+    if (!after(x.date, x.createdAt)) continue;
+    if (x.from === acc) { delta -= Number(x.amount); count++; }
+    if (x.to === acc) { delta += Number(x.amount); count++; }
+  }
+  return { amount: Number(chk.amount) + delta, check: chk, delta, count };
+}
+
+export async function addBalanceCheck(acc, amount) {
+  state.balanceChecks ||= [];
+  state.balanceChecks.push({ id: uid(), account: acc, amount: Number(amount), at: new Date().toISOString(), by: state.settings.currentUser || 'dj' });
+  persist();
+}
+export async function deleteBalanceCheck(id) {
+  state.balanceChecks = (state.balanceChecks || []).filter((c) => c.id !== id);
+  persist();
+}
+export async function addTransfer(x) {
+  state.transfers ||= [];
+  state.transfers.push({ note: '', ...x, id: uid(), by: state.settings.currentUser || 'dj', createdAt: new Date().toISOString() });
+  persist();
+}
+export async function deleteTransfer(id) {
+  state.transfers = (state.transfers || []).filter((x) => x.id !== id);
+  persist();
+}
 
 // ---- Beleške i podešavanja ----
 export const noteOf = (key) => state.notes[key] || '';

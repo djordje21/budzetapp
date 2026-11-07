@@ -1,11 +1,11 @@
 // Izveštaji: dan, nedelja, mesec, kvartal, polugodište, godina.
-import * as S from '../store.js?v=20261107213453';
-import { PERIODS, periodOf, shiftAnchor, prevPeriod, txInPeriod, planInPeriod, monthsCovered } from '../period.js?v=20261107213453';
-import { esc, fmt, fmtNum, fmtSigned, todayISO, currentMonthKey, parseISO, isoOf, MONTH_SHORT, pad } from '../util.js?v=20261107213453';
-import { animateBars, pct } from '../ui.js?v=20261107213453';
-import { donutData, donutChart, bindDonut } from '../charts.js?v=20261107213453';
-import { txRow } from './istorija.js?v=20261107213453';
-import { openEntrySheet } from './entry.js?v=20261107213453';
+import * as S from '../store.js?v=20261107214139';
+import { PERIODS, periodOf, shiftAnchor, prevPeriod, txInPeriod, planInPeriod, monthsCovered } from '../period.js?v=20261107214139';
+import { esc, fmt, fmtNum, fmtSigned, todayISO, currentMonthKey, parseISO, isoOf, MONTH_SHORT, pad } from '../util.js?v=20261107214139';
+import { animateBars, pct } from '../ui.js?v=20261107214139';
+import { donutData, donutChart, bindDonut } from '../charts.js?v=20261107214139';
+import { txRow } from './istorija.js?v=20261107214139';
+import { openEntrySheet } from './entry.js?v=20261107214139';
 
 const R = { type: 'month', anchor: null };
 const DOW = ['Pon', 'Uto', 'Sre', 'Čet', 'Pet', 'Sub', 'Ned'];

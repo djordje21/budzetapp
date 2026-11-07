@@ -661,3 +661,22 @@ input, textarea, .input { -webkit-user-select: text; user-select: text; }
 .dl-item b { font-size: 12px; }
 .dl-item.on { background: var(--surface-2); }
 .dl-item.on span { color: var(--text); }
+
+/* ===== Računi ===== */
+.acc-card, .acc-empty { display: block; width: 100%; text-align: left; padding: 14px 16px; margin-top: 4px; margin-bottom: 10px; transition: transform .12s; }
+.acc-card:active, .acc-empty:active { transform: scale(.98); }
+.acc-empty { display: flex; gap: 12px; align-items: center; border-style: dashed; }
+.acc-empty-ico { font-size: 26px; }
+.acc-head { display: flex; justify-content: space-between; font-size: 13px; font-weight: 600; color: var(--muted); }
+.acc-total { font-size: 26px; font-weight: 800; letter-spacing: -.6px; margin: 2px 0 10px; }
+.acc-rows { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.acc-row { display: flex; flex-direction: column; gap: 2px; padding: 8px 10px; border-radius: 12px; background: var(--surface-2); min-width: 0; }
+.acc-row i { width: 8px; height: 8px; border-radius: 50%; }
+.acc-row span { font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.acc-row b { font-size: 14px; white-space: nowrap; }
+.acc-sheet-total { display: flex; justify-content: space-between; align-items: baseline; margin: 6px 2px 12px; }
+.acc-sheet-total span { color: var(--muted); font-weight: 600; }
+.acc-sheet-total b { font-size: 24px; letter-spacing: -.5px; }
+.acc-item { display: flex; gap: 12px; align-items: center; padding: 12px 14px; }
+.acc-item-top { display: flex; gap: 8px; align-items: baseline; }
+.acc-item-amt { font-size: 18px; font-weight: 800; letter-spacing: -.3px; margin: 1px 0; }

@@ -5,17 +5,42 @@
 // razlika ide u red za slanje ("outbox"), a red se šalje čim ima interneta.
 // Promene drugog korisnika stižu preko Realtime kanala i pri svakom otvaranju aplikacije.
 
-import * as S from './store.js?v=20261107213453';
-import { SUPABASE_URL, SUPABASE_KEY } from './config.js?v=20261107213453';
+import * as S from './store.js?v=20261107214139';
+import { SUPABASE_URL, SUPABASE_KEY } from './config.js?v=20261107214139';
 
 const QKEY = 'budzetapp_outbox';
 const SHKEY = 'budzetapp_shadow';
-const PK = { categories: 'id', goals: 'id', plan_items: 'id', transactions: 'id', notes: 'month' };
-const UPSERT_ORDER = ['categories', 'goals', 'plan_items', 'transactions', 'notes'];
-const DELETE_ORDER = ['transactions', 'plan_items', 'notes', 'goals', 'categories'];
-const EMPTY = () => ({ categories: {}, goals: {}, plan_items: {}, transactions: {}, notes: {} });
-// Tabela 'goals' postoji tek posle SQL migracije 003 — do tada se ciljevi ne šalju.
-export let goalsAvailable = true;
+// Osnovne tabele + "opcione" tabele/kolone koje postoje tek posle SQL migracija (003 ciljevi, 004 računi).
+const PK = { categories: 'id', goals: 'id', balance_checks: 'id', transfers: 'id', plan_items: 'id', transactions: 'id', notes: 'month' };
+const UPSERT_ORDER = ['categories', 'goals', 'balance_checks', 'transfers', 'plan_items', 'transactions', 'notes'];
+const DELETE_ORDER = ['transactions', 'plan_items', 'notes', 'transfers', 'balance_checks', 'goals', 'categories'];
+const EMPTY = () => Object.fromEntries(Object.keys(PK).map((t) => [t, {}]));
+
+// Liste u stanju aplikacije koje se 1:1 slikaju na tabelu.
+const LISTS = {
+  goals: {
+    key: 'goals', feature: 'goals', order: 'created_at',
+    to: (g) => ({ id: g.id, name: g.name, icon: g.icon || null, target: Number(g.target) || 0, start_amount: Number(g.startAmount) || 0, due: g.due || null, archived: !!g.archived, created_at: g.createdAt }),
+    from: (r) => ({ id: r.id, name: r.name, icon: r.icon || '🎯', target: Number(r.target), startAmount: Number(r.start_amount) || 0, due: r.due || null, archived: !!r.archived, createdAt: r.created_at }),
+  },
+  balance_checks: {
+    key: 'balanceChecks', feature: 'accounts', order: 'at',
+    to: (c) => ({ id: c.id, account: c.account, amount: Number(c.amount) || 0, at: c.at, by_member: c.by || null }),
+    from: (r) => ({ id: r.id, account: r.account, amount: Number(r.amount), at: r.at, by: r.by_member || null }),
+  },
+  transfers: {
+    key: 'transfers', feature: 'accounts', order: 'created_at',
+    to: (x) => ({ id: x.id, date: x.date, from_account: x.from, to_account: x.to, amount: Number(x.amount) || 0, note: x.note || '', by_member: x.by || null, created_at: x.createdAt }),
+    from: (r) => ({ id: r.id, date: r.date, from: r.from_account, to: r.to_account, amount: Number(r.amount), note: r.note || '', by: r.by_member || null, createdAt: r.created_at }),
+  },
+};
+// Opcione kolone u transactions: kolona -> [polje u aplikaciji, funkcija]
+const TX_OPT = { goal_id: ['goalId', 'goals'], account: ['account', 'accounts'] };
+
+// Dok tabela za neku funkciju ne postoji, njeni podaci ostaju lokalno i šalju se kad migracija bude pokrenuta.
+const avail = { goals: true, accounts: true };
+export const isAvailable = (f) => avail[f];
+const tableOn = (t) => !LISTS[t] || avail[LISTS[t].feature];
 
 export const enabled = !!(SUPABASE_URL && SUPABASE_KEY && window.supabase?.createClient);
 
@@ -49,8 +74,7 @@ function setStatus(state, error = '') {
 // ---- Pretvaranje: lokalni podaci <-> redovi u bazi ----
 function rowsFromState(st) {
   const out = EMPTY();
-  for (const g of st.goals || [])
-    out.goals[g.id] = { id: g.id, name: g.name, icon: g.icon || null, target: Number(g.target) || 0, start_amount: Number(g.startAmount) || 0, due: g.due || null, archived: !!g.archived, created_at: g.createdAt };
+  for (const [t, L] of Object.entries(LISTS)) for (const x of st[L.key] || []) out[t][x.id] = L.to(x);
   for (const c of st.categories)
     out.categories[c.id] = { id: c.id, name: c.name, kind: c.kind, icon: c.icon || null, color: c.color || null, fixed: !!c.fixed, archived: !!c.archived };
   for (const [month, items] of Object.entries(st.plans))
@@ -59,7 +83,7 @@ function rowsFromState(st) {
   for (const t of st.transactions) {
     const r = { id: t.id, date: t.date, kind: t.kind, category_id: t.categoryId, amount: Number(t.amount) || 0, note: t.note || '', by_member: t.by, created_at: t.createdAt };
     if (t.planLine) r.plan_line = t.planLine;
-    if ('goalId' in t && goalsAvailable) r.goal_id = t.goalId || null;
+    for (const [col, [field, f]] of Object.entries(TX_OPT)) if (field in t && avail[f]) r[col] = t[field] || null;
     out.transactions[t.id] = r;
   }
   for (const [month, text] of Object.entries(st.notes))
@@ -69,8 +93,12 @@ function rowsFromState(st) {
 
 const catFromRow = (r) => ({ id: r.id, name: r.name, kind: r.kind, icon: r.icon || '📌', color: r.color || '#94a3b8', fixed: !!r.fixed, archived: !!r.archived });
 const planFromRow = (r) => ({ id: r.id, line: r.line, categoryId: r.category_id, name: r.name, amount: Number(r.amount), owner: r.owner });
-const txFromRow = (r) => ({ id: r.id, date: r.date, kind: r.kind, categoryId: r.category_id, amount: Number(r.amount), note: r.note || '', by: r.by_member, createdAt: r.created_at, ...(r.plan_line ? { planLine: r.plan_line } : {}), ...(r.goal_id ? { goalId: r.goal_id } : {}) });
-const goalFromRow = (r) => ({ id: r.id, name: r.name, icon: r.icon || '🎯', target: Number(r.target), startAmount: Number(r.start_amount) || 0, due: r.due || null, archived: !!r.archived, createdAt: r.created_at });
+function txFromRow(r) {
+  const t = { id: r.id, date: r.date, kind: r.kind, categoryId: r.category_id, amount: Number(r.amount), note: r.note || '', by: r.by_member, createdAt: r.created_at };
+  if (r.plan_line) t.planLine = r.plan_line;
+  for (const [col, [field]] of Object.entries(TX_OPT)) if (r[col]) t[field] = r[col];
+  return t;
+}
 
 const catRank = (c) => { const i = S.DEFAULT_CATEGORIES.findIndex((d) => d.id === c.id); return i < 0 ? 999 : i; };
 
@@ -91,18 +119,18 @@ function onLocalChange() {
   if (!shadow) return;
   const now = rowsFromState(S.getState());
   for (const t of UPSERT_ORDER) {
-    if (t === 'goals' && !goalsAvailable) continue;
+    if (!tableOn(t)) continue;
     const prev = shadow[t] || {};
     for (const [k, row] of Object.entries(now[t])) if (prev[k] !== JSON.stringify(row)) enqueue(t, 'upsert', k, row);
   }
   for (const t of DELETE_ORDER) {
-    if (t === 'goals' && !goalsAvailable) continue;
+    if (!tableOn(t)) continue;
     const prev = shadow[t] || {};
     for (const k of Object.keys(prev)) if (!(k in now[t])) enqueue(t, 'delete', k);
   }
-  const keepGoals = !goalsAvailable ? shadow.goals || {} : null;
-  shadow = toJSONMap(now);
-  if (keepGoals) shadow.goals = keepGoals;
+  const keep = {};
+  for (const t of Object.keys(LISTS)) if (!tableOn(t)) keep[t] = shadow[t] || {};
+  shadow = { ...toJSONMap(now), ...keep };
   save(SHKEY, shadow);
   save(QKEY, queue);
   setStatus(queue.length ? 'pending' : status.state);
@@ -160,48 +188,66 @@ export async function pull() {
   if (queue.length) { await flush(); if (queue.length) return; }
   setStatus('syncing');
   try {
-    const [cats, plans, txs, notes, goals] = await Promise.all([
+    const listNames = Object.keys(LISTS);
+    const [cats, plans, txs, notes, ...opt] = await Promise.all([
       fetchAll('categories', 'id'),
       fetchAll('plan_items', 'name'),
       fetchAll('transactions', 'created_at'),
       fetchAll('notes', 'month'),
-      fetchAll('goals', 'created_at').catch((e) => { console.warn('Tabela goals ne postoji (pokreni migraciju 003)', e); return null; }),
+      ...listNames.map((t) => fetchAll(t, LISTS[t].order).catch((e) => { console.warn(`Tabela ${t} ne postoji (pokreni migraciju)`, e); return null; })),
     ]);
     if (queue.length) { scheduleFlush(0); return; } // korisnik je nešto menjao u međuvremenu
+    const optRes = Object.fromEntries(listNames.map((t, i) => [t, opt[i]]));
+    const newAvail = {};
+    for (const f of Object.keys(avail)) newAvail[f] = listNames.filter((t) => LISTS[t].feature === f).every((t) => optRes[t] !== null);
+
     const planMap = {};
     for (const r of plans) (planMap[r.month] ||= []).push(planFromRow(r));
     const needDefaults = S.missingDefaults(cats);
-    // Ciljevi napravljeni dok tabela 'goals' nije postojala: sačuvaj ih i pošalji, ne briši.
-    const wasUnavailable = !goalsAvailable;
     const st0 = S.getState();
-    const remoteGoalIds = new Set((goals || []).map((g) => g.id));
-    const localOnlyGoals = goals ? (st0.goals || []).filter((g) => !remoteGoalIds.has(g.id) && !(shadow?.goals && g.id in shadow.goals)) : [];
-    // Veze uplata sa ciljevima koje baza još ne zna (kolona goal_id ne postoji / nije poslata).
-    const keepLinks = goals === null || wasUnavailable;
-    const localLinks = keepLinks ? Object.fromEntries(st0.transactions.filter((t) => t.goalId).map((t) => [t.id, t.goalId])) : {};
+
+    // Liste (ciljevi, provere stanja, prebacivanja): lokalni redovi koje baza još nema se čuvaju i šalju.
+    const lists = {}, localOnly = {}, remoteLists = {};
+    for (const t of listNames) {
+      const L = LISTS[t];
+      if (!newAvail[L.feature]) { lists[L.key] = st0[L.key] || []; remoteLists[L.key] = []; continue; }
+      const remote = optRes[t].map(L.from);
+      const ids = new Set(remote.map((x) => x.id));
+      localOnly[L.key] = (st0[L.key] || []).filter((x) => !ids.has(x.id) && !(shadow?.[t] && x.id in shadow[t]));
+      lists[L.key] = remote;
+      remoteLists[L.key] = remote;
+    }
+
+    // Opciona polja unosa (cilj, račun): sačuvaj lokalne vrednosti dok baza nema kolonu, i pošalji ih kad je dobije.
     const remoteTx = txs.map(txFromRow);
-    const mergedTx = keepLinks ? remoteTx.map((t) => (!t.goalId && localLinks[t.id] ? { ...t, goalId: localLinks[t.id] } : t)) : remoteTx;
+    const keepF = Object.values(TX_OPT).filter(([, f]) => !newAvail[f] || !avail[f]);
+    const localById = new Map(st0.transactions.map((t) => [t.id, t]));
+    const mergedTx = keepF.length ? remoteTx.map((t) => {
+      const o = localById.get(t.id);
+      if (!o) return t;
+      const c = { ...t };
+      for (const [field] of keepF) if (!c[field] && o[field]) c[field] = o[field];
+      return c;
+    }) : remoteTx;
+    const newlyOnWithData = keepF.some(([field, f]) => newAvail[f] && mergedTx.some((t) => t[field]));
+
     S.replaceData({
       categories: cats.map(catFromRow).sort((a, b) => catRank(a) - catRank(b) || a.name.localeCompare(b.name, 'sr')),
       plans: planMap,
       transactions: mergedTx,
       notes: Object.fromEntries(notes.map((n) => [n.month, n.text])),
-      goals: goals ? goals.map(goalFromRow) : S.getState().goals,
+      ...lists,
     });
-    goalsAvailable = goals !== null;
-    // Shadow = ono što baza zaista ima; dopunjene kategorije se zatim šalju kao lokalna izmena.
-    const remoteState = { ...S.getState(), categories: cats.map(catFromRow), transactions: remoteTx, goals: goals ? goals.map(goalFromRow) : [] };
+    Object.assign(avail, newAvail);
+
+    // Shadow = ono što baza zaista ima.
+    const remoteState = { ...S.getState(), categories: cats.map(catFromRow), transactions: remoteTx, ...remoteLists };
     shadow = toJSONMap(rowsFromState(remoteState));
     save(SHKEY, shadow);
-    if (goals === null) {
-      // Tabela još ne postoji: shadow za ciljeve ostaje prazan da bi se poslali kad proradi.
-      shadow.goals = {};
-      save(SHKEY, shadow);
-      if (needDefaults) onLocalChange();
-    } else if (localOnlyGoals.length || Object.keys(localLinks).length) {
-      S.applyRemote((st) => { st.goals = [...(st.goals || []), ...localOnlyGoals]; });
-      onLocalChange();
-    } else if (needDefaults) onLocalChange();
+
+    const anyLocalOnly = Object.values(localOnly).some((a) => a.length);
+    if (anyLocalOnly) S.applyRemote((st) => { for (const [k, arr] of Object.entries(localOnly)) st[k] = [...(st[k] || []), ...arr]; });
+    if (anyLocalOnly || newlyOnWithData || needDefaults) onLocalChange();
     lastPull = Date.now();
     setStatus('synced');
   } catch (e) {
@@ -228,8 +274,7 @@ function onRemote(payload) {
     delete shadow[table][key];
   } else {
     // Normalizuj red kroz lokalni format da bi poređenje bilo tačno (izbegava "eho" sopstvenih izmena).
-    const norm = normalizeRow(table, row);
-    const json = JSON.stringify(norm);
+    const json = JSON.stringify(normalizeRow(table, row));
     if (shadow[table][key] === json) return;
     shadow[table][key] = json;
   }
@@ -247,13 +292,14 @@ function onRemote(payload) {
       st.transactions = st.transactions.filter((t) => t.id !== key);
       if (!isDelete) {
         const t = txFromRow(row);
-        // Baza bez kolone goal_id (pre migracije) ne sme da obriše lokalnu vezu sa ciljem.
-        if (!('goal_id' in row) && old?.goalId) t.goalId = old.goalId;
+        // Baza bez opcione kolone (pre migracije) ne sme da obriše lokalnu vrednost.
+        for (const [col, [field]] of Object.entries(TX_OPT)) if (!(col in row) && old?.[field]) t[field] = old[field];
         st.transactions.push(t);
       }
-    } else if (table === 'goals') {
-      st.goals = (st.goals || []).filter((g) => g.id !== key);
-      if (!isDelete) st.goals.push(goalFromRow(row));
+    } else if (LISTS[table]) {
+      const L = LISTS[table];
+      st[L.key] = (st[L.key] || []).filter((x) => x.id !== key);
+      if (!isDelete) st[L.key].push(L.from(row));
     } else if (table === 'notes') {
       if (isDelete) delete st.notes[key];
       else st.notes[key] = row.text;
@@ -262,8 +308,9 @@ function onRemote(payload) {
 }
 
 function normalizeRow(table, row) {
-  const st = { categories: [], goals: [], plans: {}, transactions: [], notes: {} };
-  if (table === 'goals') st.goals.push(goalFromRow(row));
+  const st = { categories: [], plans: {}, transactions: [], notes: {} };
+  for (const L of Object.values(LISTS)) st[L.key] = [];
+  if (LISTS[table]) st[LISTS[table].key].push(LISTS[table].from(row));
   if (table === 'categories') st.categories.push(catFromRow(row));
   if (table === 'plan_items') st.plans[row.month] = [planFromRow(row)];
   if (table === 'transactions') st.transactions.push(txFromRow(row));
@@ -274,13 +321,10 @@ function normalizeRow(table, row) {
 
 function subscribeRealtime() {
   if (channel) return;
-  channel = sb.channel('budzet')
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'categories' }, onRemote)
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'plan_items' }, onRemote)
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'transactions' }, onRemote)
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'notes' }, onRemote)
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'goals' }, onRemote)
-    .subscribe();
+  let ch = sb.channel('budzet');
+  for (const t of ['categories', 'plan_items', 'transactions', 'notes', ...Object.keys(LISTS).filter(tableOn)])
+    ch = ch.on('postgres_changes', { event: '*', schema: 'public', table: t }, onRemote);
+  channel = ch.subscribe();
 }
 
 // ---- Prijava ----

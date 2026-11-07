@@ -1,9 +1,9 @@
 // Brzi unos stvarnog troška / prihoda / štednje (i izmena postojećeg unosa).
-import * as S from '../store.js?v=20261107213453';
-import { openSheet, toast, confirmSheet } from '../ui.js?v=20261107213453';
-import { esc, fmt, fmtNum, digitsOnly, todayISO, isoOf } from '../util.js?v=20261107213453';
-import { summarize } from '../calc.js?v=20261107213453';
-import { suggestCategory } from '../suggest.js?v=20261107213453';
+import * as S from '../store.js?v=20261107214139';
+import { openSheet, toast, confirmSheet } from '../ui.js?v=20261107214139';
+import { esc, fmt, fmtNum, digitsOnly, todayISO, isoOf } from '../util.js?v=20261107214139';
+import { summarize } from '../calc.js?v=20261107214139';
+import { suggestCategory } from '../suggest.js?v=20261107214139';
 
 const ICONS = ['📌', '☕', '🍕', '🎬', '✈️', '🐶', '👶', '📚', '💊', '🎮', '🔧', '💇'];
 const COLORS = ['#0ea5e9', '#d946ef', '#f97316', '#22c55e', '#6366f1', '#f43f5e', '#14b8a6', '#eab308'];
@@ -20,6 +20,8 @@ export function openEntrySheet({ tx = null, kind = 'expense', date = null, categ
     by: tx?.by || st.settings.currentUser || 'dj',
     showFixed: false,
     goalId: tx ? tx.goalId || null : prefill?.goalId || null,
+    account: tx ? S.accountOf(tx) : prefill?.account || (st.settings.currentUser === 'm' ? 'm' : 'dj'),
+    accountPicked: isEdit,
     picked: isEdit || !!categoryId, // korisnik je sam izabrao kategoriju → predlog je ne menja
   };
   if (v.categoryId && S.cat(v.categoryId).fixed) v.showFixed = true;
@@ -56,6 +58,11 @@ export function openEntrySheet({ tx = null, kind = 'expense', date = null, categ
     <div class="field-label">Uneo/la</div>
     <div class="seg seg-2" data-k="by">
       ${S.MEMBERS.map((m) => `<button data-v="${m.id}">${esc(m.name)}</button>`).join('')}
+    </div>
+
+    <div class="field-label" id="e-acc-label">Sa računa</div>
+    <div class="seg seg-3" data-k="account">
+      ${S.ACCOUNTS.map((a) => `<button data-v="${a.id}">${a.id === 'kes' ? '💵 ' : ''}${esc(a.name)}</button>`).join('')}
     </div>
 
     <div class="btn-row sticky-actions">
@@ -185,7 +192,10 @@ export function openEntrySheet({ tx = null, kind = 'expense', date = null, categ
         const k = b.closest('.seg').dataset.k;
         v[k] = b.dataset.v;
         paintSeg(k);
-        if (k === 'kind') { v.picked = false; paintCats(); runSuggest(); }
+        if (k === 'kind') { v.picked = false; paintCats(); runSuggest(); paintAccLabel(); }
+        if (k === 'account') v.accountPicked = true;
+        // Ko unosi → podrazumevano njegov račun (dok račun nije ručno izabran).
+        if (k === 'by' && !v.accountPicked && v.account !== 'kes') { v.account = v.by; paintSeg('account'); }
       }));
       el.querySelectorAll('[data-d]').forEach((b) => (b.onclick = () => { v.date = b.dataset.d; paintDate(); }));
       dateEl.onchange = () => { if (dateEl.value) { v.date = dateEl.value; paintDate(); } };
@@ -210,11 +220,13 @@ export function openEntrySheet({ tx = null, kind = 'expense', date = null, categ
       el.querySelectorAll('.seg[data-k="kind"] button').forEach((b) => b.addEventListener('click', paintGoals));
       paintGoals();
 
-      paintSeg('kind'); paintSeg('by'); paintDate(); paintCats();
+      function paintAccLabel() { $('#e-acc-label').textContent = v.kind === 'income' ? 'Na račun' : 'Sa računa'; }
+      paintAccLabel();
+      paintSeg('kind'); paintSeg('by'); paintSeg('account'); paintDate(); paintCats();
       if (v.note && !v.picked) runSuggest(); // npr. naziv prodavnice sa skeniranog računa
       $('#e-scan')?.addEventListener('click', () => {
         close();
-        setTimeout(() => import('./scanner.js?v=20261107213453').then((m) => m.openScanner()), 220);
+        setTimeout(() => import('./scanner.js?v=20261107214139').then((m) => m.openScanner()), 220);
       });
       if (!isEdit) setTimeout(() => amountEl.focus(), 280);
 
@@ -222,7 +234,7 @@ export function openEntrySheet({ tx = null, kind = 'expense', date = null, categ
         const amount = Number(v.amount);
         if (!amount) { shake(amountEl.parentElement); toast('Upiši iznos', 'warn'); return; }
         if (!v.categoryId) { shake($('#e-cats')); toast('Izaberi kategoriju', 'warn'); return; }
-        const data = { kind: v.kind, categoryId: v.categoryId, amount, date: v.date, note: v.note.trim(), by: v.by };
+        const data = { kind: v.kind, categoryId: v.categoryId, amount, date: v.date, note: v.note.trim(), by: v.by, account: v.account };
         if (!isEdit && prefill?.planLine) data.planLine = prefill.planLine;
         const g = v.kind === 'saving' && v.goalId ? S.goal(v.goalId) : null;
         if (g) data.goalId = g.id;
@@ -232,7 +244,7 @@ export function openEntrySheet({ tx = null, kind = 'expense', date = null, categ
         else await S.addTransaction(data);
         feedback(data, isEdit);
         if (g && !wasDone && S.goalSaved(g) >= g.target) {
-          import('./goals.js?v=20261107213453').then((m) => m.celebrate());
+          import('./goals.js?v=20261107214139').then((m) => m.celebrate());
           setTimeout(() => toast(`🎉 <b>Cilj ostvaren: ${esc(g.name)}!</b>`, 'ok', 4500), 400);
         }
         if (again) {

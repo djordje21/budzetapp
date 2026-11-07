@@ -1,15 +1,16 @@
 // Početni ekran: plan vs. stvarno za izabrani mesec.
-import * as S from '../store.js?v=20261107213453';
-import { summarize, pace, monthPhase } from '../calc.js?v=20261107213453';
-import { esc, fmt, fmtNum, fmtSigned, monthLabel, addMonths, MONTH_GEN } from '../util.js?v=20261107213453';
-import { countUp, animateBars, pct, toast } from '../ui.js?v=20261107213453';
-import { openEntrySheet } from './entry.js?v=20261107213453';
-import { txRow, setHistoryFilter } from './istorija.js?v=20261107213453';
-import { isPayable, paidTx, payItem, PAY_LABELS } from '../pay.js?v=20261107213453';
-import { openDueSheet } from './due-detail.js?v=20261107213453';
-import { cumulativeData, cumulativeChart, bindCumulative } from '../charts.js?v=20261107213453';
-import { goalsBlock, bindGoals } from './goals.js?v=20261107213453';
-import { openCategoryDetail } from './category-detail.js?v=20261107213453';
+import * as S from '../store.js?v=20261107214139';
+import { summarize, pace, monthPhase } from '../calc.js?v=20261107214139';
+import { esc, fmt, fmtNum, fmtSigned, monthLabel, addMonths, MONTH_GEN } from '../util.js?v=20261107214139';
+import { countUp, animateBars, pct, toast } from '../ui.js?v=20261107214139';
+import { openEntrySheet } from './entry.js?v=20261107214139';
+import { txRow, setHistoryFilter } from './istorija.js?v=20261107214139';
+import { isPayable, paidTx, payItem, PAY_LABELS } from '../pay.js?v=20261107214139';
+import { openDueSheet } from './due-detail.js?v=20261107214139';
+import { cumulativeData, cumulativeChart, bindCumulative } from '../charts.js?v=20261107214139';
+import { accountsBlock, bindAccounts } from './accounts.js?v=20261107214139';
+import { goalsBlock, bindGoals } from './goals.js?v=20261107214139';
+import { openCategoryDetail } from './category-detail.js?v=20261107214139';
 
 export function renderPregled(el, ctx) {
   const key = ctx.month;
@@ -18,9 +19,10 @@ export function renderPregled(el, ctx) {
   const prevKey = addMonths(key, -1);
 
   if (!sum.plan.length && !sum.txs.length) {
-    el.innerHTML = emptyMonth(key, prevKey) + goalsBlock();
+    el.innerHTML = accountsBlock() + emptyMonth(key, prevKey) + goalsBlock();
     bindEmpty(el, ctx, key, prevKey);
     bindGoals(el);
+    bindAccounts(el);
     animateBars(el);
     return;
   }
@@ -38,6 +40,8 @@ export function renderPregled(el, ctx) {
     .slice(0, 5);
 
   el.innerHTML = `
+    ${accountsBlock()}
+
     <section class="hero card clickable ${left < 0 ? 'hero-over' : ''}" role="button" tabindex="0" data-go="report">
       <div class="hero-label">${left < 0 ? 'Prekoračen plan troškova' : 'Preostalo od plana troškova'}</div>
       <div class="hero-value" id="hero-val">0</div>
@@ -114,6 +118,7 @@ export function renderPregled(el, ctx) {
     cum.innerHTML = cumulativeChart(data, cum.clientWidth || 340);
     bindCumulative(el.querySelector('#cum-card'), data, key);
   }
+  bindAccounts(el);
   bindGoals(el);
   el.querySelectorAll('[data-cat]').forEach((r) => (r.onclick = () => openCategoryDetail(key, r.dataset.cat)));
   el.querySelector('#note').oninput = (e) => S.setNote(key, e.target.value);
