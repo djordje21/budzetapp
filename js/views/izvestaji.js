@@ -1,10 +1,10 @@
 // Izveštaji: dan, nedelja, mesec, kvartal, polugodište, godina.
-import * as S from '../store.js?v=20261107205723';
-import { PERIODS, periodOf, shiftAnchor, prevPeriod, txInPeriod, planInPeriod, monthsCovered } from '../period.js?v=20261107205723';
-import { esc, fmt, fmtNum, fmtSigned, todayISO, currentMonthKey, parseISO, isoOf, MONTH_SHORT, pad } from '../util.js?v=20261107205723';
-import { animateBars, pct } from '../ui.js?v=20261107205723';
-import { txRow } from './istorija.js?v=20261107205723';
-import { openEntrySheet } from './entry.js?v=20261107205723';
+import * as S from '../store.js?v=20261107210111';
+import { PERIODS, periodOf, shiftAnchor, prevPeriod, txInPeriod, planInPeriod, monthsCovered } from '../period.js?v=20261107210111';
+import { esc, fmt, fmtNum, fmtSigned, todayISO, currentMonthKey, parseISO, isoOf, MONTH_SHORT, pad } from '../util.js?v=20261107210111';
+import { animateBars, pct } from '../ui.js?v=20261107210111';
+import { txRow } from './istorija.js?v=20261107210111';
+import { openEntrySheet } from './entry.js?v=20261107210111';
 
 const R = { type: 'month', anchor: null };
 const DOW = ['Pon', 'Uto', 'Sre', 'Čet', 'Pet', 'Sub', 'Ned'];

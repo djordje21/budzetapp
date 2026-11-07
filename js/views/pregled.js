@@ -1,13 +1,13 @@
 // Početni ekran: plan vs. stvarno za izabrani mesec.
-import * as S from '../store.js?v=20261107205723';
-import { summarize, pace, monthPhase } from '../calc.js?v=20261107205723';
-import { esc, fmt, fmtNum, fmtSigned, monthLabel, addMonths, MONTH_GEN } from '../util.js?v=20261107205723';
-import { countUp, animateBars, pct, toast } from '../ui.js?v=20261107205723';
-import { openEntrySheet } from './entry.js?v=20261107205723';
-import { txRow, setHistoryFilter } from './istorija.js?v=20261107205723';
-import { isPayable, paidTx, payItem, PAY_LABELS } from '../pay.js?v=20261107205723';
-import { openDueSheet } from './due-detail.js?v=20261107205723';
-import { openCategoryDetail } from './category-detail.js?v=20261107205723';
+import * as S from '../store.js?v=20261107210111';
+import { summarize, pace, monthPhase } from '../calc.js?v=20261107210111';
+import { esc, fmt, fmtNum, fmtSigned, monthLabel, addMonths, MONTH_GEN } from '../util.js?v=20261107210111';
+import { countUp, animateBars, pct, toast } from '../ui.js?v=20261107210111';
+import { openEntrySheet } from './entry.js?v=20261107210111';
+import { txRow, setHistoryFilter } from './istorija.js?v=20261107210111';
+import { isPayable, paidTx, payItem, PAY_LABELS } from '../pay.js?v=20261107210111';
+import { openDueSheet } from './due-detail.js?v=20261107210111';
+import { openCategoryDetail } from './category-detail.js?v=20261107210111';
 
 export function renderPregled(el, ctx) {
   const key = ctx.month;

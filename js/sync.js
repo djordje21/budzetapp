@@ -5,8 +5,8 @@
 // razlika ide u red za slanje ("outbox"), a red se šalje čim ima interneta.
 // Promene drugog korisnika stižu preko Realtime kanala i pri svakom otvaranju aplikacije.
 
-import * as S from './store.js?v=20261107205723';
-import { SUPABASE_URL, SUPABASE_KEY } from './config.js?v=20261107205723';
+import * as S from './store.js?v=20261107210111';
+import { SUPABASE_URL, SUPABASE_KEY } from './config.js?v=20261107210111';
 
 const QKEY = 'budzetapp_outbox';
 const SHKEY = 'budzetapp_shadow';
@@ -331,4 +331,13 @@ export function discardPending() {
   shadow = null;
   localStorage.removeItem(SHKEY);
   return firstSync();
+}
+
+// Poziv Supabase Edge funkcije (npr. 'racun' za fiskalne račune), sa vremenskim ograničenjem.
+export async function invoke(name, body, timeoutMs = 9000) {
+  if (!sb || !session) throw new Error('Nije prijavljen');
+  const t = new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), timeoutMs));
+  const { data, error } = await Promise.race([sb.functions.invoke(name, { body }), t]);
+  if (error) throw error;
+  return data;
 }

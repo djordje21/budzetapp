@@ -587,3 +587,22 @@ input, textarea, .input { -webkit-user-select: text; user-select: text; }
 .dd-meta div { display: flex; justify-content: space-between; gap: 10px; }
 .dd-meta span:first-child { color: var(--muted); }
 .dd-meta span:last-child { text-align: right; white-space: nowrap; }
+
+/* Skener */
+.scan-btn {
+  display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%;
+  margin-top: 12px; height: 42px; border-radius: 12px; border: 1.5px dashed var(--border);
+  font-weight: 600; font-size: 14px; color: var(--accent);
+}
+.scan-btn:active { background: var(--accent-soft); }
+.scanner { position: relative; border-radius: 18px; overflow: hidden; background: #000; aspect-ratio: 3 / 4; max-height: 60dvh; margin: 0 auto; }
+.scanner video { width: 100%; height: 100%; object-fit: cover; display: block; }
+.scan-frame {
+  position: absolute; inset: 18% 14%; border-radius: 18px;
+  box-shadow: 0 0 0 9999px rgba(0, 0, 0, .45);
+  border: 2px solid rgba(255, 255, 255, .85);
+}
+.scan-line { position: absolute; left: 16%; right: 16%; height: 2px; background: var(--accent-2); top: 20%; animation: scanline 2s ease-in-out infinite alternate; box-shadow: 0 0 12px var(--accent-2); }
+@keyframes scanline { to { top: 80%; } }
+.scan-msg { text-align: center; color: var(--muted); font-size: 14px; margin: 12px 0 4px; line-height: 1.45; }
+.scan-err { padding: 28px 18px; text-align: center; color: #ddd; font-size: 14px; line-height: 1.5; }

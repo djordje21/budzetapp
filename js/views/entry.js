@@ -1,9 +1,9 @@
 // Brzi unos stvarnog troška / prihoda / štednje (i izmena postojećeg unosa).
-import * as S from '../store.js?v=20261107205723';
-import { openSheet, toast, confirmSheet } from '../ui.js?v=20261107205723';
-import { esc, fmt, fmtNum, digitsOnly, todayISO, isoOf } from '../util.js?v=20261107205723';
-import { summarize } from '../calc.js?v=20261107205723';
-import { suggestCategory } from '../suggest.js?v=20261107205723';
+import * as S from '../store.js?v=20261107210111';
+import { openSheet, toast, confirmSheet } from '../ui.js?v=20261107210111';
+import { esc, fmt, fmtNum, digitsOnly, todayISO, isoOf } from '../util.js?v=20261107210111';
+import { summarize } from '../calc.js?v=20261107210111';
+import { suggestCategory } from '../suggest.js?v=20261107210111';
 
 const ICONS = ['📌', '☕', '🍕', '🎬', '✈️', '🐶', '👶', '📚', '💊', '🎮', '🔧', '💇'];
 const COLORS = ['#0ea5e9', '#d946ef', '#f97316', '#22c55e', '#6366f1', '#f43f5e', '#14b8a6', '#eab308'];
@@ -28,6 +28,8 @@ export function openEntrySheet({ tx = null, kind = 'expense', date = null, categ
     <div class="seg seg-3" data-k="kind">
       ${Object.entries(S.KINDS).map(([k, x]) => `<button data-v="${k}">${x.label}</button>`).join('')}
     </div>
+
+    ${isEdit ? '' : '<button class="scan-btn" id="e-scan"><span>📷</span> Skeniraj QR sa računa</button>'}
 
     <label class="amount-field">
       <input id="e-amount" inputmode="numeric" autocomplete="off" placeholder="0" aria-label="Iznos">
@@ -195,6 +197,11 @@ export function openEntrySheet({ tx = null, kind = 'expense', date = null, categ
       noteEl.oninput = () => { v.note = noteEl.value; runSuggest(); };
 
       paintSeg('kind'); paintSeg('by'); paintDate(); paintCats();
+      if (v.note && !v.picked) runSuggest(); // npr. naziv prodavnice sa skeniranog računa
+      $('#e-scan')?.addEventListener('click', () => {
+        close();
+        setTimeout(() => import('./scanner.js?v=20261107210111').then((m) => m.openScanner()), 220);
+      });
       if (!isEdit) setTimeout(() => amountEl.focus(), 280);
 
       const save = async (again) => {
