@@ -1,11 +1,11 @@
 // Plan za mesec: očekivani prihodi, troškovi i štednja.
-import * as S from '../store.js?v=20261107220058';
-import { summarize } from '../calc.js?v=20261107220058';
-import { esc, fmt, fmtNum, fmtSigned, monthLabel, addMonths, digitsOnly, MONTH_GEN } from '../util.js?v=20261107220058';
-import { openSheet, toast, confirmSheet, moneyInput } from '../ui.js?v=20261107220058';
-import { isPayable, paidTx, payItem, PAY_LABELS } from '../pay.js?v=20261107220058';
-import { openEntrySheet } from './entry.js?v=20261107220058';
-import { monthPhase } from '../calc.js?v=20261107220058';
+import * as S from '../store.js?v=20261107221027';
+import { summarize } from '../calc.js?v=20261107221027';
+import { esc, fmt, fmtNum, fmtSigned, monthLabel, addMonths, digitsOnly, MONTH_GEN } from '../util.js?v=20261107221027';
+import { openSheet, toast, confirmSheet, moneyInput } from '../ui.js?v=20261107221027';
+import { isPayable, paidTx, payItem, PAY_LABELS } from '../pay.js?v=20261107221027';
+import { openEntrySheet } from './entry.js?v=20261107221027';
+import { monthPhase } from '../calc.js?v=20261107221027';
 
 export function renderPlan(el, ctx) {
   const key = ctx.month;

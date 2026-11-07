@@ -1,6 +1,6 @@
 // Periodi za izveštaje: dan, nedelja, mesec, kvartal, polugodište, godina.
-import * as S from './store.js?v=20261107220058';
-import { isoOf, parseISO, pad, MONTH_NAMES, MONTH_SHORT, MONTH_GEN, DAY_NAMES, daysInMonth } from './util.js?v=20261107220058';
+import * as S from './store.js?v=20261107221027';
+import { isoOf, parseISO, pad, MONTH_NAMES, MONTH_SHORT, MONTH_GEN, DAY_NAMES, daysInMonth } from './util.js?v=20261107221027';
 
 export const PERIODS = [
   ['day', 'Dan'], ['week', 'Nedelja'], ['month', 'Mesec'],
@@ -75,13 +75,15 @@ export function monthsCovered(p) {
 }
 
 // Plan za period po kategoriji (srazmerno za delimične mesece).
-export function planInPeriod(p) {
+export function planInPeriod(p, { lumpFull = false } = {}) {
   const byCat = {};
   const tot = { income: 0, expense: 0, saving: 0 };
   for (const { key, share } of monthsCovered(p)) {
     for (const it of S.planOf(key)) {
       const c = S.cat(it.categoryId);
-      const a = Number(it.amount) * share;
+      // Rate, računi, plata i štednja stižu odjednom — u "planu do danas" ceo mesečni iznos, ne deo po danima.
+      const lump = c.fixed || c.kind !== 'expense';
+      const a = Number(it.amount) * (lumpFull && lump ? 1 : share);
       byCat[c.id] = (byCat[c.id] || 0) + a;
       tot[c.kind] += a;
     }

@@ -1,11 +1,12 @@
 // Izveštaji: dan, nedelja, mesec, kvartal, polugodište, godina.
-import * as S from '../store.js?v=20261107220058';
-import { PERIODS, periodOf, shiftAnchor, prevPeriod, txInPeriod, planInPeriod, monthsCovered } from '../period.js?v=20261107220058';
-import { esc, fmt, fmtNum, fmtSigned, todayISO, currentMonthKey, parseISO, isoOf, MONTH_SHORT, pad } from '../util.js?v=20261107220058';
-import { animateBars, pct } from '../ui.js?v=20261107220058';
-import { donutData, donutChart, bindDonut } from '../charts.js?v=20261107220058';
-import { txRow } from './istorija.js?v=20261107220058';
-import { openEntrySheet } from './entry.js?v=20261107220058';
+import * as S from '../store.js?v=20261107221027';
+import { PERIODS, periodOf, shiftAnchor, prevPeriod, txInPeriod, planInPeriod, monthsCovered } from '../period.js?v=20261107221027';
+import { esc, fmt, fmtNum, fmtSigned, todayISO, currentMonthKey, parseISO, isoOf, MONTH_SHORT, pad } from '../util.js?v=20261107221027';
+import { animateBars, pct } from '../ui.js?v=20261107221027';
+import { donutData, donutChart, bindDonut } from '../charts.js?v=20261107221027';
+import { txRow } from './istorija.js?v=20261107221027';
+import { openCategoryDetail, openCategoryPeriod } from './category-detail.js?v=20261107221027';
+import { openEntrySheet } from './entry.js?v=20261107221027';
 
 const R = { type: 'month', anchor: null };
 const DOW = ['Pon', 'Uto', 'Sre', 'Čet', 'Pet', 'Sub', 'Ned'];
@@ -24,7 +25,7 @@ export function renderIzvestaji(el, ctx) {
   // Tekući period se poredi sa planom do danas (srazmerno), budući nema poređenja.
   const partial = today >= p.start && today < p.end;
   const future = today < p.start;
-  const plan = future ? { byCat: {}, tot: { income: 0, expense: 0, saving: 0 } } : planInPeriod(partial ? { ...p, end: today } : p);
+  const plan = future ? { byCat: {}, tot: { income: 0, expense: 0, saving: 0 } } : planInPeriod(partial ? { ...p, end: today } : p, { lumpFull: partial });
   const planWord = partial ? 'plana do danas' : 'plana';
 
   const inc = sumBy(txs, (t) => t.kind === 'income');
@@ -116,6 +117,10 @@ export function renderIzvestaji(el, ctx) {
   el.querySelector('#p-next').onclick = () => { R.anchor = shiftAnchor(R.type, R.anchor, 1); renderIzvestaji(el, ctx); };
   el.querySelector('#p-today').onclick = () => { R.anchor = todayISO(); renderIzvestaji(el, ctx); };
   el.querySelector('#csv').onclick = () => downloadCSV(p, txs);
+  el.querySelectorAll('[data-rcat]').forEach((r) => (r.onclick = () => {
+    if (R.type === 'month') openCategoryDetail(p.start.slice(0, 7), r.dataset.rcat);
+    else openCategoryPeriod(p, r.dataset.rcat);
+  }));
   el.querySelectorAll('[data-tx]').forEach((r) => (r.onclick = () => {
     const tx = S.getState().transactions.find((t) => t.id === r.dataset.tx);
     if (tx) openEntrySheet({ tx });
@@ -232,7 +237,7 @@ function categoryRows(txs, plan, short, total) {
     let tag = '';
     if (!short && p > 0) tag = a > p ? `<span class="tag tag-red">+${fmtNum(a - p)}</span>` : '';
     else if (!short && p === 0 && a > 0) tag = '<span class="tag tag-warn">van plana</span>';
-    return `<div class="cat-row">
+    return `<div class="cat-row clickable" role="button" tabindex="0" data-rcat="${c.id}">
       <span class="cat-ico" style="--c:${c.color}">${c.icon}</span>
       <div class="cat-main">
         <div class="cat-top"><span class="cat-name">${esc(c.name)}</span>${tag}

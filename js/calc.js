@@ -1,6 +1,6 @@
 // Proračuni: plan vs. stvarno za mesec.
-import * as S from './store.js?v=20261107220058';
-import { daysInMonth, currentMonthKey, todayISO } from './util.js?v=20261107220058';
+import * as S from './store.js?v=20261107221027';
+import { daysInMonth, currentMonthKey, todayISO } from './util.js?v=20261107221027';
 
 export const txOfMonth = (key) => S.getState().transactions.filter((t) => t.date.startsWith(key));
 

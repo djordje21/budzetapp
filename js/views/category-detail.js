@@ -1,11 +1,11 @@
 // Detalj kategorije za mesec: plan, unosi i brze akcije (otvara se iz Pregleda).
-import * as S from '../store.js?v=20261107220058';
-import { summarize } from '../calc.js?v=20261107220058';
-import { esc, fmt, fmtNum, monthLabel, currentMonthKey } from '../util.js?v=20261107220058';
-import { openSheet, animateBars, pct } from '../ui.js?v=20261107220058';
-import { openEntrySheet } from './entry.js?v=20261107220058';
-import { openPlanItemSheet } from './plan.js?v=20261107220058';
-import { txRow } from './istorija.js?v=20261107220058';
+import * as S from '../store.js?v=20261107221027';
+import { summarize } from '../calc.js?v=20261107221027';
+import { esc, fmt, fmtNum, monthLabel, currentMonthKey } from '../util.js?v=20261107221027';
+import { openSheet, animateBars, pct } from '../ui.js?v=20261107221027';
+import { openEntrySheet } from './entry.js?v=20261107221027';
+import { openPlanItemSheet } from './plan.js?v=20261107221027';
+import { txRow } from './istorija.js?v=20261107221027';
 
 export function openCategoryDetail(key, catId) {
   const c = S.cat(catId);
@@ -57,6 +57,39 @@ export function openCategoryDetail(key, catId) {
         const it = items.find((p) => p.id === b.dataset.pi);
         if (it) openPlanItemSheet(key, it);
       })));
+      el.querySelectorAll('[data-tx]').forEach((b) => (b.onclick = then(() => {
+        const tx = txs.find((t) => t.id === b.dataset.tx);
+        if (tx) openEntrySheet({ tx });
+      })));
+    },
+  });
+}
+
+// Kategorija u proizvoljnom periodu (nedelja, kvartal, godina...) — iz Izveštaja.
+export function openCategoryPeriod(p, catId) {
+  const c = S.cat(catId);
+  const txs = S.getState().transactions
+    .filter((t) => t.categoryId === catId && t.date >= p.start && t.date <= p.end)
+    .sort((a, b) => b.date.localeCompare(a.date) || (b.createdAt || '').localeCompare(a.createdAt || ''));
+  const total = txs.reduce((s, t) => s + Number(t.amount), 0);
+  openSheet({
+    title: `${c.name}`,
+    body: `
+      <div class="cd-head">
+        <span class="cat-ico" style="--c:${c.color}">${c.icon}</span>
+        <div class="grow">
+          <div class="cd-big">${fmt(total)}</div>
+          <div class="cd-sub">${esc(p.label)} · ${txs.length} ${txs.length === 1 ? 'unos' : 'unosa'}${txs.length ? ` · prosek ${fmtNum(total / txs.length)}` : ''}</div>
+        </div>
+      </div>
+      <div class="cd-actions" style="grid-template-columns:1fr">
+        <button class="btn btn-primary btn-sm" id="cp-add">+ Novi ${c.kind === 'income' ? 'prihod' : 'trošak'} u ovoj kategoriji</button>
+      </div>
+      <div class="field-label">Unosi — dodir za izmenu ili brisanje</div>
+      <section class="list">${txs.length ? txs.map((t) => txRow(t, { showDate: true })).join('') : '<div class="empty-mini">Nema unosa u ovom periodu.</div>'}</section>`,
+    onMount(el, close) {
+      const then = (fn) => () => { close(); setTimeout(fn, 200); };
+      el.querySelector('#cp-add').onclick = then(() => openEntrySheet({ categoryId: catId }));
       el.querySelectorAll('[data-tx]').forEach((b) => (b.onclick = then(() => {
         const tx = txs.find((t) => t.id === b.dataset.tx);
         if (tx) openEntrySheet({ tx });
