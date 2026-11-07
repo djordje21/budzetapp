@@ -1,11 +1,11 @@
 // Plan za mesec: očekivani prihodi, troškovi i štednja.
-import * as S from '../store.js?v=20261107215237';
-import { summarize } from '../calc.js?v=20261107215237';
-import { esc, fmt, fmtNum, fmtSigned, monthLabel, addMonths, digitsOnly, MONTH_GEN } from '../util.js?v=20261107215237';
-import { openSheet, toast, confirmSheet } from '../ui.js?v=20261107215237';
-import { isPayable, paidTx, payItem, PAY_LABELS } from '../pay.js?v=20261107215237';
-import { openEntrySheet } from './entry.js?v=20261107215237';
-import { monthPhase } from '../calc.js?v=20261107215237';
+import * as S from '../store.js?v=20261107220058';
+import { summarize } from '../calc.js?v=20261107220058';
+import { esc, fmt, fmtNum, fmtSigned, monthLabel, addMonths, digitsOnly, MONTH_GEN } from '../util.js?v=20261107220058';
+import { openSheet, toast, confirmSheet, moneyInput } from '../ui.js?v=20261107220058';
+import { isPayable, paidTx, payItem, PAY_LABELS } from '../pay.js?v=20261107220058';
+import { openEntrySheet } from './entry.js?v=20261107220058';
+import { monthPhase } from '../calc.js?v=20261107220058';
 
 export function renderPlan(el, ctx) {
   const key = ctx.month;
@@ -176,7 +176,7 @@ export function openPlanItemSheet(key, item, kind = null, presetCat = null) {
       $('#p-cat').value = v.categoryId;
       const amt = $('#p-amount');
       amt.value = v.amount ? fmtNum(v.amount) : '';
-      amt.oninput = () => { v.amount = digitsOnly(amt.value).slice(0, 10); amt.value = v.amount ? fmtNum(v.amount) : ''; };
+      moneyInput(amt, (d) => (v.amount = d), 10);
       const paintOwner = () => el.querySelectorAll('#p-owner button').forEach((b) => b.classList.toggle('on', b.dataset.v === v.owner));
       el.querySelectorAll('#p-owner button').forEach((b) => (b.onclick = () => { v.owner = b.dataset.v; paintOwner(); }));
       paintOwner();

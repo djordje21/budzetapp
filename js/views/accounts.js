@@ -1,9 +1,9 @@
 // Stanje na računima: Đorđe (OTP), Maksijana (OTP), Keš i zbir.
-import * as S from '../store.js?v=20261107215237';
-import * as Sync from '../sync.js?v=20261107215237';
-import { esc, fmt, fmtNum, digitsOnly, todayISO, dayLabel, currentMonthKey, daysInMonth } from '../util.js?v=20261107215237';
-import { openEntrySheet } from './entry.js?v=20261107215237';
-import { openSheet, toast, confirmSheet, countUp } from '../ui.js?v=20261107215237';
+import * as S from '../store.js?v=20261107220058';
+import * as Sync from '../sync.js?v=20261107220058';
+import { esc, fmt, fmtNum, digitsOnly, todayISO, dayLabel, currentMonthKey, daysInMonth } from '../util.js?v=20261107220058';
+import { openEntrySheet } from './entry.js?v=20261107220058';
+import { openSheet, toast, confirmSheet, countUp, moneyInput } from '../ui.js?v=20261107220058';
 
 const signed = (n) => (n < 0 ? '−' : '') + fmtNum(Math.abs(n));
 
@@ -114,7 +114,7 @@ export function openCheckForm(accId) {
       <div class="btn-row sticky-actions"><button class="btn btn-primary" id="c-save">Sačuvaj stanje</button></div>`,
     onMount(el, close) {
       const inp = el.querySelector('#c-amount');
-      inp.oninput = () => { v.amount = digitsOnly(inp.value).slice(0, 11); inp.value = v.amount ? fmtNum(v.amount) : ''; };
+      moneyInput(inp, (d) => (v.amount = d));
       setTimeout(() => inp.focus(), 280);
       el.querySelector('#c-save').onclick = async () => {
         if (v.amount === '') { toast('Upiši stanje (može i 0)', 'warn'); return; }
@@ -152,7 +152,7 @@ export function openTransferForm() {
       el.querySelectorAll('.seg button').forEach((b) => (b.onclick = () => { v[b.closest('.seg').dataset.k] = b.dataset.v; paint(); }));
       paint();
       const inp = el.querySelector('#t-amount');
-      inp.oninput = () => { v.amount = digitsOnly(inp.value).slice(0, 11); inp.value = v.amount ? fmtNum(v.amount) : ''; };
+      moneyInput(inp, (d) => (v.amount = d));
       el.querySelector('#t-date').value = v.date;
       setTimeout(() => inp.focus(), 280);
       el.querySelector('#t-save').onclick = async () => {

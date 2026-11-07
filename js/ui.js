@@ -1,5 +1,5 @@
 // UI pomoćnici: donji panel (sheet), potvrda, obaveštenja, animacija brojeva.
-import { esc } from './util.js?v=20261107215237';
+import { esc, fmtNum, digitsOnly } from './util.js?v=20261107220058';
 
 const reduceMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -108,3 +108,28 @@ export function animateBars(root) {
 }
 
 export const pct = (a, b) => (b > 0 ? Math.max(0, Math.min(100, (a / b) * 100)) : a > 0 ? 100 : 0);
+
+// Polje za iznos sa tačkama hiljada (2.000). Bezbedno za Android tastature (Samsung, Gboard):
+// dok traje "kompozicija" teksta ne diramo vrednost, inače tastatura poništi otkucani broj.
+export function moneyInput(inp, onChange, maxLen = 11) {
+  let composing = false;
+  const format = () => {
+    const d = digitsOnly(inp.value).slice(0, maxLen);
+    const f = d ? fmtNum(d) : '';
+    if (inp.value !== f) {
+      inp.value = f;
+      try { inp.setSelectionRange(f.length, f.length); } catch {}
+    }
+    onChange(d);
+  };
+  inp.setAttribute('autocomplete', 'off');
+  inp.setAttribute('autocorrect', 'off');
+  inp.setAttribute('spellcheck', 'false');
+  inp.addEventListener('compositionstart', () => { composing = true; });
+  inp.addEventListener('compositionend', () => { composing = false; format(); });
+  inp.addEventListener('input', (e) => {
+    if (composing || e.isComposing) { onChange(digitsOnly(inp.value).slice(0, maxLen)); return; }
+    format();
+  });
+  inp.addEventListener('blur', format);
+}

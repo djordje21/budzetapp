@@ -1,10 +1,10 @@
 // Ciljevi štednje: kartice na Pregledu, detalj, forma, proslava.
-import * as S from '../store.js?v=20261107215237';
-import * as Sync from '../sync.js?v=20261107215237';
-import { esc, fmt, fmtNum, digitsOnly, currentMonthKey, monthLabel, MONTH_GEN } from '../util.js?v=20261107215237';
-import { openSheet, toast, confirmSheet, animateBars, pct } from '../ui.js?v=20261107215237';
-import { txRow } from './istorija.js?v=20261107215237';
-import { openEntrySheet } from './entry.js?v=20261107215237';
+import * as S from '../store.js?v=20261107220058';
+import * as Sync from '../sync.js?v=20261107220058';
+import { esc, fmt, fmtNum, digitsOnly, currentMonthKey, monthLabel, MONTH_GEN } from '../util.js?v=20261107220058';
+import { openSheet, toast, confirmSheet, animateBars, pct, moneyInput } from '../ui.js?v=20261107220058';
+import { txRow } from './istorija.js?v=20261107220058';
+import { openEntrySheet } from './entry.js?v=20261107220058';
 
 const ICONS = ['🎯', '🏖️', '✈️', '🚗', '🏠', '💍', '👶', '🎓', '💻', '🛋️', '🩺', '🎁'];
 
@@ -135,7 +135,7 @@ export function openGoalForm(g) {
       const money = (id, key) => {
         const i = $(id);
         i.value = v[key] && Number(v[key]) ? fmtNum(v[key]) : '';
-        i.oninput = () => { v[key] = digitsOnly(i.value).slice(0, 11); i.value = v[key] ? fmtNum(v[key]) : ''; };
+        moneyInput(i, (d) => (v[key] = d));
       };
       money('#g-target', 'target');
       money('#g-start', 'start');
