@@ -1,14 +1,15 @@
 // Početni ekran: plan vs. stvarno za izabrani mesec.
-import * as S from '../store.js?v=20261107212806';
-import { summarize, pace, monthPhase } from '../calc.js?v=20261107212806';
-import { esc, fmt, fmtNum, fmtSigned, monthLabel, addMonths, MONTH_GEN } from '../util.js?v=20261107212806';
-import { countUp, animateBars, pct, toast } from '../ui.js?v=20261107212806';
-import { openEntrySheet } from './entry.js?v=20261107212806';
-import { txRow, setHistoryFilter } from './istorija.js?v=20261107212806';
-import { isPayable, paidTx, payItem, PAY_LABELS } from '../pay.js?v=20261107212806';
-import { openDueSheet } from './due-detail.js?v=20261107212806';
-import { goalsBlock, bindGoals } from './goals.js?v=20261107212806';
-import { openCategoryDetail } from './category-detail.js?v=20261107212806';
+import * as S from '../store.js?v=20261107213453';
+import { summarize, pace, monthPhase } from '../calc.js?v=20261107213453';
+import { esc, fmt, fmtNum, fmtSigned, monthLabel, addMonths, MONTH_GEN } from '../util.js?v=20261107213453';
+import { countUp, animateBars, pct, toast } from '../ui.js?v=20261107213453';
+import { openEntrySheet } from './entry.js?v=20261107213453';
+import { txRow, setHistoryFilter } from './istorija.js?v=20261107213453';
+import { isPayable, paidTx, payItem, PAY_LABELS } from '../pay.js?v=20261107213453';
+import { openDueSheet } from './due-detail.js?v=20261107213453';
+import { cumulativeData, cumulativeChart, bindCumulative } from '../charts.js?v=20261107213453';
+import { goalsBlock, bindGoals } from './goals.js?v=20261107213453';
+import { openCategoryDetail } from './category-detail.js?v=20261107213453';
 
 export function renderPregled(el, ctx) {
   const key = ctx.month;
@@ -58,6 +59,11 @@ export function renderPregled(el, ctx) {
       </div>
     </section>
 
+    ${phase !== 'future' && (sum.varPlan > 0 || sum.varActual > 0) ? `
+    <div class="section-head"><h3>Tok potrošnje</h3><span class="legend"><i class="lg-line"></i>Stvarno <i class="lg-dash"></i>Plan</span></div>
+    <section class="card chart-card" id="cum-card"><div class="chart" id="cum"></div><div class="chart-tip" hidden></div>
+      <p class="chart-note">Promenljivi troškovi (bez rata i računa), zbirno od 1. u mesecu</p></section>` : ''}
+
     ${dueBlock(key, sum, phase)}
 
     <div class="section-head"><h3>Po kategorijama</h3><span class="muted">stvarno / plan</span></div>
@@ -102,6 +108,12 @@ export function renderPregled(el, ctx) {
     e.target.closest('.list').classList.add('show-all');
     e.target.remove();
   });
+  const cum = el.querySelector('#cum');
+  if (cum) {
+    const data = cumulativeData(key, sum);
+    cum.innerHTML = cumulativeChart(data, cum.clientWidth || 340);
+    bindCumulative(el.querySelector('#cum-card'), data, key);
+  }
   bindGoals(el);
   el.querySelectorAll('[data-cat]').forEach((r) => (r.onclick = () => openCategoryDetail(key, r.dataset.cat)));
   el.querySelector('#note').oninput = (e) => S.setNote(key, e.target.value);

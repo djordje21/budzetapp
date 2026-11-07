@@ -1,10 +1,11 @@
 // Izveštaji: dan, nedelja, mesec, kvartal, polugodište, godina.
-import * as S from '../store.js?v=20261107212806';
-import { PERIODS, periodOf, shiftAnchor, prevPeriod, txInPeriod, planInPeriod, monthsCovered } from '../period.js?v=20261107212806';
-import { esc, fmt, fmtNum, fmtSigned, todayISO, currentMonthKey, parseISO, isoOf, MONTH_SHORT, pad } from '../util.js?v=20261107212806';
-import { animateBars, pct } from '../ui.js?v=20261107212806';
-import { txRow } from './istorija.js?v=20261107212806';
-import { openEntrySheet } from './entry.js?v=20261107212806';
+import * as S from '../store.js?v=20261107213453';
+import { PERIODS, periodOf, shiftAnchor, prevPeriod, txInPeriod, planInPeriod, monthsCovered } from '../period.js?v=20261107213453';
+import { esc, fmt, fmtNum, fmtSigned, todayISO, currentMonthKey, parseISO, isoOf, MONTH_SHORT, pad } from '../util.js?v=20261107213453';
+import { animateBars, pct } from '../ui.js?v=20261107213453';
+import { donutData, donutChart, bindDonut } from '../charts.js?v=20261107213453';
+import { txRow } from './istorija.js?v=20261107213453';
+import { openEntrySheet } from './entry.js?v=20261107213453';
 
 const R = { type: 'month', anchor: null };
 const DOW = ['Pon', 'Uto', 'Sre', 'Čet', 'Pet', 'Sub', 'Ned'];
@@ -85,6 +86,9 @@ export function renderIzvestaji(el, ctx) {
 
     ${insightsBlock({ p, prev, txs, ptx, plan, inc, exp, sav, short, elapsed })}
 
+    ${exp > 0 ? `<div class="section-head"><h3>Raspodela troškova</h3></div>
+    <section class="card pad" id="donut-card">${donutChart(donutData(txs))}</section>` : ''}
+
     <div class="section-head"><h3>Po kategorijama</h3><span class="muted">${short ? 'udeo' : partial ? 'stvarno · plan do danas' : 'stvarno · plan'}</span></div>
     <section class="card list">${categoryRows(txs, plan, short, exp)}</section>
 
@@ -103,6 +107,8 @@ export function renderIzvestaji(el, ctx) {
     chartEl.innerHTML = buildChart(p, txs, planInPeriod(p), chartEl.clientWidth || 340);
     bindTips(el);
   }
+  const dc = el.querySelector('#donut-card');
+  if (dc) bindDonut(dc, donutData(txs));
   animateBars(el);
 
   el.querySelectorAll('[data-t]').forEach((b) => (b.onclick = () => { R.type = b.dataset.t; renderIzvestaji(el, ctx); }));
