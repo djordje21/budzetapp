@@ -1,22 +1,22 @@
 // Brzi unos stvarnog troška / prihoda / štednje (i izmena postojećeg unosa).
-import * as S from '../store.js?v=20261107205429';
-import { openSheet, toast, confirmSheet } from '../ui.js?v=20261107205429';
-import { esc, fmt, fmtNum, digitsOnly, todayISO, isoOf } from '../util.js?v=20261107205429';
-import { summarize } from '../calc.js?v=20261107205429';
-import { suggestCategory } from '../suggest.js?v=20261107205429';
+import * as S from '../store.js?v=20261107205723';
+import { openSheet, toast, confirmSheet } from '../ui.js?v=20261107205723';
+import { esc, fmt, fmtNum, digitsOnly, todayISO, isoOf } from '../util.js?v=20261107205723';
+import { summarize } from '../calc.js?v=20261107205723';
+import { suggestCategory } from '../suggest.js?v=20261107205723';
 
 const ICONS = ['📌', '☕', '🍕', '🎬', '✈️', '🐶', '👶', '📚', '💊', '🎮', '🔧', '💇'];
 const COLORS = ['#0ea5e9', '#d946ef', '#f97316', '#22c55e', '#6366f1', '#f43f5e', '#14b8a6', '#eab308'];
 
-export function openEntrySheet({ tx = null, kind = 'expense', date = null, categoryId = null } = {}) {
+export function openEntrySheet({ tx = null, kind = 'expense', date = null, categoryId = null, prefill = null } = {}) {
   const st = S.getState();
   const isEdit = !!tx;
   const v = {
     kind: tx?.kind || (categoryId ? S.cat(categoryId).kind : kind),
     categoryId: tx?.categoryId || categoryId || null,
-    amount: tx ? String(Math.round(tx.amount)) : '',
+    amount: tx ? String(Math.round(tx.amount)) : prefill?.amount ? String(Math.round(prefill.amount)) : '',
     date: tx?.date || date || todayISO(),
-    note: tx?.note || '',
+    note: tx?.note || prefill?.note || '',
     by: tx?.by || st.settings.currentUser || 'dj',
     showFixed: false,
     picked: isEdit || !!categoryId, // korisnik je sam izabrao kategoriju → predlog je ne menja
@@ -202,6 +202,7 @@ export function openEntrySheet({ tx = null, kind = 'expense', date = null, categ
         if (!amount) { shake(amountEl.parentElement); toast('Upiši iznos', 'warn'); return; }
         if (!v.categoryId) { shake($('#e-cats')); toast('Izaberi kategoriju', 'warn'); return; }
         const data = { kind: v.kind, categoryId: v.categoryId, amount, date: v.date, note: v.note.trim(), by: v.by };
+        if (!isEdit && prefill?.planLine) data.planLine = prefill.planLine;
         if (isEdit) await S.updateTransaction(tx.id, data);
         else await S.addTransaction(data);
         feedback(data, isEdit);

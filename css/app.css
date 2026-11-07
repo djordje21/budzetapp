@@ -577,3 +577,13 @@ button, a, .cat-row.clickable, .plan-item, .tx-row, .due-row, .tool-row, .chip, 
   -webkit-user-select: none; user-select: none; -webkit-touch-callout: none;
 }
 input, textarea, .input { -webkit-user-select: text; user-select: text; }
+
+.stat.clickable, .hero.clickable, .due-row.clickable { cursor: pointer; transition: transform .12s, background .15s; }
+.stat.clickable:active, .hero.clickable:active { transform: scale(.98); }
+.due-row.clickable:active { background: var(--surface-2); }
+.dd-actions { display: grid; gap: 8px; margin-top: 16px; }
+.dd-actions .btn { width: 100%; }
+.dd-meta { display: grid; gap: 6px; margin-top: 14px; padding: 12px 14px; border-radius: 14px; background: var(--surface-2); font-size: 14px; }
+.dd-meta div { display: flex; justify-content: space-between; gap: 10px; }
+.dd-meta span:first-child { color: var(--muted); }
+.dd-meta span:last-child { text-align: right; white-space: nowrap; }

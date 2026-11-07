@@ -1,12 +1,13 @@
 // Početni ekran: plan vs. stvarno za izabrani mesec.
-import * as S from '../store.js?v=20261107205429';
-import { summarize, pace, monthPhase } from '../calc.js?v=20261107205429';
-import { esc, fmt, fmtNum, fmtSigned, monthLabel, addMonths, MONTH_GEN } from '../util.js?v=20261107205429';
-import { countUp, animateBars, pct, toast } from '../ui.js?v=20261107205429';
-import { openEntrySheet } from './entry.js?v=20261107205429';
-import { txRow } from './istorija.js?v=20261107205429';
-import { isPayable, paidTx, payItem, PAY_LABELS } from '../pay.js?v=20261107205429';
-import { openCategoryDetail } from './category-detail.js?v=20261107205429';
+import * as S from '../store.js?v=20261107205723';
+import { summarize, pace, monthPhase } from '../calc.js?v=20261107205723';
+import { esc, fmt, fmtNum, fmtSigned, monthLabel, addMonths, MONTH_GEN } from '../util.js?v=20261107205723';
+import { countUp, animateBars, pct, toast } from '../ui.js?v=20261107205723';
+import { openEntrySheet } from './entry.js?v=20261107205723';
+import { txRow, setHistoryFilter } from './istorija.js?v=20261107205723';
+import { isPayable, paidTx, payItem, PAY_LABELS } from '../pay.js?v=20261107205723';
+import { openDueSheet } from './due-detail.js?v=20261107205723';
+import { openCategoryDetail } from './category-detail.js?v=20261107205723';
 
 export function renderPregled(el, ctx) {
   const key = ctx.month;
@@ -33,7 +34,7 @@ export function renderPregled(el, ctx) {
     .slice(0, 5);
 
   el.innerHTML = `
-    <section class="hero card ${left < 0 ? 'hero-over' : ''}">
+    <section class="hero card clickable ${left < 0 ? 'hero-over' : ''}" role="button" tabindex="0" data-go="report">
       <div class="hero-label">${left < 0 ? 'Prekoračen plan troškova' : 'Preostalo od plana troškova'}</div>
       <div class="hero-value" id="hero-val">0</div>
       <div class="hero-sub">Potrošeno <b>${fmtNum(tot.expense.actual)}</b> od <b>${fmtNum(tot.expense.plan)}</b> RSD</div>
@@ -44,10 +45,10 @@ export function renderPregled(el, ctx) {
     </section>
 
     <section class="stat-grid">
-      ${stat('Prihodi', tot.income.actual, tot.income.plan, 'green')}
-      ${stat('Troškovi', tot.expense.actual, tot.expense.plan, 'red')}
-      ${stat('Štednja', tot.saving.actual, tot.saving.plan, 'cyan')}
-      <div class="stat card">
+      ${stat('Prihodi', tot.income.actual, tot.income.plan, 'green', 'income')}
+      ${stat('Troškovi', tot.expense.actual, tot.expense.plan, 'red', 'expense')}
+      ${stat('Štednja', tot.saving.actual, tot.saving.plan, 'cyan', 'saving')}
+      <div class="stat card clickable" role="button" tabindex="0" data-go="report">
         <div class="stat-label">Bilans</div>
         <div class="stat-val ${sum.balanceActual < 0 ? 't-red' : 't-accent'}">${fmtSigned(sum.balanceActual)}</div>
         <div class="stat-sub">plan ${fmtSigned(sum.balancePlan)}</div>
@@ -75,7 +76,18 @@ export function renderPregled(el, ctx) {
   countUp(el.querySelector('#hero-val'), 'hero:' + key, Math.abs(left), (n) => fmt(n));
   animateBars(el);
 
-  el.querySelectorAll('[data-pay]').forEach((b) => (b.onclick = () => {
+  el.querySelectorAll('[data-due]').forEach((r) => (r.onclick = () => {
+    const item = sum.plan.find((p) => p.id === r.dataset.due);
+    if (item) openDueSheet(key, item);
+  }));
+  el.querySelectorAll('[data-go]').forEach((c) => (c.onclick = () => {
+    const g = c.dataset.go;
+    if (g === 'report') { location.hash = '#/izvestaji'; return; }
+    setHistoryFilter({ kind: g });
+    location.hash = '#/istorija';
+  }));
+  el.querySelectorAll('[data-pay]').forEach((b) => (b.onclick = (e) => {
+    e.stopPropagation();
     const item = sum.plan.find((p) => p.id === b.dataset.pay);
     if (!item) return;
     b.closest('.due-row')?.classList.add('leaving');
@@ -108,7 +120,7 @@ function dueBlock(key, sum, phase) {
     <section class="card list">
       ${due.map((p, i) => {
         const c = S.cat(p.categoryId);
-        return `<div class="due-row ${i >= 4 ? 'due-extra' : ''}">
+        return `<div class="due-row clickable ${i >= 4 ? 'due-extra' : ''}" role="button" tabindex="0" data-due="${p.id}">
           <span class="cat-ico" style="--c:${c.color}">${c.icon}</span>
           <span class="tx-main"><span class="tx-title">${esc(p.name)}</span><span class="tx-sub">${esc(c.name)}</span></span>
           <span class="tx-amt ${c.kind === 'income' ? 't-green' : ''}">${fmtNum(p.amount)}</span>
@@ -119,8 +131,8 @@ function dueBlock(key, sum, phase) {
     </section>`;
 }
 
-function stat(label, actual, plan, color) {
-  return `<div class="stat card">
+function stat(label, actual, plan, color, go) {
+  return `<div class="stat card clickable" role="button" tabindex="0" data-go="${go}">
     <div class="stat-label">${label}</div>
     <div class="stat-val t-${color}">${fmtNum(actual)}</div>
     <div class="stat-sub">plan ${fmtNum(plan)}</div>

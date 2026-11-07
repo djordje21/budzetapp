@@ -5,8 +5,8 @@
 // razlika ide u red za slanje ("outbox"), a red se šalje čim ima interneta.
 // Promene drugog korisnika stižu preko Realtime kanala i pri svakom otvaranju aplikacije.
 
-import * as S from './store.js?v=20261107205429';
-import { SUPABASE_URL, SUPABASE_KEY } from './config.js?v=20261107205429';
+import * as S from './store.js?v=20261107205723';
+import { SUPABASE_URL, SUPABASE_KEY } from './config.js?v=20261107205723';
 
 const QKEY = 'budzetapp_outbox';
 const SHKEY = 'budzetapp_shadow';
