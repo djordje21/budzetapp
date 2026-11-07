@@ -5,6 +5,7 @@ import { esc, fmt, fmtNum, fmtSigned, monthLabel, addMonths, MONTH_GEN } from '.
 import { countUp, animateBars, pct, toast } from '../ui.js';
 import { openEntrySheet } from './entry.js';
 import { txRow } from './istorija.js';
+import { isPayable, paidTx, payItem, PAY_LABELS } from '../pay.js';
 
 export function renderPregled(el, ctx) {
   const key = ctx.month;
@@ -52,6 +53,8 @@ export function renderPregled(el, ctx) {
       </div>
     </section>
 
+    ${dueBlock(key, sum, phase)}
+
     <div class="section-head"><h3>Po kategorijama</h3><span class="muted">stvarno / plan</span></div>
     <section class="card list">
       ${expenseCats.length ? expenseCats.map(catRow).join('') : '<div class="empty-mini">Nema troškova u planu.</div>'}
@@ -71,12 +74,47 @@ export function renderPregled(el, ctx) {
   countUp(el.querySelector('#hero-val'), 'hero:' + key, Math.abs(left), (n) => fmt(n));
   animateBars(el);
 
+  el.querySelectorAll('[data-pay]').forEach((b) => (b.onclick = () => {
+    const item = sum.plan.find((p) => p.id === b.dataset.pay);
+    if (!item) return;
+    b.closest('.due-row')?.classList.add('leaving');
+    setTimeout(() => payItem(key, item), 220);
+  }));
+  el.querySelector('#due-all')?.addEventListener('click', (e) => {
+    e.target.closest('.list').classList.add('show-all');
+    e.target.remove();
+  });
   el.querySelector('#note').oninput = (e) => S.setNote(key, e.target.value);
   el.querySelector('#first-entry')?.addEventListener('click', () => openEntrySheet());
   el.querySelectorAll('[data-tx]').forEach((r) => (r.onclick = () => {
     const tx = S.getState().transactions.find((t) => t.id === r.dataset.tx);
     if (tx) openEntrySheet({ tx });
   }));
+}
+
+function dueBlock(key, sum, phase) {
+  if (phase === 'future') return '';
+  const due = sum.plan.filter((p) => isPayable(p) && !paidTx(key, p));
+  const all = sum.plan.filter(isPayable);
+  if (!all.length) return '';
+  if (!due.length) return `<div class="hint hint-good due-done">✅ Sve fiksne stavke za ovaj mesec su evidentirane.</div>`;
+  const order = { income: 0, expense: 1, saving: 2 };
+  due.sort((a, b) => order[S.cat(a.categoryId).kind] - order[S.cat(b.categoryId).kind] || b.amount - a.amount);
+  const total = due.filter((p) => S.cat(p.categoryId).kind === 'expense').reduce((s, p) => s + Number(p.amount), 0);
+  return `
+    <div class="section-head"><h3>Čeka evidenciju · ${due.length}/${all.length}</h3>${total ? `<span class="muted">računi ${fmtNum(total)}</span>` : ''}</div>
+    <section class="card list">
+      ${due.map((p, i) => {
+        const c = S.cat(p.categoryId);
+        return `<div class="due-row ${i >= 4 ? 'due-extra' : ''}">
+          <span class="cat-ico" style="--c:${c.color}">${c.icon}</span>
+          <span class="tx-main"><span class="tx-title">${esc(p.name)}</span><span class="tx-sub">${esc(c.name)}</span></span>
+          <span class="tx-amt ${c.kind === 'income' ? 't-green' : ''}">${fmtNum(p.amount)}</span>
+          <button class="pay-btn" data-pay="${p.id}">${PAY_LABELS[c.kind].act}</button>
+        </div>`;
+      }).join('')}
+      ${due.length > 4 ? `<button class="add-line" id="due-all">Prikaži sve (${due.length})</button>` : ''}
+    </section>`;
 }
 
 function stat(label, actual, plan, color) {

@@ -486,3 +486,33 @@ textarea.input.note { height: auto; min-height: 90px; padding: 12px 14px; resize
   .stat-val { font-size: 17px; }
   .cat-grid { grid-template-columns: repeat(3, 1fr); }
 }
+
+/* Dugme Plaćeno */
+.plan-item { cursor: pointer; }
+.pay-btn {
+  flex-shrink: 0; height: 30px; padding: 0 12px; border-radius: 99px;
+  background: var(--accent-soft); color: var(--accent); font-size: 13px; font-weight: 700;
+  transition: transform .12s, background .2s;
+}
+.pay-btn:active { transform: scale(.94); }
+.pay-btn.paid { background: var(--green-soft); color: var(--green); }
+.due-row { display: flex; align-items: center; gap: 12px; padding: 10px 14px; transition: opacity .22s, transform .22s; }
+.due-row.leaving { opacity: 0; transform: translateX(30px); }
+.due-done { margin-top: 14px; }
+
+/* Predlog kategorije i nova kategorija u unosu */
+.suggest {
+  display: flex; align-items: center; gap: 10px; margin-top: 8px; padding: 9px 12px;
+  border-radius: 12px; background: var(--accent-soft); font-size: 13px; line-height: 1.35;
+  animation: fadeUp .25s ease-out;
+}
+.suggest > span { flex: 1; min-width: 0; }
+.cat-more { border-style: dashed; color: var(--muted); }
+.newcat { padding: 12px; margin-top: 10px; animation: fadeUp .25s ease-out; box-shadow: none; }
+.newcat .btn-row { margin-top: 12px; }
+.icon-row { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px; }
+.icon-opt { width: 36px; height: 36px; border-radius: 10px; font-size: 18px; }
+.icon-opt:active, .icon-opt:hover { background: var(--surface-2); }
+
+.due-extra { display: none; }
+.show-all .due-extra { display: flex; }

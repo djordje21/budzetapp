@@ -3,6 +3,10 @@ import * as S from '../store.js';
 import { openSheet, toast, confirmSheet } from '../ui.js';
 import { esc, fmt, fmtNum, digitsOnly, todayISO, isoOf } from '../util.js';
 import { summarize } from '../calc.js';
+import { suggestCategory } from '../suggest.js';
+
+const ICONS = ['📌', '☕', '🍕', '🎬', '✈️', '🐶', '👶', '📚', '💊', '🎮', '🔧', '💇'];
+const COLORS = ['#0ea5e9', '#d946ef', '#f97316', '#22c55e', '#6366f1', '#f43f5e', '#14b8a6', '#eab308'];
 
 export function openEntrySheet({ tx = null, kind = 'expense', date = null } = {}) {
   const st = S.getState();
@@ -14,7 +18,10 @@ export function openEntrySheet({ tx = null, kind = 'expense', date = null } = {}
     date: tx?.date || date || todayISO(),
     note: tx?.note || '',
     by: tx?.by || st.settings.currentUser || 'dj',
+    showFixed: false,
+    picked: isEdit, // korisnik je sam izabrao kategoriju → predlog je ne menja
   };
+  if (isEdit && S.cat(v.categoryId).fixed) v.showFixed = true;
   const yesterday = (() => { const d = new Date(); d.setDate(d.getDate() - 1); return isoOf(d); })();
 
   const body = `
@@ -27,8 +34,13 @@ export function openEntrySheet({ tx = null, kind = 'expense', date = null } = {}
       <span>RSD</span>
     </label>
 
+    <div class="field-label">Gde / napomena</div>
+    <input id="e-note" class="input" maxlength="80" autocomplete="off" placeholder="npr. Smokvica, Maxi, NIS pumpa…">
+    <div id="e-suggest" class="suggest" hidden></div>
+
     <div class="field-label">Kategorija</div>
     <div class="cat-grid" id="e-cats"></div>
+    <div id="e-newcat" hidden></div>
 
     <div class="field-label">Datum</div>
     <div class="date-row">
@@ -36,9 +48,6 @@ export function openEntrySheet({ tx = null, kind = 'expense', date = null } = {}
       <button class="chip" data-d="${yesterday}">Juče</button>
       <input type="date" id="e-date" class="input input-date">
     </div>
-
-    <div class="field-label">Napomena <span class="muted">(opciono)</span></div>
-    <input id="e-note" class="input" maxlength="80" placeholder="npr. Maxi, pijaca, servis...">
 
     <div class="field-label">Uneo/la</div>
     <div class="seg seg-2" data-k="by">
@@ -58,27 +67,121 @@ export function openEntrySheet({ tx = null, kind = 'expense', date = null } = {}
       const amountEl = $('#e-amount');
       const dateEl = $('#e-date');
       const noteEl = $('#e-note');
+      const sugEl = $('#e-suggest');
 
       const paintSeg = (k) => el.querySelectorAll(`[data-k="${k}"] button`).forEach((b) => b.classList.toggle('on', b.dataset.v === v[k]));
       const paintDate = () => {
         dateEl.value = v.date;
         el.querySelectorAll('[data-d]').forEach((b) => b.classList.toggle('on', b.dataset.d === v.date));
       };
+
+      const tile = (c) => `
+        <button class="cat-pick ${c.id === v.categoryId ? 'on' : ''}" data-c="${c.id}" style="--c:${c.color}">
+          <span class="cat-ico">${c.icon}</span><span>${esc(c.name)}</span>
+        </button>`;
+
       const paintCats = () => {
-        const cats = S.categoriesOf(v.kind);
+        let cats = S.categoriesOf(v.kind);
+        const sel = S.cat(v.categoryId);
+        // Jednokratna (sakrivena) kategorija izabrana u ovom unosu ostaje vidljiva.
+        if (v.categoryId && sel.archived && sel.kind === v.kind) cats = [...cats, sel];
         if (!cats.some((c) => c.id === v.categoryId)) v.categoryId = null;
-        $('#e-cats').innerHTML = cats.map((c) => `
-          <button class="cat-pick ${c.id === v.categoryId ? 'on' : ''}" data-c="${c.id}" style="--c:${c.color}">
-            <span class="cat-ico">${c.icon}</span><span>${esc(c.name)}</span>
-          </button>`).join('');
-        el.querySelectorAll('[data-c]').forEach((b) => (b.onclick = () => { v.categoryId = b.dataset.c; paintCats(); }));
+        const fixed = cats.filter((c) => c.fixed);
+        const main = cats.filter((c) => !c.fixed);
+        $('#e-cats').innerHTML =
+          main.map(tile).join('') +
+          (v.showFixed ? fixed.map(tile).join('') : '') +
+          (fixed.length && !v.showFixed ? `<button class="cat-pick cat-more" id="e-fixed"><span class="cat-ico">🧾</span><span>Rate i računi</span></button>` : '') +
+          `<button class="cat-pick cat-more" id="e-add"><span class="cat-ico">＋</span><span>Nova kategorija</span></button>`;
+        el.querySelectorAll('[data-c]').forEach((b) => (b.onclick = () => {
+          v.categoryId = b.dataset.c;
+          v.picked = true;
+          paintCats();
+          paintSuggest();
+        }));
+        $('#e-fixed')?.addEventListener('click', () => { v.showFixed = true; paintCats(); });
+        $('#e-add').onclick = openNewCat;
       };
 
-      el.querySelectorAll('.seg button').forEach((b) => (b.onclick = () => {
+      // ---- Predlog kategorije ----
+      let sug = null;
+      const paintSuggest = () => {
+        if (!sug || sug.categoryId === v.categoryId && v.picked) { sugEl.hidden = true; return; }
+        const c = S.cat(sug.categoryId);
+        const applied = v.categoryId === sug.categoryId;
+        sugEl.hidden = false;
+        sugEl.innerHTML = applied
+          ? `<span>💡 <b>${esc(c.icon + ' ' + c.name)}</b> — ${esc(sug.reason)}</span>`
+          : `<span>💡 Predlog: <b>${esc(c.icon + ' ' + c.name)}</b> — ${esc(sug.reason)}</span><button class="pay-btn" id="e-sug-ok">Primeni</button>`;
+        $('#e-sug-ok')?.addEventListener('click', () => { v.categoryId = sug.categoryId; v.picked = true; paintCats(); paintSuggest(); });
+      };
+      let sugTimer;
+      const runSuggest = () => {
+        clearTimeout(sugTimer);
+        sugTimer = setTimeout(() => {
+          sug = suggestCategory(v.note, v.kind);
+          // Automatski primeni dok korisnik sam nije birao.
+          if (sug && !v.picked) { v.categoryId = sug.categoryId; paintCats(); }
+          paintSuggest();
+        }, 250);
+      };
+
+      // ---- Nova kategorija (jednokratna ili trajna) ----
+      function openNewCat() {
+        const box = $('#e-newcat');
+        const nv = { icon: ICONS[0], keep: true };
+        box.hidden = false;
+        box.innerHTML = `
+          <div class="newcat card">
+            <div class="cat-form">
+              <input class="input icon-input" id="n-icon" maxlength="4" value="${nv.icon}" aria-label="Ikonica">
+              <input class="input grow" id="n-name" maxlength="30" placeholder="Naziv, npr. Đorđe — lično">
+            </div>
+            <div class="icon-row">${ICONS.map((i) => `<button class="icon-opt" data-i="${i}">${i}</button>`).join('')}</div>
+            <div class="seg seg-2 mt" id="n-keep">
+              <button data-v="1" class="on">Sačuvaj za ubuduće</button>
+              <button data-v="0">Samo ovaj put</button>
+            </div>
+            <div class="btn-row">
+              <button class="btn btn-ghost btn-sm" id="n-cancel">Odustani</button>
+              <button class="btn btn-primary btn-sm" id="n-ok">Dodaj</button>
+            </div>
+          </div>`;
+        const nameEl = box.querySelector('#n-name');
+        const iconEl = box.querySelector('#n-icon');
+        setTimeout(() => nameEl.focus(), 50);
+        box.querySelectorAll('[data-i]').forEach((b) => (b.onclick = () => { iconEl.value = b.dataset.i; }));
+        box.querySelectorAll('#n-keep button').forEach((b) => (b.onclick = () => {
+          nv.keep = b.dataset.v === '1';
+          box.querySelectorAll('#n-keep button').forEach((x) => x.classList.toggle('on', x === b));
+        }));
+        box.querySelector('#n-cancel').onclick = () => { box.hidden = true; box.innerHTML = ''; };
+        box.querySelector('#n-ok').onclick = async () => {
+          const name = nameEl.value.trim();
+          if (!name) { shake(nameEl); return; }
+          const id = 'c-' + Math.random().toString(36).slice(2, 10);
+          await S.saveCategory({
+            id, kind: v.kind, name,
+            icon: iconEl.value.trim() || '📌',
+            color: COLORS[S.getState().categories.length % COLORS.length],
+            fixed: false,
+            archived: !nv.keep, // "samo ovaj put" = sakrivena kategorija, ostaje u istoriji
+          });
+          v.categoryId = id;
+          v.picked = true;
+          box.hidden = true;
+          box.innerHTML = '';
+          paintCats();
+          paintSuggest();
+          toast(nv.keep ? `Kategorija „${esc(name)}“ dodata` : `„${esc(name)}“ — samo za ovaj unos`, 'ok');
+        };
+      }
+
+      el.querySelectorAll('.seg[data-k] button').forEach((b) => (b.onclick = () => {
         const k = b.closest('.seg').dataset.k;
         v[k] = b.dataset.v;
         paintSeg(k);
-        if (k === 'kind') paintCats();
+        if (k === 'kind') { v.picked = false; paintCats(); runSuggest(); }
       }));
       el.querySelectorAll('[data-d]').forEach((b) => (b.onclick = () => { v.date = b.dataset.d; paintDate(); }));
       dateEl.onchange = () => { if (dateEl.value) { v.date = dateEl.value; paintDate(); } };
@@ -89,7 +192,7 @@ export function openEntrySheet({ tx = null, kind = 'expense', date = null } = {}
         amountEl.value = v.amount ? fmtNum(v.amount) : '';
       };
       noteEl.value = v.note;
-      noteEl.oninput = () => (v.note = noteEl.value);
+      noteEl.oninput = () => { v.note = noteEl.value; runSuggest(); };
 
       paintSeg('kind'); paintSeg('by'); paintDate(); paintCats();
       if (!isEdit) setTimeout(() => amountEl.focus(), 280);
@@ -103,14 +206,16 @@ export function openEntrySheet({ tx = null, kind = 'expense', date = null } = {}
         else await S.addTransaction(data);
         feedback(data, isEdit);
         if (again) {
-          v.amount = ''; v.note = '';
+          v.amount = ''; v.note = ''; v.picked = false; sug = null;
           amountEl.value = ''; noteEl.value = '';
+          paintSuggest();
           amountEl.focus();
         } else close();
       };
       $('#e-save').onclick = () => save(false);
       $('#e-more')?.addEventListener('click', () => save(true));
-      amountEl.onkeydown = (e) => e.key === 'Enter' && save(false);
+      amountEl.onkeydown = (e) => e.key === 'Enter' && noteEl.focus();
+      noteEl.onkeydown = (e) => e.key === 'Enter' && save(false);
       $('#e-del')?.addEventListener('click', async () => {
         if (await confirmSheet({ title: 'Obriši unos?', text: `${esc(S.cat(tx.categoryId).name)} · ${fmt(tx.amount)}`, ok: 'Obriši', danger: true })) {
           await S.deleteTransaction(tx.id);

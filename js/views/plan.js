@@ -3,6 +3,9 @@ import * as S from '../store.js';
 import { summarize } from '../calc.js';
 import { esc, fmt, fmtNum, fmtSigned, monthLabel, addMonths, digitsOnly, MONTH_GEN } from '../util.js';
 import { openSheet, toast, confirmSheet } from '../ui.js';
+import { isPayable, paidTx, payItem, PAY_LABELS } from '../pay.js';
+import { openEntrySheet } from './entry.js';
+import { monthPhase } from '../calc.js';
 
 export function renderPlan(el, ctx) {
   const key = ctx.month;
@@ -28,10 +31,10 @@ export function renderPlan(el, ctx) {
           const c = S.cat(cid);
           return `<div class="plan-group">
             <div class="plan-group-head"><span>${c.icon} ${esc(c.name)}</span><span>${fmtNum(sumOf(arr))}</span></div>
-            ${arr.map(itemRow).join('')}
+            ${arr.map((p) => itemRow(p, key)).join('')}
           </div>`;
         }).join('');
-    } else rows = items.map(itemRow).join('');
+    } else rows = items.map((p) => itemRow(p, key)).join('');
 
     return `
       <div class="section-head"><h3>${S.KINDS[kind].plural}</h3><span class="t-${kind === 'income' ? 'green' : kind === 'saving' ? 'cyan' : 'red'}"><b>${fmtNum(total)}</b></span></div>
@@ -67,6 +70,16 @@ export function renderPlan(el, ctx) {
     const item = plan.find((p) => p.id === r.dataset.item);
     if (item) openPlanItemSheet(key, item);
   }));
+  el.querySelectorAll('[data-pay]').forEach((b) => (b.onclick = (e) => {
+    e.stopPropagation();
+    const item = plan.find((p) => p.id === b.dataset.pay);
+    if (item) payItem(key, item);
+  }));
+  el.querySelectorAll('[data-paid]').forEach((b) => (b.onclick = (e) => {
+    e.stopPropagation();
+    const tx = S.getState().transactions.find((t) => t.id === b.dataset.paid);
+    if (tx) openEntrySheet({ tx });
+  }));
   el.querySelectorAll('[data-add]').forEach((b) => (b.onclick = () => openPlanItemSheet(key, null, b.dataset.add)));
 
   const copyPrev = async (replace) => {
@@ -90,13 +103,22 @@ export function renderPlan(el, ctx) {
 
 const sumOf = (arr) => arr.reduce((s, p) => s + Number(p.amount), 0);
 
-function itemRow(p) {
+function itemRow(p, key) {
   const o = S.member(p.owner);
-  return `<button class="plan-item" data-item="${p.id}">
+  let pay = '';
+  if (isPayable(p) && monthPhase(key) !== 'future') {
+    const kind = S.cat(p.categoryId).kind;
+    const tx = paidTx(key, p);
+    pay = tx
+      ? `<button class="pay-btn paid" data-paid="${tx.id}" title="Otvori unos">✓ ${PAY_LABELS[kind].done}</button>`
+      : `<button class="pay-btn" data-pay="${p.id}">${PAY_LABELS[kind].act}</button>`;
+  }
+  return `<div class="plan-item" role="button" tabindex="0" data-item="${p.id}">
     <span class="pi-name">${esc(p.name)}</span>
     ${p.owner && p.owner !== 'zaj' ? `<span class="who" style="--c:${o.color}">${o.short}</span>` : ''}
     <span class="pi-amt">${fmtNum(p.amount)}</span>
-  </button>`;
+    ${pay}
+  </div>`;
 }
 
 function planHint(sum) {

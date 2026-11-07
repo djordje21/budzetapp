@@ -50,10 +50,12 @@ create table if not exists public.transactions (
   amount      numeric(14, 2) not null check (amount >= 0),
   note        text not null default '',
   by_member   text not null check (by_member in ('dj', 'm')),
+  plan_line   uuid,
   created_at  timestamptz not null default now(),
   updated_at  timestamptz not null default now()
 );
 create index if not exists transactions_date_idx on public.transactions (date);
+alter table public.transactions add column if not exists plan_line uuid;
 
 create table if not exists public.notes (
   month      text primary key check (month ~ '^\d{4}-\d{2}$'),

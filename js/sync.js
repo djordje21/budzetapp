@@ -51,8 +51,11 @@ function rowsFromState(st) {
   for (const [month, items] of Object.entries(st.plans))
     for (const p of items)
       out.plan_items[p.id] = { id: p.id, month, line: p.line, category_id: p.categoryId, name: p.name, amount: Number(p.amount) || 0, owner: p.owner || 'zaj' };
-  for (const t of st.transactions)
-    out.transactions[t.id] = { id: t.id, date: t.date, kind: t.kind, category_id: t.categoryId, amount: Number(t.amount) || 0, note: t.note || '', by_member: t.by, created_at: t.createdAt };
+  for (const t of st.transactions) {
+    const r = { id: t.id, date: t.date, kind: t.kind, category_id: t.categoryId, amount: Number(t.amount) || 0, note: t.note || '', by_member: t.by, created_at: t.createdAt };
+    if (t.planLine) r.plan_line = t.planLine;
+    out.transactions[t.id] = r;
+  }
   for (const [month, text] of Object.entries(st.notes))
     if (text) out.notes[month] = { month, text };
   return out;
@@ -60,7 +63,7 @@ function rowsFromState(st) {
 
 const catFromRow = (r) => ({ id: r.id, name: r.name, kind: r.kind, icon: r.icon || '📌', color: r.color || '#94a3b8', fixed: !!r.fixed, archived: !!r.archived });
 const planFromRow = (r) => ({ id: r.id, line: r.line, categoryId: r.category_id, name: r.name, amount: Number(r.amount), owner: r.owner });
-const txFromRow = (r) => ({ id: r.id, date: r.date, kind: r.kind, categoryId: r.category_id, amount: Number(r.amount), note: r.note || '', by: r.by_member, createdAt: r.created_at });
+const txFromRow = (r) => ({ id: r.id, date: r.date, kind: r.kind, categoryId: r.category_id, amount: Number(r.amount), note: r.note || '', by: r.by_member, createdAt: r.created_at, ...(r.plan_line ? { planLine: r.plan_line } : {}) });
 
 const catRank = (c) => { const i = S.DEFAULT_CATEGORIES.findIndex((d) => d.id === c.id); return i < 0 ? 999 : i; };
 
