@@ -1,8 +1,9 @@
 // Stanje na računima: Đorđe (OTP), Maksijana (OTP), Keš i zbir.
-import * as S from '../store.js?v=20261107214139';
-import * as Sync from '../sync.js?v=20261107214139';
-import { esc, fmt, fmtNum, digitsOnly, todayISO, dayLabel } from '../util.js?v=20261107214139';
-import { openSheet, toast, confirmSheet, countUp } from '../ui.js?v=20261107214139';
+import * as S from '../store.js?v=20261107215237';
+import * as Sync from '../sync.js?v=20261107215237';
+import { esc, fmt, fmtNum, digitsOnly, todayISO, dayLabel, currentMonthKey, daysInMonth } from '../util.js?v=20261107215237';
+import { openEntrySheet } from './entry.js?v=20261107215237';
+import { openSheet, toast, confirmSheet, countUp } from '../ui.js?v=20261107215237';
 
 const signed = (n) => (n < 0 ? '−' : '') + fmtNum(Math.abs(n));
 
@@ -33,6 +34,7 @@ export function accountsBlock() {
   return `${warn}<button class="card acc-card" data-acc-open>
     <div class="acc-head"><span>Ukupno na računima</span><span class="chev">›</span></div>
     <div class="acc-total ${total < 0 ? 't-red' : ''}" id="acc-total">${fmt(total)}</div>
+    ${accountWarnings().map((w) => `<div class="acc-warn">${w}</div>`).join('')}
     <div class="acc-rows">
       ${rows.map(({ a, b }) => `<div class="acc-row">
         <i style="background:${a.color}"></i><span>${esc(a.name)}</span>
@@ -117,13 +119,12 @@ export function openCheckForm(accId) {
       el.querySelector('#c-save').onclick = async () => {
         if (v.amount === '') { toast('Upiši stanje (može i 0)', 'warn'); return; }
         const amount = Number(v.amount) * (el.querySelector('#c-minus')?.checked ? -1 : 1);
-        await S.addBalanceCheck(accId, amount);
+        const chk = await S.addBalanceCheck(accId, amount);
         close();
         if (!est) { toast(`✅ Stanje upisano: ${esc(a.name)} ${signed(amount)}`, 'ok'); return; }
         const diff = amount - est.amount;
-        if (Math.abs(diff) < 1) toast('✅ Tačno se poklapa sa procenom. Sve je uneto!', 'ok', 3500);
-        else if (diff < 0) toast(`Na računu je <b>${fmtNum(-diff)} manje</b> od procene.<br><small>Verovatno neki trošak nije unet.</small>`, 'warn', 5000);
-        else toast(`Na računu je <b>${fmtNum(diff)} više</b> od procene.<br><small>Možda neki prihod nije unet, ili je trošak unet dvaput.</small>`, 'warn', 5000);
+        if (Math.abs(diff) < 1) { toast('✅ Tačno se poklapa sa procenom. Sve je uneto!', 'ok', 3500); return; }
+        setTimeout(() => openDiffSheet(a, chk, diff), 260);
       };
     },
   });
@@ -164,4 +165,64 @@ export function openTransferForm() {
       };
     },
   });
+}
+
+// ---- Razlika posle provere: objasni je ili je evidentiraj kao "iscurelo" ----
+function openDiffSheet(a, chk, diff) {
+  const short = diff < 0;
+  const abs = Math.abs(diff);
+  const pre = S.beforeCheck(chk);
+  const today = todayISO();
+  openSheet({
+    title: short ? `Nedostaje ${fmtNum(abs)} RSD` : `Višak ${fmtNum(abs)} RSD`,
+    body: `
+      <div class="diff-ico">${short ? '💧' : '🤔'}</div>
+      <p class="sheet-text center">${short
+        ? `Na računu <b>${esc(a.name)}</b> je manje nego što su unosi pokazivali. Verovatno neki trošak nije unet.`
+        : `Na računu <b>${esc(a.name)}</b> je više nego što su unosi pokazivali. Možda prihod nije unet, ili je neki trošak unet dvaput.`}</p>
+      <div class="dd-actions">
+        ${short ? `
+          <button class="btn btn-primary" id="d-add">Setio sam se — dodaj trošak</button>
+          <button class="btn btn-soft" id="d-leak">💧 Iscurelo — ne znam gde</button>`
+        : `
+          <button class="btn btn-primary" id="d-add">Dodaj prihod</button>
+          <button class="btn btn-soft" id="d-leak">Evidentiraj kao nepoznat priliv</button>`}
+        <button class="btn btn-ghost" id="d-skip">Ostavi tako</button>
+      </div>
+      <p class="muted small center mt">Stanje računa je u svakom slučaju ažurirano na ${fmt(chk.amount)}.</p>`,
+    onMount(el, close) {
+      const then = (fn) => () => { close(); setTimeout(fn, 220); };
+      el.querySelector('#d-skip').onclick = () => close();
+      el.querySelector('#d-add').onclick = then(() => openEntrySheet({
+        kind: short ? 'expense' : 'income',
+        prefill: { amount: abs, account: a.id, createdAt: pre },
+      }));
+      el.querySelector('#d-leak').onclick = async () => {
+        await S.addTransaction(short
+          ? { kind: 'expense', categoryId: 'iscurelo', amount: abs, date: today, note: `Razlika pri proveri · ${a.name}`, account: a.id, createdAt: pre }
+          : { kind: 'income', categoryId: 'dodatno', amount: abs, date: today, note: `Nepoznat priliv · ${a.name}`, account: a.id, createdAt: pre });
+        close();
+        if (short) {
+          const key = currentMonthKey();
+          const month = S.leakedIn(`${key}-01`, `${key}-${daysInMonth(key)}`);
+          toast(`💧 Evidentirano kao iscurelo: ${fmtNum(abs)} RSD${month > abs ? `<br><small>Ovog meseca ukupno iscurelo: ${fmtNum(month)} RSD</small>` : ''}`, 'warn', 4500);
+        } else toast(`Evidentirano kao priliv: ${fmtNum(abs)} RSD`, 'ok');
+      };
+    },
+  });
+}
+
+// ---- Upozorenja za karticu na Pregledu ----
+function accountWarnings() {
+  const out = [];
+  for (const a of S.ACCOUNTS) {
+    const c = S.lastCheck(a.id);
+    if (!c) continue;
+    const days = Math.floor((Date.now() - Date.parse(c.at)) / 864e5);
+    if (days >= 7) out.push(`⏰ ${esc(a.name)}: stanje nije provereno ${days} dana`);
+  }
+  const key = currentMonthKey();
+  const leak = S.leakedIn(`${key}-01`, `${key}-${daysInMonth(key)}`);
+  if (leak > 0) out.push(`💧 Ovog meseca iscurelo: <b>${fmtNum(leak)} RSD</b>`);
+  return out;
 }

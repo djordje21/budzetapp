@@ -1,7 +1,7 @@
 // Skladište podataka. Za sada lokalno (localStorage); kasnije se ovde uključuje Supabase
 // bez menjanja ekrana — svi ekrani koriste samo funkcije iz ovog fajla.
 
-import { uid, addMonths } from './util.js?v=20261107214139';
+import { uid, addMonths } from './util.js?v=20261107215237';
 
 const KEY = 'budzetapp_v2';
 
@@ -31,6 +31,8 @@ export const DEFAULT_CATEGORIES = [
   { id: 'pokloni', name: 'Pokloni', kind: 'expense', icon: '🎁', color: '#f43f5e' },
   { id: 'licno-dj', name: 'Džeparac – Đorđe', kind: 'expense', icon: '🧔', color: '#8b5cf6', personal: 'dj' },
   { id: 'licno-m', name: 'Džeparac – Maksijana', kind: 'expense', icon: '👩', color: '#ec4899', personal: 'm' },
+  // Razlika pri proveri stanja koju niko ne ume da objasni. Sakrivena iz izbora pri unosu.
+  { id: 'iscurelo', name: 'Iscurelo', kind: 'expense', icon: '💧', color: '#0ea5e9', archived: true },
   { id: 'ostalo', name: 'Ostalo', kind: 'expense', icon: '📦', color: '#94a3b8' },
   { id: 'plata', name: 'Plata', kind: 'income', icon: '💼', color: '#22c55e' },
   { id: 'dodatno', name: 'Dodatni prihod', kind: 'income', icon: '💵', color: '#10b981' },
@@ -53,7 +55,7 @@ function emptyState() {
 }
 
 // Kategorije dodate u novijim verzijama — dopunjuju se postojećim podacima.
-const ADDED_LATER = ['licno-dj', 'licno-m'];
+const ADDED_LATER = ['licno-dj', 'licno-m', 'iscurelo'];
 function withNewDefaults(cats) {
   const out = [...cats];
   for (const id of ADDED_LATER) {
@@ -275,9 +277,16 @@ export function balanceOf(acc) {
 
 export async function addBalanceCheck(acc, amount) {
   state.balanceChecks ||= [];
-  state.balanceChecks.push({ id: uid(), account: acc, amount: Number(amount), at: new Date().toISOString(), by: state.settings.currentUser || 'dj' });
+  const chk = { id: uid(), account: acc, amount: Number(amount), at: new Date().toISOString(), by: state.settings.currentUser || 'dj' };
+  state.balanceChecks.push(chk);
   persist();
+  return chk;
 }
+// Unos koji objašnjava razliku pri proveri mora da bude "pre" provere, inače bi je duplirao.
+export const beforeCheck = (chk) => new Date(Date.parse(chk.at) - 1000).toISOString();
+
+// Iscurelo u periodu (za upozorenja i izveštaje).
+export const leakedIn = (from, to) => state.transactions.filter((t) => t.categoryId === 'iscurelo' && t.date >= from && t.date <= to).reduce((s, t) => s + Number(t.amount), 0);
 export async function deleteBalanceCheck(id) {
   state.balanceChecks = (state.balanceChecks || []).filter((c) => c.id !== id);
   persist();

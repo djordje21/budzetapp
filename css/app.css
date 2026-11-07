@@ -680,3 +680,6 @@ input, textarea, .input { -webkit-user-select: text; user-select: text; }
 .acc-item { display: flex; gap: 12px; align-items: center; padding: 12px 14px; }
 .acc-item-top { display: flex; gap: 8px; align-items: baseline; }
 .acc-item-amt { font-size: 18px; font-weight: 800; letter-spacing: -.3px; margin: 1px 0; }
+
+.acc-warn { font-size: 12.5px; padding: 6px 10px; margin: -2px 0 8px; border-radius: 10px; background: var(--amber-soft); }
+.diff-ico { font-size: 44px; text-align: center; margin: 4px 0 2px; animation: pop .5s cubic-bezier(.2, 1.4, .4, 1) both; }

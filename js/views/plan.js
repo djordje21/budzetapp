@@ -1,11 +1,11 @@
 // Plan za mesec: očekivani prihodi, troškovi i štednja.
-import * as S from '../store.js?v=20261107214139';
-import { summarize } from '../calc.js?v=20261107214139';
-import { esc, fmt, fmtNum, fmtSigned, monthLabel, addMonths, digitsOnly, MONTH_GEN } from '../util.js?v=20261107214139';
-import { openSheet, toast, confirmSheet } from '../ui.js?v=20261107214139';
-import { isPayable, paidTx, payItem, PAY_LABELS } from '../pay.js?v=20261107214139';
-import { openEntrySheet } from './entry.js?v=20261107214139';
-import { monthPhase } from '../calc.js?v=20261107214139';
+import * as S from '../store.js?v=20261107215237';
+import { summarize } from '../calc.js?v=20261107215237';
+import { esc, fmt, fmtNum, fmtSigned, monthLabel, addMonths, digitsOnly, MONTH_GEN } from '../util.js?v=20261107215237';
+import { openSheet, toast, confirmSheet } from '../ui.js?v=20261107215237';
+import { isPayable, paidTx, payItem, PAY_LABELS } from '../pay.js?v=20261107215237';
+import { openEntrySheet } from './entry.js?v=20261107215237';
+import { monthPhase } from '../calc.js?v=20261107215237';
 
 export function renderPlan(el, ctx) {
   const key = ctx.month;
