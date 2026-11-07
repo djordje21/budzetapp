@@ -44,8 +44,8 @@ export function renderPlan(el, ctx) {
   el.innerHTML = `
     <section class="card plan-summary">
       <div class="ps-row"><span>Planirani prihodi</span><b class="t-green">${fmtNum(sum.tot.income.plan)}</b></div>
-      <div class="ps-row"><span>Planirani troškovi</span><b class="t-red">−${fmtNum(sum.tot.expense.plan)}</b></div>
-      <div class="ps-row"><span>Štednja i investicije</span><b class="t-cyan">−${fmtNum(sum.tot.saving.plan)}</b></div>
+      <div class="ps-row"><span>Planirani troškovi</span><b class="t-red">${sum.tot.expense.plan ? '−' : ''}${fmtNum(sum.tot.expense.plan)}</b></div>
+      <div class="ps-row"><span>Štednja i investicije</span><b class="t-cyan">${sum.tot.saving.plan ? '−' : ''}${fmtNum(sum.tot.saving.plan)}</b></div>
       <div class="ps-row ps-total"><span>Neraspoređeno</span><b class="${unassigned < 0 ? 't-red' : 't-accent'}">${fmtSigned(unassigned)} RSD</b></div>
       ${planHint(sum)}
     </section>
