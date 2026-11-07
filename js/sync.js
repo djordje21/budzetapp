@@ -5,14 +5,17 @@
 // razlika ide u red za slanje ("outbox"), a red se šalje čim ima interneta.
 // Promene drugog korisnika stižu preko Realtime kanala i pri svakom otvaranju aplikacije.
 
-import * as S from './store.js?v=20261107210111';
-import { SUPABASE_URL, SUPABASE_KEY } from './config.js?v=20261107210111';
+import * as S from './store.js?v=20261107212806';
+import { SUPABASE_URL, SUPABASE_KEY } from './config.js?v=20261107212806';
 
 const QKEY = 'budzetapp_outbox';
 const SHKEY = 'budzetapp_shadow';
-const PK = { categories: 'id', plan_items: 'id', transactions: 'id', notes: 'month' };
-const UPSERT_ORDER = ['categories', 'plan_items', 'transactions', 'notes'];
-const DELETE_ORDER = ['transactions', 'plan_items', 'notes', 'categories'];
+const PK = { categories: 'id', goals: 'id', plan_items: 'id', transactions: 'id', notes: 'month' };
+const UPSERT_ORDER = ['categories', 'goals', 'plan_items', 'transactions', 'notes'];
+const DELETE_ORDER = ['transactions', 'plan_items', 'notes', 'goals', 'categories'];
+const EMPTY = () => ({ categories: {}, goals: {}, plan_items: {}, transactions: {}, notes: {} });
+// Tabela 'goals' postoji tek posle SQL migracije 003 — do tada se ciljevi ne šalju.
+export let goalsAvailable = true;
 
 export const enabled = !!(SUPABASE_URL && SUPABASE_KEY && window.supabase?.createClient);
 
@@ -45,7 +48,9 @@ function setStatus(state, error = '') {
 
 // ---- Pretvaranje: lokalni podaci <-> redovi u bazi ----
 function rowsFromState(st) {
-  const out = { categories: {}, plan_items: {}, transactions: {}, notes: {} };
+  const out = EMPTY();
+  for (const g of st.goals || [])
+    out.goals[g.id] = { id: g.id, name: g.name, icon: g.icon || null, target: Number(g.target) || 0, start_amount: Number(g.startAmount) || 0, due: g.due || null, archived: !!g.archived, created_at: g.createdAt };
   for (const c of st.categories)
     out.categories[c.id] = { id: c.id, name: c.name, kind: c.kind, icon: c.icon || null, color: c.color || null, fixed: !!c.fixed, archived: !!c.archived };
   for (const [month, items] of Object.entries(st.plans))
@@ -54,6 +59,7 @@ function rowsFromState(st) {
   for (const t of st.transactions) {
     const r = { id: t.id, date: t.date, kind: t.kind, category_id: t.categoryId, amount: Number(t.amount) || 0, note: t.note || '', by_member: t.by, created_at: t.createdAt };
     if (t.planLine) r.plan_line = t.planLine;
+    if ('goalId' in t && goalsAvailable) r.goal_id = t.goalId || null;
     out.transactions[t.id] = r;
   }
   for (const [month, text] of Object.entries(st.notes))
@@ -63,7 +69,8 @@ function rowsFromState(st) {
 
 const catFromRow = (r) => ({ id: r.id, name: r.name, kind: r.kind, icon: r.icon || '📌', color: r.color || '#94a3b8', fixed: !!r.fixed, archived: !!r.archived });
 const planFromRow = (r) => ({ id: r.id, line: r.line, categoryId: r.category_id, name: r.name, amount: Number(r.amount), owner: r.owner });
-const txFromRow = (r) => ({ id: r.id, date: r.date, kind: r.kind, categoryId: r.category_id, amount: Number(r.amount), note: r.note || '', by: r.by_member, createdAt: r.created_at, ...(r.plan_line ? { planLine: r.plan_line } : {}) });
+const txFromRow = (r) => ({ id: r.id, date: r.date, kind: r.kind, categoryId: r.category_id, amount: Number(r.amount), note: r.note || '', by: r.by_member, createdAt: r.created_at, ...(r.plan_line ? { planLine: r.plan_line } : {}), ...(r.goal_id ? { goalId: r.goal_id } : {}) });
+const goalFromRow = (r) => ({ id: r.id, name: r.name, icon: r.icon || '🎯', target: Number(r.target), startAmount: Number(r.start_amount) || 0, due: r.due || null, archived: !!r.archived, createdAt: r.created_at });
 
 const catRank = (c) => { const i = S.DEFAULT_CATEGORIES.findIndex((d) => d.id === c.id); return i < 0 ? 999 : i; };
 
@@ -84,14 +91,18 @@ function onLocalChange() {
   if (!shadow) return;
   const now = rowsFromState(S.getState());
   for (const t of UPSERT_ORDER) {
+    if (t === 'goals' && !goalsAvailable) continue;
     const prev = shadow[t] || {};
     for (const [k, row] of Object.entries(now[t])) if (prev[k] !== JSON.stringify(row)) enqueue(t, 'upsert', k, row);
   }
   for (const t of DELETE_ORDER) {
+    if (t === 'goals' && !goalsAvailable) continue;
     const prev = shadow[t] || {};
     for (const k of Object.keys(prev)) if (!(k in now[t])) enqueue(t, 'delete', k);
   }
+  const keepGoals = !goalsAvailable ? shadow.goals || {} : null;
   shadow = toJSONMap(now);
+  if (keepGoals) shadow.goals = keepGoals;
   save(SHKEY, shadow);
   save(QKEY, queue);
   setStatus(queue.length ? 'pending' : status.state);
@@ -149,27 +160,48 @@ export async function pull() {
   if (queue.length) { await flush(); if (queue.length) return; }
   setStatus('syncing');
   try {
-    const [cats, plans, txs, notes] = await Promise.all([
+    const [cats, plans, txs, notes, goals] = await Promise.all([
       fetchAll('categories', 'id'),
       fetchAll('plan_items', 'name'),
       fetchAll('transactions', 'created_at'),
       fetchAll('notes', 'month'),
+      fetchAll('goals', 'created_at').catch((e) => { console.warn('Tabela goals ne postoji (pokreni migraciju 003)', e); return null; }),
     ]);
     if (queue.length) { scheduleFlush(0); return; } // korisnik je nešto menjao u međuvremenu
     const planMap = {};
     for (const r of plans) (planMap[r.month] ||= []).push(planFromRow(r));
     const needDefaults = S.missingDefaults(cats);
+    // Ciljevi napravljeni dok tabela 'goals' nije postojala: sačuvaj ih i pošalji, ne briši.
+    const wasUnavailable = !goalsAvailable;
+    const st0 = S.getState();
+    const remoteGoalIds = new Set((goals || []).map((g) => g.id));
+    const localOnlyGoals = goals ? (st0.goals || []).filter((g) => !remoteGoalIds.has(g.id) && !(shadow?.goals && g.id in shadow.goals)) : [];
+    // Veze uplata sa ciljevima koje baza još ne zna (kolona goal_id ne postoji / nije poslata).
+    const keepLinks = goals === null || wasUnavailable;
+    const localLinks = keepLinks ? Object.fromEntries(st0.transactions.filter((t) => t.goalId).map((t) => [t.id, t.goalId])) : {};
+    const remoteTx = txs.map(txFromRow);
+    const mergedTx = keepLinks ? remoteTx.map((t) => (!t.goalId && localLinks[t.id] ? { ...t, goalId: localLinks[t.id] } : t)) : remoteTx;
     S.replaceData({
       categories: cats.map(catFromRow).sort((a, b) => catRank(a) - catRank(b) || a.name.localeCompare(b.name, 'sr')),
       plans: planMap,
-      transactions: txs.map(txFromRow),
+      transactions: mergedTx,
       notes: Object.fromEntries(notes.map((n) => [n.month, n.text])),
+      goals: goals ? goals.map(goalFromRow) : S.getState().goals,
     });
+    goalsAvailable = goals !== null;
     // Shadow = ono što baza zaista ima; dopunjene kategorije se zatim šalju kao lokalna izmena.
-    const remoteState = { ...S.getState(), categories: cats.map(catFromRow) };
+    const remoteState = { ...S.getState(), categories: cats.map(catFromRow), transactions: remoteTx, goals: goals ? goals.map(goalFromRow) : [] };
     shadow = toJSONMap(rowsFromState(remoteState));
     save(SHKEY, shadow);
-    if (needDefaults) onLocalChange();
+    if (goals === null) {
+      // Tabela još ne postoji: shadow za ciljeve ostaje prazan da bi se poslali kad proradi.
+      shadow.goals = {};
+      save(SHKEY, shadow);
+      if (needDefaults) onLocalChange();
+    } else if (localOnlyGoals.length || Object.keys(localLinks).length) {
+      S.applyRemote((st) => { st.goals = [...(st.goals || []), ...localOnlyGoals]; });
+      onLocalChange();
+    } else if (needDefaults) onLocalChange();
     lastPull = Date.now();
     setStatus('synced');
   } catch (e) {
@@ -189,7 +221,7 @@ function onRemote(payload) {
   if (key == null) return;
   if (queue.some((q) => q.table === table && q.key === key)) return; // lokalna izmena ima prednost
 
-  shadow ||= { categories: {}, plan_items: {}, transactions: {}, notes: {} };
+  shadow ||= EMPTY();
   shadow[table] ||= {};
   if (isDelete) {
     if (!(key in shadow[table])) return;
@@ -211,8 +243,17 @@ function onRemote(payload) {
       for (const m of Object.keys(st.plans)) st.plans[m] = st.plans[m].filter((p) => p.id !== key);
       if (!isDelete) (st.plans[row.month] ||= []).push(planFromRow(row));
     } else if (table === 'transactions') {
+      const old = st.transactions.find((t) => t.id === key);
       st.transactions = st.transactions.filter((t) => t.id !== key);
-      if (!isDelete) st.transactions.push(txFromRow(row));
+      if (!isDelete) {
+        const t = txFromRow(row);
+        // Baza bez kolone goal_id (pre migracije) ne sme da obriše lokalnu vezu sa ciljem.
+        if (!('goal_id' in row) && old?.goalId) t.goalId = old.goalId;
+        st.transactions.push(t);
+      }
+    } else if (table === 'goals') {
+      st.goals = (st.goals || []).filter((g) => g.id !== key);
+      if (!isDelete) st.goals.push(goalFromRow(row));
     } else if (table === 'notes') {
       if (isDelete) delete st.notes[key];
       else st.notes[key] = row.text;
@@ -221,7 +262,8 @@ function onRemote(payload) {
 }
 
 function normalizeRow(table, row) {
-  const st = { categories: [], plans: {}, transactions: [], notes: {} };
+  const st = { categories: [], goals: [], plans: {}, transactions: [], notes: {} };
+  if (table === 'goals') st.goals.push(goalFromRow(row));
   if (table === 'categories') st.categories.push(catFromRow(row));
   if (table === 'plan_items') st.plans[row.month] = [planFromRow(row)];
   if (table === 'transactions') st.transactions.push(txFromRow(row));
@@ -237,6 +279,7 @@ function subscribeRealtime() {
     .on('postgres_changes', { event: '*', schema: 'public', table: 'plan_items' }, onRemote)
     .on('postgres_changes', { event: '*', schema: 'public', table: 'transactions' }, onRemote)
     .on('postgres_changes', { event: '*', schema: 'public', table: 'notes' }, onRemote)
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'goals' }, onRemote)
     .subscribe();
 }
 
@@ -298,7 +341,7 @@ async function firstSync() {
   if (error) throw error;
   if (!data.length) {
     // Baza je prazna: ovaj uređaj je prvi — šalje sve što ima (kategorije, plan, unose).
-    shadow = { categories: {}, plan_items: {}, transactions: {}, notes: {} };
+    shadow = EMPTY();
     onLocalChange();
     await flush();
   } else {

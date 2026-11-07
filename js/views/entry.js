@@ -1,9 +1,9 @@
 // Brzi unos stvarnog troška / prihoda / štednje (i izmena postojećeg unosa).
-import * as S from '../store.js?v=20261107210111';
-import { openSheet, toast, confirmSheet } from '../ui.js?v=20261107210111';
-import { esc, fmt, fmtNum, digitsOnly, todayISO, isoOf } from '../util.js?v=20261107210111';
-import { summarize } from '../calc.js?v=20261107210111';
-import { suggestCategory } from '../suggest.js?v=20261107210111';
+import * as S from '../store.js?v=20261107212806';
+import { openSheet, toast, confirmSheet } from '../ui.js?v=20261107212806';
+import { esc, fmt, fmtNum, digitsOnly, todayISO, isoOf } from '../util.js?v=20261107212806';
+import { summarize } from '../calc.js?v=20261107212806';
+import { suggestCategory } from '../suggest.js?v=20261107212806';
 
 const ICONS = ['📌', '☕', '🍕', '🎬', '✈️', '🐶', '👶', '📚', '💊', '🎮', '🔧', '💇'];
 const COLORS = ['#0ea5e9', '#d946ef', '#f97316', '#22c55e', '#6366f1', '#f43f5e', '#14b8a6', '#eab308'];
@@ -19,6 +19,7 @@ export function openEntrySheet({ tx = null, kind = 'expense', date = null, categ
     note: tx?.note || prefill?.note || '',
     by: tx?.by || st.settings.currentUser || 'dj',
     showFixed: false,
+    goalId: tx ? tx.goalId || null : prefill?.goalId || null,
     picked: isEdit || !!categoryId, // korisnik je sam izabrao kategoriju → predlog je ne menja
   };
   if (v.categoryId && S.cat(v.categoryId).fixed) v.showFixed = true;
@@ -43,6 +44,7 @@ export function openEntrySheet({ tx = null, kind = 'expense', date = null, categ
     <div class="field-label">Kategorija</div>
     <div class="cat-grid" id="e-cats"></div>
     <div id="e-newcat" hidden></div>
+    <div id="e-goals"></div>
 
     <div class="field-label">Datum</div>
     <div class="date-row">
@@ -196,11 +198,23 @@ export function openEntrySheet({ tx = null, kind = 'expense', date = null, categ
       noteEl.value = v.note;
       noteEl.oninput = () => { v.note = noteEl.value; runSuggest(); };
 
+      const paintGoals = () => {
+        const box = $('#e-goals');
+        const goals = S.goalsOf();
+        if (v.kind !== 'saving' || !goals.length) { box.innerHTML = ''; return; }
+        box.innerHTML = `<div class="field-label">Za cilj</div><div class="chips wrap">
+          <button class="chip ${!v.goalId ? 'on' : ''}" data-g="">Bez cilja</button>
+          ${goals.map((g) => `<button class="chip ${v.goalId === g.id ? 'on' : ''}" data-g="${g.id}">${g.icon || '🎯'} ${esc(g.name)}</button>`).join('')}</div>`;
+        box.querySelectorAll('[data-g]').forEach((b) => (b.onclick = () => { v.goalId = b.dataset.g || null; paintGoals(); }));
+      };
+      el.querySelectorAll('.seg[data-k="kind"] button').forEach((b) => b.addEventListener('click', paintGoals));
+      paintGoals();
+
       paintSeg('kind'); paintSeg('by'); paintDate(); paintCats();
       if (v.note && !v.picked) runSuggest(); // npr. naziv prodavnice sa skeniranog računa
       $('#e-scan')?.addEventListener('click', () => {
         close();
-        setTimeout(() => import('./scanner.js?v=20261107210111').then((m) => m.openScanner()), 220);
+        setTimeout(() => import('./scanner.js?v=20261107212806').then((m) => m.openScanner()), 220);
       });
       if (!isEdit) setTimeout(() => amountEl.focus(), 280);
 
@@ -210,9 +224,17 @@ export function openEntrySheet({ tx = null, kind = 'expense', date = null, categ
         if (!v.categoryId) { shake($('#e-cats')); toast('Izaberi kategoriju', 'warn'); return; }
         const data = { kind: v.kind, categoryId: v.categoryId, amount, date: v.date, note: v.note.trim(), by: v.by };
         if (!isEdit && prefill?.planLine) data.planLine = prefill.planLine;
+        const g = v.kind === 'saving' && v.goalId ? S.goal(v.goalId) : null;
+        if (g) data.goalId = g.id;
+        else if (isEdit && tx.goalId) data.goalId = null; // skinuto sa cilja
+        const wasDone = g ? S.goalSaved(g) >= g.target : true;
         if (isEdit) await S.updateTransaction(tx.id, data);
         else await S.addTransaction(data);
         feedback(data, isEdit);
+        if (g && !wasDone && S.goalSaved(g) >= g.target) {
+          import('./goals.js?v=20261107212806').then((m) => m.celebrate());
+          setTimeout(() => toast(`🎉 <b>Cilj ostvaren: ${esc(g.name)}!</b>`, 'ok', 4500), 400);
+        }
         if (again) {
           v.amount = ''; v.note = ''; v.picked = false; sug = null;
           amountEl.value = ''; noteEl.value = '';

@@ -1,7 +1,7 @@
 // Skladište podataka. Za sada lokalno (localStorage); kasnije se ovde uključuje Supabase
 // bez menjanja ekrana — svi ekrani koriste samo funkcije iz ovog fajla.
 
-import { uid, addMonths } from './util.js?v=20261107210111';
+import { uid, addMonths } from './util.js?v=20261107212806';
 
 const KEY = 'budzetapp_v2';
 
@@ -45,6 +45,7 @@ function emptyState() {
     plans: {}, // 'YYYY-MM' -> [{ id, line, categoryId, name, amount, owner }]
     transactions: [], // { id, date, kind, categoryId, amount, note, by, createdAt }
     notes: {}, // 'YYYY-MM' -> text
+    goals: [], // { id, name, icon, target, startAmount, due:'YYYY-MM'|null, archived, createdAt }
     settings: { currentUser: null, theme: 'auto' },
   };
 }
@@ -72,6 +73,7 @@ function normalize(s) {
     plans: s.plans || {},
     transactions: s.transactions || [],
     notes: s.notes || {},
+    goals: s.goals || [],
   };
 }
 
@@ -110,8 +112,8 @@ export function applyRemote(fn) {
   fn(state);
   persist({ fromRemote: true });
 }
-export function replaceData({ categories, plans, transactions, notes }) {
-  state = normalize({ ...state, categories, plans, transactions, notes });
+export function replaceData({ categories, plans, transactions, notes, goals }) {
+  state = normalize({ ...state, categories, plans, transactions, notes, goals: goals || state.goals });
   persist({ fromRemote: true });
 }
 // Posle preuzimanja iz baze: ako su dopunjene nove kategorije, pošalji ih.
@@ -213,6 +215,23 @@ export async function copyPlan(fromKey, toKeys) {
   persist();
 }
 export const copyPlanToRestOfYear = (key) => copyPlan(key, forwardKeys(key));
+
+// ---- Ciljevi štednje ----
+export const goalsOf = ({ includeArchived = false } = {}) => (state.goals || []).filter((g) => includeArchived || !g.archived);
+export const goal = (id) => (state.goals || []).find((g) => g.id === id);
+export async function saveGoal(g) {
+  state.goals ||= [];
+  if (g.id && state.goals.some((x) => x.id === g.id)) state.goals = state.goals.map((x) => (x.id === g.id ? { ...x, ...g } : x));
+  else state.goals.push({ startAmount: 0, archived: false, ...g, id: uid(), createdAt: new Date().toISOString() });
+  persist();
+}
+export async function deleteGoal(id) {
+  state.goals = (state.goals || []).filter((g) => g.id !== id);
+  state.transactions = state.transactions.map((t) => (t.goalId === id ? (({ goalId, ...rest }) => rest)(t) : t));
+  persist();
+}
+// Koliko je uplaćeno na cilj (početni iznos + uplate štednje vezane za cilj).
+export const goalSaved = (g) => (Number(g.startAmount) || 0) + state.transactions.filter((t) => t.goalId === g.id).reduce((s, t) => s + (t.kind === 'saving' ? 1 : -1) * Number(t.amount), 0);
 
 // ---- Beleške i podešavanja ----
 export const noteOf = (key) => state.notes[key] || '';

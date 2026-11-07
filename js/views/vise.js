@@ -1,8 +1,8 @@
 // Podešavanja: korisnik, tema, kategorije, backup.
-import * as S from '../store.js?v=20261107210111';
-import { esc, todayISO } from '../util.js?v=20261107210111';
-import { openSheet, toast, confirmSheet } from '../ui.js?v=20261107210111';
-import * as Sync from '../sync.js?v=20261107210111';
+import * as S from '../store.js?v=20261107212806';
+import { esc, todayISO } from '../util.js?v=20261107212806';
+import { openSheet, toast, confirmSheet } from '../ui.js?v=20261107212806';
+import * as Sync from '../sync.js?v=20261107212806';
 
 export function renderVise(el, ctx) {
   const st = S.getState();

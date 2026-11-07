@@ -1,13 +1,14 @@
 // Početni ekran: plan vs. stvarno za izabrani mesec.
-import * as S from '../store.js?v=20261107210111';
-import { summarize, pace, monthPhase } from '../calc.js?v=20261107210111';
-import { esc, fmt, fmtNum, fmtSigned, monthLabel, addMonths, MONTH_GEN } from '../util.js?v=20261107210111';
-import { countUp, animateBars, pct, toast } from '../ui.js?v=20261107210111';
-import { openEntrySheet } from './entry.js?v=20261107210111';
-import { txRow, setHistoryFilter } from './istorija.js?v=20261107210111';
-import { isPayable, paidTx, payItem, PAY_LABELS } from '../pay.js?v=20261107210111';
-import { openDueSheet } from './due-detail.js?v=20261107210111';
-import { openCategoryDetail } from './category-detail.js?v=20261107210111';
+import * as S from '../store.js?v=20261107212806';
+import { summarize, pace, monthPhase } from '../calc.js?v=20261107212806';
+import { esc, fmt, fmtNum, fmtSigned, monthLabel, addMonths, MONTH_GEN } from '../util.js?v=20261107212806';
+import { countUp, animateBars, pct, toast } from '../ui.js?v=20261107212806';
+import { openEntrySheet } from './entry.js?v=20261107212806';
+import { txRow, setHistoryFilter } from './istorija.js?v=20261107212806';
+import { isPayable, paidTx, payItem, PAY_LABELS } from '../pay.js?v=20261107212806';
+import { openDueSheet } from './due-detail.js?v=20261107212806';
+import { goalsBlock, bindGoals } from './goals.js?v=20261107212806';
+import { openCategoryDetail } from './category-detail.js?v=20261107212806';
 
 export function renderPregled(el, ctx) {
   const key = ctx.month;
@@ -16,8 +17,10 @@ export function renderPregled(el, ctx) {
   const prevKey = addMonths(key, -1);
 
   if (!sum.plan.length && !sum.txs.length) {
-    el.innerHTML = emptyMonth(key, prevKey);
+    el.innerHTML = emptyMonth(key, prevKey) + goalsBlock();
     bindEmpty(el, ctx, key, prevKey);
+    bindGoals(el);
+    animateBars(el);
     return;
   }
 
@@ -62,6 +65,8 @@ export function renderPregled(el, ctx) {
       ${expenseCats.length ? expenseCats.map(catRow).join('') : '<div class="empty-mini">Nema troškova u planu.</div>'}
     </section>
 
+    ${goalsBlock()}
+
     <div class="section-head"><h3>Poslednji unosi</h3>${sum.txs.length ? '<a href="#/istorija" class="link">Sve →</a>' : ''}</div>
     <section class="card list">
       ${recent.length ? recent.map((t) => txRow(t, { showDate: true })).join('') : `
@@ -97,6 +102,7 @@ export function renderPregled(el, ctx) {
     e.target.closest('.list').classList.add('show-all');
     e.target.remove();
   });
+  bindGoals(el);
   el.querySelectorAll('[data-cat]').forEach((r) => (r.onclick = () => openCategoryDetail(key, r.dataset.cat)));
   el.querySelector('#note').oninput = (e) => S.setNote(key, e.target.value);
   el.querySelector('#first-entry')?.addEventListener('click', () => openEntrySheet());
