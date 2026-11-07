@@ -1,8 +1,8 @@
 // "Plaćeno" — stavka plana jednim dodirom postaje stvarni unos.
-import * as S from './store.js';
-import { todayISO, currentMonthKey, fmtNum, esc } from './util.js';
-import { txOfMonth } from './calc.js';
-import { toast } from './ui.js';
+import * as S from './store.js?v=20261107205429';
+import { todayISO, currentMonthKey, fmtNum, esc } from './util.js?v=20261107205429';
+import { txOfMonth } from './calc.js?v=20261107205429';
+import { toast } from './ui.js?v=20261107205429';
 
 // Koje stavke plana imaju dugme: prihodi, štednja i fiksni troškovi (rate, računi).
 export const isPayable = (item) => {

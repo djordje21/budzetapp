@@ -1,9 +1,9 @@
 // Brzi unos stvarnog troška / prihoda / štednje (i izmena postojećeg unosa).
-import * as S from '../store.js';
-import { openSheet, toast, confirmSheet } from '../ui.js';
-import { esc, fmt, fmtNum, digitsOnly, todayISO, isoOf } from '../util.js';
-import { summarize } from '../calc.js';
-import { suggestCategory } from '../suggest.js';
+import * as S from '../store.js?v=20261107205429';
+import { openSheet, toast, confirmSheet } from '../ui.js?v=20261107205429';
+import { esc, fmt, fmtNum, digitsOnly, todayISO, isoOf } from '../util.js?v=20261107205429';
+import { summarize } from '../calc.js?v=20261107205429';
+import { suggestCategory } from '../suggest.js?v=20261107205429';
 
 const ICONS = ['📌', '☕', '🍕', '🎬', '✈️', '🐶', '👶', '📚', '💊', '🎮', '🔧', '💇'];
 const COLORS = ['#0ea5e9', '#d946ef', '#f97316', '#22c55e', '#6366f1', '#f43f5e', '#14b8a6', '#eab308'];

@@ -1,15 +1,16 @@
 // Ulazna tačka: navigacija, izbor meseca, tema.
-import * as S from './store.js';
-import { currentMonthKey, addMonths, monthLabel, MONTH_SHORT, esc } from './util.js';
-import { openSheet } from './ui.js';
-import { renderPregled } from './views/pregled.js';
-import { renderPlan } from './views/plan.js';
-import { renderIstorija } from './views/istorija.js';
-import { renderVise } from './views/vise.js';
-import { renderIzvestaji } from './views/izvestaji.js';
-import { openEntrySheet } from './views/entry.js';
-import { renderLogin } from './views/login.js';
-import * as Sync from './sync.js';
+import * as S from './store.js?v=20261107205429';
+import { currentMonthKey, addMonths, monthLabel, MONTH_SHORT, esc } from './util.js?v=20261107205429';
+import { openSheet } from './ui.js?v=20261107205429';
+import { renderPregled } from './views/pregled.js?v=20261107205429';
+import { renderPlan } from './views/plan.js?v=20261107205429';
+import { renderIstorija } from './views/istorija.js?v=20261107205429';
+import { renderVise } from './views/vise.js?v=20261107205429';
+import { renderIzvestaji } from './views/izvestaji.js?v=20261107205429';
+import { openEntrySheet } from './views/entry.js?v=20261107205429';
+import { renderLogin } from './views/login.js?v=20261107205429';
+import * as Sync from './sync.js?v=20261107205429';
+import { VERSION } from './version.js?v=20261107205429';
 
 const views = {
   pregled: { render: renderPregled, title: 'Pregled' },
@@ -141,7 +142,23 @@ function init() {
   if (!Sync.enabled && !S.getState().settings.currentUser) askWho();
 }
 
+// Ako je na serveru novija verzija nego što je telefon učitao, osveži (jednom).
+async function checkVersion() {
+  try {
+    const r = await fetch('version.json', { cache: 'no-store' });
+    const { version } = await r.json();
+    if (version && version !== VERSION && sessionStorage.getItem('budzet_reloaded') !== version) {
+      sessionStorage.setItem('budzet_reloaded', version);
+      location.replace(location.pathname + '?v=' + version + location.hash);
+      return true;
+    }
+  } catch {}
+  return false;
+}
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') checkVersion(); });
+
 async function boot() {
+  if (await checkVersion()) return;
   if (Sync.enabled) {
     const session = await Sync.init().catch(() => null);
     if (!session) {

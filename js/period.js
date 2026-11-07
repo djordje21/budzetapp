@@ -1,6 +1,6 @@
 // Periodi za izveštaje: dan, nedelja, mesec, kvartal, polugodište, godina.
-import * as S from './store.js';
-import { isoOf, parseISO, pad, MONTH_NAMES, MONTH_SHORT, MONTH_GEN, DAY_NAMES, daysInMonth } from './util.js';
+import * as S from './store.js?v=20261107205429';
+import { isoOf, parseISO, pad, MONTH_NAMES, MONTH_SHORT, MONTH_GEN, DAY_NAMES, daysInMonth } from './util.js?v=20261107205429';
 
 export const PERIODS = [
   ['day', 'Dan'], ['week', 'Nedelja'], ['month', 'Mesec'],

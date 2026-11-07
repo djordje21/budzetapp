@@ -571,3 +571,9 @@ textarea.input.note { height: auto; min-height: 90px; padding: 12px 14px; resize
 .cd-sub { font-size: 13px; color: var(--muted); }
 .cd-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 14px; }
 .sheet .list { border: 1px solid var(--border); border-radius: 14px; }
+
+/* Telefon: bez selekcije teksta i "Copy/Search" menija na elementima koji se klikću */
+button, a, .cat-row.clickable, .plan-item, .tx-row, .due-row, .tool-row, .chip, .tabbar, .topbar, .seg, .cat-pick, .stat, .hero {
+  -webkit-user-select: none; user-select: none; -webkit-touch-callout: none;
+}
+input, textarea, .input { -webkit-user-select: text; user-select: text; }
