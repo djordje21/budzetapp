@@ -1,5 +1,5 @@
 // UI pomoćnici: donji panel (sheet), potvrda, obaveštenja, animacija brojeva.
-import { esc, fmtNum, digitsOnly, fmtDate } from './util.js?v=20261108084802';
+import { esc, fmtNum, digitsOnly, fmtDate } from './util.js?v=20261108085345';
 
 const reduceMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -165,4 +165,28 @@ export function confetti() {
   }
   document.body.appendChild(box);
   setTimeout(() => box.remove(), 3500);
+}
+
+// Mali prasak konfeta iz tačke (npr. iz dugmeta Plati). Bez tačke: sredina ekrana.
+export function burst(origin = null) {
+  if (reduceMotion()) return;
+  let x = innerWidth / 2, y = innerHeight / 2;
+  if (origin?.getBoundingClientRect) { const r = origin.getBoundingClientRect(); x = r.left + r.width / 2; y = r.top + r.height / 2; }
+  const colors = ['#a78bfa', '#22d3ee', '#4ade80', '#fbbf24', '#f472b6'];
+  const box = document.createElement('div');
+  box.className = 'burst';
+  box.style.left = x + 'px';
+  box.style.top = y + 'px';
+  for (let i = 0; i < 16; i++) {
+    const p = document.createElement('i');
+    const a = (Math.PI * 2 * i) / 16 + Math.random() * 0.4;
+    const d = 40 + Math.random() * 45;
+    p.style.background = colors[i % colors.length];
+    p.style.setProperty('--tx', Math.cos(a) * d + 'px');
+    p.style.setProperty('--ty', Math.sin(a) * d - 20 + 'px');
+    p.style.setProperty('--r', Math.random() * 360 + 'deg');
+    box.appendChild(p);
+  }
+  document.body.appendChild(box);
+  setTimeout(() => box.remove(), 900);
 }

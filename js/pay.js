@@ -1,8 +1,8 @@
 // "Plaćeno" — stavka plana jednim dodirom postaje stvarni unos.
-import * as S from './store.js?v=20261108084802';
-import { todayISO, currentMonthKey, fmtNum, esc, monthLabel } from './util.js?v=20261108084802';
-import { txOfMonth } from './calc.js?v=20261108084802';
-import { toast, openSheet, confetti } from './ui.js?v=20261108084802';
+import * as S from './store.js?v=20261108085345';
+import { todayISO, currentMonthKey, fmtNum, esc, monthLabel } from './util.js?v=20261108085345';
+import { txOfMonth } from './calc.js?v=20261108085345';
+import { toast, openSheet, confetti, burst } from './ui.js?v=20261108085345';
 
 // Koje stavke plana imaju dugme: prihodi, štednja i fiksni troškovi (rate, računi).
 export const isPayable = (item) => {
@@ -18,7 +18,7 @@ export const PAY_LABELS = {
   saving: { act: 'Uplati', done: 'Uplaćeno' },
 };
 
-export async function payItem(key, item) {
+export async function payItem(key, item, origin = null) {
   const c = S.cat(item.categoryId);
   // Tekući mesec → danas; ranija/buduća → prvi u mesecu (datum može da se izmeni posle).
   const date = key === currentMonthKey() ? todayISO() : `${key}-01`;
@@ -31,8 +31,25 @@ export async function payItem(key, item) {
     note: item.name,
     planLine: item.line,
   });
-  toast(`<b>✓ ${PAY_LABELS[c.kind].done}</b> ${esc(item.name)} · ${fmtNum(item.amount)} RSD`, 'ok');
+  burst(origin);
+  toast(progressMsg(key, item, c), 'ok', 3200);
   afterBillPaid(key, before);
+}
+
+const NUDGES = ['Korak po korak 👣', 'Odlično ide 👌', 'Jedan manje 😌', 'Tako se to radi 💪', 'Sve po planu ✨'];
+const pick = (a) => a[Math.floor(Math.random() * a.length)];
+const racuna = (n) => (n === 1 ? 'račun' : n < 5 ? 'računa' : 'računa');
+
+// Poruka posle plaćanja: šta je ostalo, a ne opšta motivacija.
+function progressMsg(key, item, c) {
+  const head = `<b>✓ ${PAY_LABELS[c.kind].done}</b> ${esc(item.name)} · ${fmtNum(item.amount)} RSD`;
+  if (c.kind === 'income') return `💰 <b>${esc(item.name)} stigla!</b> ${fmtNum(item.amount)} RSD`;
+  if (c.kind === 'saving') return `🐷 <b>Uplaćeno:</b> ${esc(item.name)} · ${fmtNum(item.amount)} RSD<br><small>Budući vi će vam biti zahvalni.</small>`;
+  const left = unpaidBills(key);
+  if (!left.length) return head; // poslednji — sledi velika proslava
+  const sum = left.reduce((s, p) => s + Number(p.amount), 0);
+  if (left.length === 1) return `${head}<br><small>Još samo <b>${esc(left[0].name)}</b> i gotovi ste! 💪</small>`;
+  return `${head}<br><small>Još ${left.length} ${racuna(left.length)} (${fmtNum(sum)} RSD) · ${pick(NUDGES)}</small>`;
 }
 
 // ---- Računi i rate (fiksni troškovi iz plana) ----

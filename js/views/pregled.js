@@ -1,17 +1,17 @@
 // Početni ekran: plan vs. stvarno za izabrani mesec.
-import * as S from '../store.js?v=20261108084802';
-import { summarize, pace, monthPhase } from '../calc.js?v=20261108084802';
-import { esc, fmt, fmtNum, fmtSigned, monthLabel, addMonths, MONTH_GEN } from '../util.js?v=20261108084802';
-import { countUp, animateBars, pct, toast } from '../ui.js?v=20261108084802';
-import { openEntrySheet } from './entry.js?v=20261108084802';
-import { txRow, setHistoryFilter } from './istorija.js?v=20261108084802';
-import { isPayable, paidTx, payItem, PAY_LABELS } from '../pay.js?v=20261108084802';
-import { openDueSheet } from './due-detail.js?v=20261108084802';
-import { cumulativeData, cumulativeChart, bindCumulative } from '../charts.js?v=20261108084802';
-import { accountsBlock, bindAccounts } from './accounts.js?v=20261108084802';
-import { goalsBlock, bindGoals } from './goals.js?v=20261108084802';
-import { openCategoryDetail } from './category-detail.js?v=20261108084802';
-import { openQuickEntry } from './quick.js?v=20261108084802';
+import * as S from '../store.js?v=20261108085345';
+import { summarize, pace, monthPhase } from '../calc.js?v=20261108085345';
+import { esc, fmt, fmtNum, fmtSigned, monthLabel, addMonths, MONTH_GEN } from '../util.js?v=20261108085345';
+import { countUp, animateBars, pct, toast } from '../ui.js?v=20261108085345';
+import { openEntrySheet } from './entry.js?v=20261108085345';
+import { txRow, setHistoryFilter } from './istorija.js?v=20261108085345';
+import { isPayable, paidTx, payItem, PAY_LABELS } from '../pay.js?v=20261108085345';
+import { openDueSheet } from './due-detail.js?v=20261108085345';
+import { cumulativeData, cumulativeChart, bindCumulative } from '../charts.js?v=20261108085345';
+import { accountsBlock, bindAccounts } from './accounts.js?v=20261108085345';
+import { goalsBlock, bindGoals } from './goals.js?v=20261108085345';
+import { openCategoryDetail } from './category-detail.js?v=20261108085345';
+import { openQuickEntry } from './quick.js?v=20261108085345';
 
 export function renderPregled(el, ctx) {
   const key = ctx.month;
@@ -106,8 +106,10 @@ export function renderPregled(el, ctx) {
     e.stopPropagation();
     const item = sum.plan.find((p) => p.id === b.dataset.pay);
     if (!item) return;
+    const r = b.getBoundingClientRect();
+    const origin = { getBoundingClientRect: () => r };
     b.closest('.due-row')?.classList.add('leaving');
-    setTimeout(() => payItem(key, item), 220);
+    setTimeout(() => payItem(key, item, origin), 220);
   }));
   el.querySelector('#due-all')?.addEventListener('click', (e) => {
     e.target.closest('.list').classList.add('show-all');
