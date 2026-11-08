@@ -791,3 +791,7 @@ input, textarea, select, .input, [contenteditable] { -webkit-user-select: text; 
 .guide-step.done .gs-num { background: var(--green-soft); color: var(--green); }
 .guide-hide { display: block; margin: 6px auto 0; font-size: 12.5px; color: var(--muted); padding: 6px; }
 .plan-intro { margin: 4px 0 10px; }
+
+.gear-btn { margin-left: auto; }
+.topbar .month-pill { min-width: 0; }
+.forgot { display: block; margin: 14px auto 0; font-size: 14px; }

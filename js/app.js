@@ -1,16 +1,16 @@
 // Ulazna tačka: navigacija, izbor meseca, tema.
-import * as S from './store.js?v=20261108091307';
-import { currentMonthKey, addMonths, monthLabel, MONTH_SHORT, esc } from './util.js?v=20261108091307';
-import { openSheet } from './ui.js?v=20261108091307';
-import { renderPregled } from './views/pregled.js?v=20261108091307';
-import { renderPlan } from './views/plan.js?v=20261108091307';
-import { renderIstorija } from './views/istorija.js?v=20261108091307';
-import { renderVise } from './views/vise.js?v=20261108091307';
-import { renderIzvestaji } from './views/izvestaji.js?v=20261108091307';
-import { openEntrySheet } from './views/entry.js?v=20261108091307';
-import { renderLogin } from './views/login.js?v=20261108091307';
-import * as Sync from './sync.js?v=20261108091307';
-import { VERSION } from './version.js?v=20261108091307';
+import * as S from './store.js?v=20261108091458';
+import { currentMonthKey, addMonths, monthLabel, MONTH_SHORT, esc } from './util.js?v=20261108091458';
+import { openSheet, toast } from './ui.js?v=20261108091458';
+import { renderPregled } from './views/pregled.js?v=20261108091458';
+import { renderPlan } from './views/plan.js?v=20261108091458';
+import { renderIstorija } from './views/istorija.js?v=20261108091458';
+import { renderVise } from './views/vise.js?v=20261108091458';
+import { renderIzvestaji } from './views/izvestaji.js?v=20261108091458';
+import { openEntrySheet } from './views/entry.js?v=20261108091458';
+import { renderLogin } from './views/login.js?v=20261108091458';
+import * as Sync from './sync.js?v=20261108091458';
+import { VERSION } from './version.js?v=20261108091458';
 
 const views = {
   pregled: { render: renderPregled, title: 'Pregled' },
@@ -127,6 +127,7 @@ function init() {
   $('#next-month').onclick = () => setMonth(addMonths(ctx.month, 1));
   $('#month-label').onclick = openMonthPicker;
   $('#who-btn').onclick = () => (location.hash = '#/vise');
+  $('#gear-btn').onclick = () => (location.hash = '#/vise');
   $('#fab').onclick = () => {
     // Ako gledaš drugi mesec, predloži datum u tom mesecu.
     const cur = currentMonthKey();
@@ -136,7 +137,7 @@ function init() {
   window.matchMedia('(prefers-color-scheme: dark)').addEventListener?.('change', render);
   S.subscribe(render);
   Sync.onStatus(paintSync);
-  enableSwipe();
+  // enableSwipe(); — isključeno: prevlačenje je slučajno menjalo mesec
   onRoute();
   paintSync();
   if (!Sync.enabled && !S.getState().settings.currentUser) askWho();
@@ -156,6 +157,27 @@ async function checkVersion() {
   return false;
 }
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') checkVersion(); });
+
+// Link "zaboravljena lozinka" iz emaila: korisnik je prijavljen i treba da upiše novu lozinku.
+window.addEventListener('budzet:recovery', () => setTimeout(() => {
+  openSheet({
+    title: 'Nova lozinka',
+    body: `<p class="sheet-text">Upiši novu lozinku za prijavu.</p>
+      <input class="input mt" id="np1" type="password" autocomplete="new-password" placeholder="Nova lozinka (najmanje 6 znakova)">
+      <input class="input mt" id="np2" type="password" autocomplete="new-password" placeholder="Ponovi lozinku">
+      <div class="login-error" id="np-err"></div>
+      <button class="btn btn-primary btn-block" id="np-save">Sačuvaj lozinku</button>`,
+    onMount(el, close) {
+      el.querySelector('#np-save').onclick = async () => {
+        const a = el.querySelector('#np1').value, b = el.querySelector('#np2').value, err = el.querySelector('#np-err');
+        if (a.length < 6) { err.textContent = 'Lozinka mora imati najmanje 6 znakova.'; return; }
+        if (a !== b) { err.textContent = 'Lozinke se ne poklapaju.'; return; }
+        try { await Sync.setNewPassword(a); close(); toast('✅ Nova lozinka je sačuvana', 'ok'); }
+        catch (e) { err.textContent = 'Greška: ' + (e.message || e); }
+      };
+    },
+  });
+}, 600));
 
 async function boot() {
   if (await checkVersion()) return;

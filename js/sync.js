@@ -5,8 +5,8 @@
 // razlika ide u red za slanje ("outbox"), a red se šalje čim ima interneta.
 // Promene drugog korisnika stižu preko Realtime kanala i pri svakom otvaranju aplikacije.
 
-import * as S from './store.js?v=20261108091307';
-import { SUPABASE_URL, SUPABASE_KEY } from './config.js?v=20261108091307';
+import * as S from './store.js?v=20261108091458';
+import { SUPABASE_URL, SUPABASE_KEY } from './config.js?v=20261108091458';
 
 const QKEY = 'budzetapp_outbox';
 const SHKEY = 'budzetapp_shadow';
@@ -335,11 +335,24 @@ export async function init() {
   });
   const { data } = await sb.auth.getSession();
   session = data.session;
-  sb.auth.onAuthStateChange((_ev, s) => { session = s; });
+  sb.auth.onAuthStateChange((ev, s) => {
+    session = s;
+    if (ev === 'PASSWORD_RECOVERY') window.dispatchEvent(new Event('budzet:recovery'));
+  });
   return session;
 }
 
 export const isSignedIn = () => !!session;
+
+// Zaboravljena lozinka: Supabase šalje email sa linkom nazad u aplikaciju.
+export async function resetPassword(email) {
+  const { error } = await sb.auth.resetPasswordForEmail(email.trim(), { redirectTo: location.origin + location.pathname });
+  if (error) throw error;
+}
+export async function setNewPassword(password) {
+  const { error } = await sb.auth.updateUser({ password });
+  if (error) throw error;
+}
 
 export async function signIn(email, password) {
   const { data, error } = await sb.auth.signInWithPassword({ email: email.trim(), password });

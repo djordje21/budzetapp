@@ -1,12 +1,12 @@
 // Plan za mesec: očekivani prihodi, troškovi i štednja.
-import * as S from '../store.js?v=20261108091307';
-import { summarize } from '../calc.js?v=20261108091307';
-import { esc, fmt, fmtNum, fmtSigned, monthLabel, addMonths, digitsOnly, MONTH_GEN } from '../util.js?v=20261108091307';
-import { openSheet, toast, confirmSheet, moneyInput } from '../ui.js?v=20261108091307';
-import { isPayable, paidTx, payItem, PAY_LABELS } from '../pay.js?v=20261108091307';
-import { openEntrySheet } from './entry.js?v=20261108091307';
-import { openQuickEntry } from './quick.js?v=20261108091307';
-import { monthPhase } from '../calc.js?v=20261108091307';
+import * as S from '../store.js?v=20261108091458';
+import { summarize } from '../calc.js?v=20261108091458';
+import { esc, fmt, fmtNum, fmtSigned, monthLabel, addMonths, digitsOnly, MONTH_GEN } from '../util.js?v=20261108091458';
+import { openSheet, toast, confirmSheet, moneyInput } from '../ui.js?v=20261108091458';
+import { isPayable, paidTx, payItem, PAY_LABELS } from '../pay.js?v=20261108091458';
+import { openEntrySheet } from './entry.js?v=20261108091458';
+import { openQuickEntry } from './quick.js?v=20261108091458';
+import { monthPhase } from '../calc.js?v=20261108091458';
 
 export function renderPlan(el, ctx) {
   const key = ctx.month;
