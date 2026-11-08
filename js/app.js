@@ -1,21 +1,21 @@
 // Ulazna tačka: navigacija, izbor meseca, tema.
-import * as S from './store.js?v=20261108141149';
-import { currentMonthKey, addMonths, monthLabel, MONTH_SHORT, esc } from './util.js?v=20261108141149';
-import { openSheet, toast } from './ui.js?v=20261108141149';
-import { renderPregled } from './views/pregled.js?v=20261108141149';
-import { renderPlan } from './views/plan.js?v=20261108141149';
-import { renderIstorija } from './views/istorija.js?v=20261108141149';
-import { renderVise } from './views/vise.js?v=20261108141149';
-import { renderDomacinstvo } from './views/domacinstvo.js?v=20261108141149';
-import { renderSaveti } from './views/saveti.js?v=20261108141149';
-import { renderCiljevi } from './views/ciljevi.js?v=20261108141149';
-import { svg } from './icons.js?v=20261108141149';
-import { setHistoryFilter } from './views/istorija.js?v=20261108141149';
-import { renderIzvestaji } from './views/izvestaji.js?v=20261108141149';
-import { openEntrySheet } from './views/entry.js?v=20261108141149';
-import { renderLogin } from './views/login.js?v=20261108141149';
-import * as Sync from './sync.js?v=20261108141149';
-import { VERSION } from './version.js?v=20261108141149';
+import * as S from './store.js?v=20261108141405';
+import { currentMonthKey, addMonths, monthLabel, MONTH_SHORT, esc } from './util.js?v=20261108141405';
+import { openSheet, toast } from './ui.js?v=20261108141405';
+import { renderPregled } from './views/pregled.js?v=20261108141405';
+import { renderPlan } from './views/plan.js?v=20261108141405';
+import { renderIstorija } from './views/istorija.js?v=20261108141405';
+import { renderVise } from './views/vise.js?v=20261108141405';
+import { renderDomacinstvo } from './views/domacinstvo.js?v=20261108141405';
+import { renderSaveti } from './views/saveti.js?v=20261108141405';
+import { renderCiljevi } from './views/ciljevi.js?v=20261108141405';
+import { svg } from './icons.js?v=20261108141405';
+import { setHistoryFilter } from './views/istorija.js?v=20261108141405';
+import { renderIzvestaji } from './views/izvestaji.js?v=20261108141405';
+import { openEntrySheet } from './views/entry.js?v=20261108141405';
+import { renderLogin } from './views/login.js?v=20261108141405';
+import * as Sync from './sync.js?v=20261108141405';
+import { VERSION } from './version.js?v=20261108141405';
 
 const views = {
   pregled: { render: renderPregled, title: 'Pregled' },
@@ -172,7 +172,7 @@ function openMenu() {
   wrap.querySelectorAll('[data-go]').forEach((b) => (b.onclick = () => {
     const g = b.dataset.go;
     close();
-    if (g === '@accounts') return import('./views/accounts.js?v=20261108141149').then((m) => m.openAccounts());
+    if (g === '@accounts') return import('./views/accounts.js?v=20261108141405').then((m) => m.openAccounts());
     if (g === '@income' || g === '@expense') { setHistoryFilter({ kind: g.slice(1) }); location.hash = '#/istorija'; return; }
     if (g === '@help') { try { localStorage.removeItem('budzet_guide_hidden'); } catch {} location.hash = '#/pregled'; ctx.route = 'pregled'; render(); window.scrollTo({ top: 0 }); return; }
     location.hash = '#/' + g;

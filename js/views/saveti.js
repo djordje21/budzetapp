@@ -1,9 +1,9 @@
 // Saveti: konkretni predlozi na osnovu vaše potrošnje ovog meseca + par opštih pravila.
-import * as S from '../store.js?v=20261108141149';
-import { summarize, pace, monthPhase } from '../calc.js?v=20261108141149';
-import { esc, fmt, fmtNum, currentMonthKey, daysInMonth, todayISO } from '../util.js?v=20261108141149';
-import { unpaidBills } from '../pay.js?v=20261108141149';
-import { goalStats } from './goals.js?v=20261108141149';
+import * as S from '../store.js?v=20261108141405';
+import { summarize, pace, monthPhase } from '../calc.js?v=20261108141405';
+import { esc, fmt, fmtNum, currentMonthKey, daysInMonth, todayISO } from '../util.js?v=20261108141405';
+import { unpaidBills } from '../pay.js?v=20261108141405';
+import { goalStats } from './goals.js?v=20261108141405';
 
 const GENERAL = [
   ['🐷', 'Prvo platite sebe', 'Kad legne plata, odmah uplatite štednju — pre računa i kupovine. Šta ostane, troši se.'],
