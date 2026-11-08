@@ -1,13 +1,13 @@
 // Plan za mesec: očekivani prihodi, troškovi i štednja.
-import { ico } from '../icons.js?v=20261108121414';
-import * as S from '../store.js?v=20261108121414';
-import { summarize } from '../calc.js?v=20261108121414';
-import { esc, fmt, fmtNum, fmtSigned, monthLabel, addMonths, digitsOnly, MONTH_GEN , dayLabel } from '../util.js?v=20261108121414';
-import { openSheet, toast, confirmSheet, moneyInput } from '../ui.js?v=20261108121414';
-import { isPayable, paidTx, payItem, PAY_LABELS } from '../pay.js?v=20261108121414';
-import { openEntrySheet } from './entry.js?v=20261108121414';
-import { openQuickEntry } from './quick.js?v=20261108121414';
-import { monthPhase } from '../calc.js?v=20261108121414';
+import { ico } from '../icons.js?v=20261108124130';
+import * as S from '../store.js?v=20261108124130';
+import { summarize } from '../calc.js?v=20261108124130';
+import { esc, fmt, fmtNum, fmtSigned, monthLabel, addMonths, digitsOnly, MONTH_GEN , dayLabel } from '../util.js?v=20261108124130';
+import { openSheet, toast, confirmSheet, moneyInput } from '../ui.js?v=20261108124130';
+import { isPayable, paidTx, payItem, PAY_LABELS } from '../pay.js?v=20261108124130';
+import { openEntrySheet } from './entry.js?v=20261108124130';
+import { openQuickEntry } from './quick.js?v=20261108124130';
+import { monthPhase } from '../calc.js?v=20261108124130';
 
 // Sekcija kao padajući meni: naslov sa zbirom uvek vidljiv; zatvorene sekcije se trajno pamte.
 const SEC_KEY = 'budzet_sec_closed';
@@ -19,6 +19,9 @@ function sec(id, title, right, body) {
   </details>`;
 }
 
+// Kategorije koje su svakog meseca, ali se troše pomalo (hrana, gorivo, džeparac).
+const REGULAR = new Set(['hrana', 'auto', 'licno-dj', 'licno-m']);
+
 export function renderPlan(el, ctx) {
   const key = ctx.month;
   const sum = summarize(key);
@@ -29,8 +32,11 @@ export function renderPlan(el, ctx) {
 
   // Fiksni rashodi: rate, računi i štednja (isti iznos svakog meseca, plaća se jednom).
   const isBill = (p) => { const c = S.cat(p.categoryId); return (c.kind === 'expense' && c.fixed) || c.kind === 'saving'; };
+  // Redovni mesečni troškovi (svakog meseca, ali se troše pomalo): u fiksnim rashodima, sa "+ Unesi".
+  const isRegular = (p) => REGULAR.has(p.categoryId);
+  const isFixedGroup = (p) => isBill(p) || isRegular(p);
   const section = (kind, title = S.KINDS[kind].plural) => {
-    const items = plan.filter((p) => S.cat(p.categoryId).kind === kind && !isBill(p));
+    const items = plan.filter((p) => S.cat(p.categoryId).kind === kind && !isFixedGroup(p));
     const total = items.reduce((s, p) => s + Number(p.amount), 0);
     let rows = '';
     if (kind === 'expense') {
@@ -69,15 +75,18 @@ export function renderPlan(el, ctx) {
   // Računi i rate: šta je ostalo za plaćanje, a šta je plaćeno (sklopljeno).
   const billsSection = () => {
     const bills = plan.filter(isBill).sort((a, b) => b.amount - a.amount);
-    if (!bills.length) return '';
+    const regular = plan.filter(isRegular).sort((a, b) => b.amount - a.amount);
+    if (!bills.length && !regular.length) return '';
     const future = monthPhase(key) === 'future';
     const unpaid = future ? bills : bills.filter((p) => !paidTx(key, p));
     const paid = future ? [] : bills.filter((p) => paidTx(key, p));
     const paidSum = paid.reduce((s, p) => s + Number(paidTx(key, p).amount), 0);
     const row = (p) => itemRow(p, key, S.cat(p.categoryId));
-    return sec('bills', future || !unpaid.length ? 'Fiksni rashodi' : `Fiksni rashodi · još ${unpaid.length}`, `<b class="t-red">${fmtNum(sumOf(bills))}</b>`, `
+    return sec('bills', future || !unpaid.length ? 'Fiksni rashodi' : `Fiksni rashodi · još ${unpaid.length}`, `<b class="t-red">${fmtNum(sumOf(bills) + sumOf(regular))}</b>`, `
       <section class="card list">
-        ${unpaid.length ? unpaid.map(row).join('') : '<div class="empty-mini all-paid">🎉 Svi fiksni rashodi za ovaj mesec su plaćeni!</div>'}
+        ${bills.length ? `<div class="sub-label">Plaća se jednom · rate, računi, štednja</div>` : ''}
+        ${unpaid.length ? unpaid.map(row).join('') : bills.length ? '<div class="empty-mini all-paid">🎉 Sve rate, računi i štednja za ovaj mesec su plaćeni!</div>' : ''}
+        ${regular.length ? `<div class="sub-label">Mesečni budžet · troši se pomalo</div>${regular.map(row).join('')}` : ''}
         <button class="add-line" data-add="out">+ Dodaj fiksni rashod</button>
       </section>
       ${paid.length ? `<details class="paid-box">
@@ -86,8 +95,8 @@ export function renderPlan(el, ctx) {
       </details>` : ''}`);
   };
 
-  const fixedSum = sumOf(plan.filter(isBill));
-  const varSum = sumOf(plan.filter((p) => !isBill(p) && S.cat(p.categoryId).kind === 'expense'));
+  const fixedSum = sumOf(plan.filter(isFixedGroup));
+  const varSum = sumOf(plan.filter((p) => !isFixedGroup(p) && S.cat(p.categoryId).kind === 'expense'));
   const misplaced = findMisplacedPocket(plan);
   el.innerHTML = `
     ${misplaced.length ? `<div class="hint hint-warn fix-banner">
@@ -98,7 +107,7 @@ export function renderPlan(el, ctx) {
     ${!plan.length ? '<div class="hint plan-intro">📋 <b>Plan</b> je koliko očekujete da <b>zaradite</b> i <b>potrošite</b> ovog meseca. Dodajte plate, račune, hranu, gorivo... Stvarne troškove kasnije unosite preko dugmeta <b>+</b>.</div>' : ''}
     <section class="card plan-summary">
       <div class="ps-row"><span>Prihodi</span><b class="t-green">${fmtNum(sum.tot.income.plan)}</b></div>
-      <div class="ps-row"><span>Fiksni rashodi <span class="muted small">(rate, računi, štednja)</span></span><b class="t-red">${fixedSum ? '−' : ''}${fmtNum(fixedSum)}</b></div>
+      <div class="ps-row"><span>Fiksni rashodi <span class="muted small">(svakog meseca)</span></span><b class="t-red">${fixedSum ? '−' : ''}${fmtNum(fixedSum)}</b></div>
       <div class="ps-row"><span>Varijabilni rashodi</span><b class="t-red">${varSum ? '−' : ''}${fmtNum(varSum)}</b></div>
       <div class="ps-row ps-total"><span>Ostaje bez namene</span><b class="${unassigned < 0 ? 't-red' : 't-accent'}">${fmtSigned(unassigned)} RSD</b></div>
       ${planHint(sum)}
