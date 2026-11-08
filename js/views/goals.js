@@ -1,11 +1,11 @@
 // Ciljevi štednje: kartice na Pregledu, detalj, forma, proslava.
-import { ico } from '../icons.js?v=20261108141405';
-import * as S from '../store.js?v=20261108141405';
-import * as Sync from '../sync.js?v=20261108141405';
-import { esc, fmt, fmtNum, digitsOnly, currentMonthKey, monthLabel, MONTH_GEN } from '../util.js?v=20261108141405';
-import { openSheet, toast, confirmSheet, animateBars, pct, moneyInput, confetti } from '../ui.js?v=20261108141405';
-import { txRow } from './istorija.js?v=20261108141405';
-import { openEntrySheet } from './entry.js?v=20261108141405';
+import { ico } from '../icons.js?v=20261108203432';
+import * as S from '../store.js?v=20261108203432';
+import * as Sync from '../sync.js?v=20261108203432';
+import { esc, fmt, fmtNum, digitsOnly, currentMonthKey, monthLabel, MONTH_GEN } from '../util.js?v=20261108203432';
+import { openSheet, toast, confirmSheet, animateBars, pct, moneyInput, confetti } from '../ui.js?v=20261108203432';
+import { txRow } from './istorija.js?v=20261108203432';
+import { openEntrySheet } from './entry.js?v=20261108203432';
 
 const ICONS = ['🎯', '🏖️', '✈️', '🚗', '🏠', '💍', '👶', '🎓', '💻', '🛋️', '🩺', '🎁'];
 

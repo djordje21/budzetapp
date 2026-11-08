@@ -10,6 +10,7 @@ def stamp(text):
     # import ... from './x.js'  /  import('./x.js')  /  src="js/app.js"  /  href="css/app.css"
     text = re.sub(r"""((?:from\s+|import\s*\(\s*)['"])(\.{1,2}/[^'"?]+\.js)(?:\?v=\w+)?(['"])""", rf"\g<1>\g<2>?v={ver}\g<3>", text)
     text = re.sub(r"""((?:src|href)=")((?:js|css)/[^"?]+\.(?:js|css))(?:\?v=\w+)?(")""", rf"\g<1>\g<2>?v={ver}\g<3>", text)
+    text = re.sub(r"""(href=")(manifest\.webmanifest)(?:\?v=\w+)?(")""", rf"\g<1>\g<2>?v={ver}\g<3>", text)
     return text
 
 for f in list((root / 'js').rglob('*.js')) + [root / 'index.html']:
