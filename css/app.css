@@ -795,3 +795,13 @@ input, textarea, select, .input, [contenteditable] { -webkit-user-select: text; 
 .gear-btn { margin-left: auto; }
 .topbar .month-pill { min-width: 0; }
 .forgot { display: block; margin: 14px auto 0; font-size: 14px; }
+
+/* Plan: grupe sa više stavki kao padajući meni */
+.plan-fold + .plan-fold, .plan-fold + .plan-single, .plan-single + .plan-fold, .plan-group + .plan-fold { border-top: 1px solid var(--border); }
+.fold-head { list-style: none; padding: 10px 14px; }
+.fold-head::-webkit-details-marker { display: none; }
+.fold-chev { transition: transform .2s; margin-left: 2px; }
+.plan-fold[open] .fold-chev { transform: rotate(90deg); }
+.plan-fold[open] .fold-head { background: var(--surface-2); }
+.fold-body .plan-item { padding: 8px 14px 8px 64px; }
+.fold-body { animation: fadeUp .2s ease-out; }

@@ -1,12 +1,12 @@
 // Plan za mesec: očekivani prihodi, troškovi i štednja.
-import * as S from '../store.js?v=20261108110650';
-import { summarize } from '../calc.js?v=20261108110650';
-import { esc, fmt, fmtNum, fmtSigned, monthLabel, addMonths, digitsOnly, MONTH_GEN , dayLabel } from '../util.js?v=20261108110650';
-import { openSheet, toast, confirmSheet, moneyInput } from '../ui.js?v=20261108110650';
-import { isPayable, paidTx, payItem, PAY_LABELS } from '../pay.js?v=20261108110650';
-import { openEntrySheet } from './entry.js?v=20261108110650';
-import { openQuickEntry } from './quick.js?v=20261108110650';
-import { monthPhase } from '../calc.js?v=20261108110650';
+import * as S from '../store.js?v=20261108112459';
+import { summarize } from '../calc.js?v=20261108112459';
+import { esc, fmt, fmtNum, fmtSigned, monthLabel, addMonths, digitsOnly, MONTH_GEN , dayLabel } from '../util.js?v=20261108112459';
+import { openSheet, toast, confirmSheet, moneyInput } from '../ui.js?v=20261108112459';
+import { isPayable, paidTx, payItem, PAY_LABELS } from '../pay.js?v=20261108112459';
+import { openEntrySheet } from './entry.js?v=20261108112459';
+import { openQuickEntry } from './quick.js?v=20261108112459';
+import { monthPhase } from '../calc.js?v=20261108112459';
 
 export function renderPlan(el, ctx) {
   const key = ctx.month;
@@ -34,10 +34,16 @@ export function renderPlan(el, ctx) {
           // Jedna stavka u kategoriji: jedan red sa ikonicom (bez suvišnog naslova grupe).
           if (arr.length === 1) return `<div class="plan-single">${itemRow(arr[0], key, c)}</div>`;
           const w = arr.length < 5 ? 'stavke' : 'stavki';
-          return `<div class="plan-group">
-            <div class="plan-group-head"><span class="pgh-name">${c.icon} ${esc(c.name)} <em>· ${arr.length} ${w}</em></span><span class="pgh-sum">${fmtNum(sumOf(arr))}</span></div>
-            ${arr.map((p) => itemRow(p, key)).join('')}
-          </div>`;
+          // Grupa sa više stavki: padajući meni (zatvoren), pamti se šta je otvoreno.
+          return `<details class="plan-fold" data-fold="${c.id}" ${openFolds().has(c.id) ? 'open' : ''}>
+            <summary class="plan-item fold-head">
+              <span class="cat-ico" style="--c:${c.color}">${c.icon}</span>
+              <span class="pi-name">${esc(c.name)}<small>${arr.length} ${w}</small></span>
+              <span class="pi-amt">${fmtNum(sumOf(arr))}</span>
+              <span class="chev fold-chev">›</span>
+            </summary>
+            <div class="fold-body">${arr.map((p) => itemRow(p, key)).join('')}</div>
+          </details>`;
         }).join('');
     } else rows = items.map((p) => itemRow(p, key)).join('');
 
@@ -109,6 +115,11 @@ export function renderPlan(el, ctx) {
     for (const m of misplaced) moved += await S.moveLineToCategory(key, m.item.line, m.item.categoryId, m.to, m.item.name);
     toast(`✅ Džeparac prebačen${moved ? ` · i ${moved} ${moved === 1 ? 'unos' : 'unosa'}` : ''}`, 'ok', 3500);
   });
+  el.querySelectorAll('.plan-fold').forEach((d) => d.addEventListener('toggle', () => {
+    const set = openFolds();
+    d.open ? set.add(d.dataset.fold) : set.delete(d.dataset.fold);
+    try { sessionStorage.setItem('budzet_folds', JSON.stringify([...set])); } catch {}
+  }));
   el.querySelectorAll('[data-quick]').forEach((b) => (b.onclick = (e) => {
     e.stopPropagation();
     const item = plan.find((p) => p.id === b.dataset.quick);
@@ -319,4 +330,8 @@ function findMisplacedPocket(plan) {
       return who && ids.has('licno-' + who) ? { item: p, to: 'licno-' + who } : null;
     })
     .filter(Boolean);
+}
+
+function openFolds() {
+  try { return new Set(JSON.parse(sessionStorage.getItem('budzet_folds') || '[]')); } catch { return new Set(); }
 }
