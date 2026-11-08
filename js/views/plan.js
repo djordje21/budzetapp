@@ -1,12 +1,12 @@
 // Plan za mesec: očekivani prihodi, troškovi i štednja.
-import * as S from '../store.js?v=20261108112909';
-import { summarize } from '../calc.js?v=20261108112909';
-import { esc, fmt, fmtNum, fmtSigned, monthLabel, addMonths, digitsOnly, MONTH_GEN , dayLabel } from '../util.js?v=20261108112909';
-import { openSheet, toast, confirmSheet, moneyInput } from '../ui.js?v=20261108112909';
-import { isPayable, paidTx, payItem, PAY_LABELS } from '../pay.js?v=20261108112909';
-import { openEntrySheet } from './entry.js?v=20261108112909';
-import { openQuickEntry } from './quick.js?v=20261108112909';
-import { monthPhase } from '../calc.js?v=20261108112909';
+import * as S from '../store.js?v=20261108114937';
+import { summarize } from '../calc.js?v=20261108114937';
+import { esc, fmt, fmtNum, fmtSigned, monthLabel, addMonths, digitsOnly, MONTH_GEN , dayLabel } from '../util.js?v=20261108114937';
+import { openSheet, toast, confirmSheet, moneyInput } from '../ui.js?v=20261108114937';
+import { isPayable, paidTx, payItem, PAY_LABELS } from '../pay.js?v=20261108114937';
+import { openEntrySheet } from './entry.js?v=20261108114937';
+import { openQuickEntry } from './quick.js?v=20261108114937';
+import { monthPhase } from '../calc.js?v=20261108114937';
 
 // Sekcija kao padajući meni: naslov sa zbirom uvek vidljiv; zatvorene sekcije se trajno pamte.
 const SEC_KEY = 'budzet_sec_closed';
@@ -26,7 +26,8 @@ export function renderPlan(el, ctx) {
   const isDec = key.endsWith('-12');
   const unassigned = sum.balancePlan;
 
-  const isBill = (p) => { const c = S.cat(p.categoryId); return c.kind === 'expense' && c.fixed; };
+  // Fiksni rashodi: rate, računi i štednja (isti iznos svakog meseca, plaća se jednom).
+  const isBill = (p) => { const c = S.cat(p.categoryId); return (c.kind === 'expense' && c.fixed) || c.kind === 'saving'; };
   const section = (kind, title = S.KINDS[kind].plural) => {
     const items = plan.filter((p) => S.cat(p.categoryId).kind === kind && !isBill(p));
     const total = items.reduce((s, p) => s + Number(p.amount), 0);
@@ -60,7 +61,7 @@ export function renderPlan(el, ctx) {
     return sec(kind, title, `<b class="t-${kind === 'income' ? 'green' : kind === 'saving' ? 'cyan' : 'red'}">${fmtNum(total)}</b>`, `
       <section class="card list">
         ${rows || '<div class="empty-mini">Nema stavki.</div>'}
-        <button class="add-line" data-add="${kind}">+ Dodaj ${S.KINDS[kind].acc}</button>
+        <button class="add-line" data-add="${kind === 'expense' ? 'var' : kind}">+ Dodaj ${kind === 'expense' ? 'varijabilni rashod' : S.KINDS[kind].acc}</button>
       </section>`);
   };
 
@@ -73,10 +74,10 @@ export function renderPlan(el, ctx) {
     const paid = future ? [] : bills.filter((p) => paidTx(key, p));
     const paidSum = paid.reduce((s, p) => s + Number(paidTx(key, p).amount), 0);
     const row = (p) => itemRow(p, key, S.cat(p.categoryId));
-    return sec('bills', future ? 'Računi i rate' : `📌 Za plaćanje · ${unpaid.length}`, `<b class="t-red">${fmtNum(sumOf(unpaid))}</b>`, `
+    return sec('bills', future || !unpaid.length ? 'Fiksni rashodi' : `Fiksni rashodi · još ${unpaid.length}`, `<b class="t-red">${fmtNum(sumOf(bills))}</b>`, `
       <section class="card list">
-        ${unpaid.length ? unpaid.map(row).join('') : '<div class="empty-mini all-paid">🎉 Svi računi i rate za ovaj mesec su plaćeni!</div>'}
-        <button class="add-line" data-add="expense">+ Dodaj račun ili ratu</button>
+        ${unpaid.length ? unpaid.map(row).join('') : '<div class="empty-mini all-paid">🎉 Svi fiksni rashodi za ovaj mesec su plaćeni!</div>'}
+        <button class="add-line" data-add="out">+ Dodaj fiksni rashod</button>
       </section>
       ${paid.length ? `<details class="paid-box">
         <summary><span>✓ Plaćeno · ${paid.length}</span><span><b>${fmtNum(paidSum)}</b> RSD <i class="chev">›</i></span></summary>
@@ -84,6 +85,8 @@ export function renderPlan(el, ctx) {
       </details>` : ''}`);
   };
 
+  const fixedSum = sumOf(plan.filter(isBill));
+  const varSum = sumOf(plan.filter((p) => !isBill(p) && S.cat(p.categoryId).kind === 'expense'));
   const misplaced = findMisplacedPocket(plan);
   el.innerHTML = `
     ${misplaced.length ? `<div class="hint hint-warn fix-banner">
@@ -93,9 +96,9 @@ export function renderPlan(el, ctx) {
     </div>` : ''}
     ${!plan.length ? '<div class="hint plan-intro">📋 <b>Plan</b> je koliko očekujete da <b>zaradite</b> i <b>potrošite</b> ovog meseca. Dodajte plate, račune, hranu, gorivo... Stvarne troškove kasnije unosite preko dugmeta <b>+</b>.</div>' : ''}
     <section class="card plan-summary">
-      <div class="ps-row"><span>Planirani prihodi</span><b class="t-green">${fmtNum(sum.tot.income.plan)}</b></div>
-      <div class="ps-row"><span>Planirani troškovi</span><b class="t-red">${sum.tot.expense.plan ? '−' : ''}${fmtNum(sum.tot.expense.plan)}</b></div>
-      <div class="ps-row"><span>Štednja i investicije</span><b class="t-cyan">${sum.tot.saving.plan ? '−' : ''}${fmtNum(sum.tot.saving.plan)}</b></div>
+      <div class="ps-row"><span>Prihodi</span><b class="t-green">${fmtNum(sum.tot.income.plan)}</b></div>
+      <div class="ps-row"><span>Fiksni rashodi <span class="muted small">(rate, računi, štednja)</span></span><b class="t-red">${fixedSum ? '−' : ''}${fmtNum(fixedSum)}</b></div>
+      <div class="ps-row"><span>Varijabilni rashodi</span><b class="t-red">${varSum ? '−' : ''}${fmtNum(varSum)}</b></div>
       <div class="ps-row ps-total"><span>Ostaje bez namene</span><b class="${unassigned < 0 ? 't-red' : 't-accent'}">${fmtSigned(unassigned)} RSD</b></div>
       ${planHint(sum)}
     </section>
@@ -104,8 +107,7 @@ export function renderPlan(el, ctx) {
 
     ${section('income')}
     ${billsSection()}
-    ${section('expense', 'Svakodnevni i ostali troškovi')}
-    ${section('saving')}
+    ${section('expense', 'Varijabilni rashodi')}
 
     ${sec('tools', 'Alati', '', `<section class="card list">
       ${S.hasPlan(prevKey) && plan.length ? `<button class="tool-row" id="copy-prev2">📋 Zameni plan planom iz ${MONTH_GEN[Number(prevKey.slice(5)) - 1]}</button>` : ''}
@@ -206,8 +208,12 @@ function planHint(sum) {
 }
 
 export function openPlanItemSheet(key, item, kind = null, presetCat = null) {
-  kind = item ? S.cat(item.categoryId).kind : presetCat ? S.cat(presetCat).kind : kind;
-  const cats = S.categoriesOf(kind);
+  const group = !item && !presetCat ? kind : null;
+  kind = item ? S.cat(item.categoryId).kind : presetCat ? S.cat(presetCat).kind : kind === 'out' || kind === 'var' ? 'expense' : kind;
+  let cats = S.categoriesOf(kind);
+  if (group === 'out') cats = [...S.categoriesOf('expense').filter((c) => c.fixed), ...S.categoriesOf('saving'), ...S.categoriesOf('expense').filter((c) => !c.fixed)];
+  if (group === 'var') cats = S.categoriesOf('expense').filter((c) => !c.fixed);
+  if (item && kind !== 'income') cats = [...S.categoriesOf('expense'), ...S.categoriesOf('saving')];
   const v = {
     name: item?.name || '',
     categoryId: item?.categoryId || presetCat || cats[0]?.id,
@@ -217,7 +223,7 @@ export function openPlanItemSheet(key, item, kind = null, presetCat = null) {
   const isDec = key.endsWith('-12');
 
   openSheet({
-    title: item ? '✏️ Izmena plana' : `Nova stavka plana — ${S.KINDS[kind].label.toLowerCase()}`,
+    title: item ? '✏️ Izmena plana' : group === 'out' ? 'Novi fiksni rashod' : group === 'var' ? 'Novi varijabilni rashod' : `Nova stavka plana — ${S.KINDS[kind].label.toLowerCase()}`,
     body: `
       <div class="hint hint-warn plan-edit-hint">Menjaš koliko je <b>planirano</b> za mesec — ovo <b>nije unos troška</b>.
         ${item && kind === 'expense' ? '<button class="link" id="p-to-entry">Hteo si da uneseš trošak? →</button>' : ''}</div>

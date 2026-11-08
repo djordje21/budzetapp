@@ -1,8 +1,8 @@
 // Istorija stvarnih unosa za mesec, grupisano po danima, sa filterima.
-import * as S from '../store.js?v=20261108112909';
-import { txOfMonth } from '../calc.js?v=20261108112909';
-import { esc, fmtNum, dayLabel, monthLabel } from '../util.js?v=20261108112909';
-import { openEntrySheet } from './entry.js?v=20261108112909';
+import * as S from '../store.js?v=20261108114937';
+import { txOfMonth } from '../calc.js?v=20261108114937';
+import { esc, fmtNum, dayLabel, monthLabel } from '../util.js?v=20261108114937';
+import { openEntrySheet } from './entry.js?v=20261108114937';
 
 const filters = { who: 'all', kind: 'all', cat: 'all' };
 export const setHistoryFilter = (f) => Object.assign(filters, { who: 'all', kind: 'all', cat: 'all' }, f);
@@ -45,7 +45,7 @@ export function renderIstorija(el, ctx) {
     .filter(() => (filters.kind === 'all' || filters.kind === 'transfer') && filters.cat === 'all');
   const list = all
     .filter((t) => filters.who === 'all' || t.by === filters.who)
-    .filter((t) => filters.kind === 'all' || t.kind === filters.kind)
+    .filter((t) => filters.kind === 'all' || t.kind === filters.kind || (filters.kind === 'expense' && t.kind === 'saving'))
     .filter(() => filters.kind !== 'transfer')
     .filter((t) => filters.cat === 'all' || t.categoryId === filters.cat)
     .sort((a, b) => b.date.localeCompare(a.date) || (b.createdAt || '').localeCompare(a.createdAt || ''));
@@ -67,7 +67,7 @@ export function renderIstorija(el, ctx) {
           `<button class="chip ${filters.who === v ? 'on' : ''}" data-f="who" data-v="${v}">${esc(l)}</button>`).join('')}
       </div>
       <div class="chips">
-        ${[['all', 'Sve'], ...Object.entries(S.KINDS).map(([k, x]) => [k, x.plural.split(' ')[0]]), ['transfer', '⇄ Prebacivanja']].map(([v, l]) =>
+        ${[['all', 'Sve'], ['expense', 'Rashodi'], ['income', 'Prihodi'], ['transfer', '⇄ Prebacivanja']].map(([v, l]) =>
           `<button class="chip ${filters.kind === v ? 'on' : ''}" data-f="kind" data-v="${v}">${esc(l)}</button>`).join('')}
         <select class="chip chip-select" id="f-cat" aria-label="Kategorija">
           <option value="all">Sve kategorije</option>
@@ -103,7 +103,7 @@ export function renderIstorija(el, ctx) {
   el.querySelector('#add-first')?.addEventListener('click', () => openEntrySheet());
   el.querySelectorAll('[data-tr]').forEach((r) => (r.onclick = () => {
     const x = (S.getState().transfers || []).find((t) => t.id === r.dataset.tr);
-    if (x) import('./accounts.js?v=20261108112909').then((m) => m.openTransferForm({ tr: x }));
+    if (x) import('./accounts.js?v=20261108114937').then((m) => m.openTransferForm({ tr: x }));
   }));
   el.querySelectorAll('[data-tx]').forEach((r) => (r.onclick = () => {
     const tx = S.getState().transactions.find((t) => t.id === r.dataset.tx);

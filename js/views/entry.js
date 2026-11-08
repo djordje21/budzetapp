@@ -1,10 +1,10 @@
 // Brzi unos stvarnog troška / prihoda / štednje (i izmena postojećeg unosa).
-import * as S from '../store.js?v=20261108112909';
-import { openSheet, toast, confirmSheet, moneyInput, dateInputHTML, syncDateShow } from '../ui.js?v=20261108112909';
-import { esc, fmt, fmtNum, digitsOnly, todayISO, isoOf } from '../util.js?v=20261108112909';
-import { summarize } from '../calc.js?v=20261108112909';
-import { unpaidBills, afterBillPaid } from '../pay.js?v=20261108112909';
-import { suggestCategory } from '../suggest.js?v=20261108112909';
+import * as S from '../store.js?v=20261108114937';
+import { openSheet, toast, confirmSheet, moneyInput, dateInputHTML, syncDateShow } from '../ui.js?v=20261108114937';
+import { esc, fmt, fmtNum, digitsOnly, todayISO, isoOf } from '../util.js?v=20261108114937';
+import { summarize } from '../calc.js?v=20261108114937';
+import { unpaidBills, afterBillPaid } from '../pay.js?v=20261108114937';
+import { suggestCategory } from '../suggest.js?v=20261108114937';
 
 const ICONS = ['📌', '☕', '🍕', '🎬', '✈️', '🐶', '👶', '📚', '💊', '🎮', '🔧', '💇'];
 const COLORS = ['#0ea5e9', '#d946ef', '#f97316', '#22c55e', '#6366f1', '#f43f5e', '#14b8a6', '#eab308'];
@@ -25,12 +25,16 @@ export function openEntrySheet({ tx = null, kind = 'expense', date = null, categ
     accountPicked: isEdit,
     picked: isEdit || !!categoryId, // korisnik je sam izabrao kategoriju → predlog je ne menja
   };
-  if (v.categoryId && S.cat(v.categoryId).fixed) v.showFixed = true;
+  // Dve vrste za korisnika: Rashod (troškovi + štednja) i Prihod. Interno vrsta dolazi iz kategorije.
+  v.mode = v.kind === 'income' ? 'in' : 'out';
+  // Uplata iz cilja štednje (ili druga štednja bez kategorije): odmah izaberi Štednju.
+  if (!v.categoryId && v.kind === 'saving') { v.categoryId = S.categoriesOf('saving')[0]?.id || null; v.picked = !!v.categoryId; }
+  if (v.categoryId && (S.cat(v.categoryId).fixed || S.cat(v.categoryId).kind === 'saving')) v.showFixed = true;
   const yesterday = (() => { const d = new Date(); d.setDate(d.getDate() - 1); return isoOf(d); })();
 
   const body = `
-    <div class="seg ${isEdit ? 'seg-3' : 'seg-4'}" data-k="kind">
-      ${Object.entries(S.KINDS).map(([k, x]) => `<button data-v="${k}">${x.label}</button>`).join('')}${isEdit ? '' : '<button data-v="transfer">⇄ Prebaci</button>'}
+    <div class="seg ${isEdit ? 'seg-2' : 'seg-3'}" data-k="mode">
+      <button data-v="out">Rashod</button><button data-v="in">Prihod</button>${isEdit ? '' : '<button data-v="transfer">⇄ Prebaci</button>'}
     </div>
 
     ${isEdit ? '' : '<button class="scan-btn" id="e-scan"><span>📷</span> Skeniraj QR sa računa</button>'}
@@ -94,23 +98,26 @@ export function openEntrySheet({ tx = null, kind = 'expense', date = null, categ
         </button>`;
 
       const paintCats = () => {
-        let cats = S.categoriesOf(v.kind);
+        let cats = v.mode === 'in' ? S.categoriesOf('income') : [...S.categoriesOf('expense'), ...S.categoriesOf('saving')];
         const sel = S.cat(v.categoryId);
         // Jednokratna (sakrivena) kategorija izabrana u ovom unosu ostaje vidljiva.
-        if (v.categoryId && sel.archived && sel.kind === v.kind) cats = [...cats, sel];
+        if (v.categoryId && sel.archived && (sel.kind === 'income') === (v.mode === 'in')) cats = [...cats, sel];
         if (!cats.some((c) => c.id === v.categoryId)) v.categoryId = null;
-        const fixed = cats.filter((c) => c.fixed);
-        const main = cats.filter((c) => !c.fixed);
+        const isFixed = (c) => c.fixed || c.kind === 'saving';
+        const fixed = cats.filter(isFixed);
+        const main = cats.filter((c) => !isFixed(c));
         $('#e-cats').innerHTML =
           main.map(tile).join('') +
           (v.showFixed ? fixed.map(tile).join('') : '') +
-          (fixed.length && !v.showFixed ? `<button class="cat-pick cat-more" id="e-fixed"><span class="cat-ico">🧾</span><span>Rate i računi</span></button>` : '') +
+          (fixed.length && !v.showFixed ? `<button class="cat-pick cat-more" id="e-fixed"><span class="cat-ico">🧾</span><span>Fiksni: rate, računi, štednja</span></button>` : '') +
           `<button class="cat-pick cat-more" id="e-add"><span class="cat-ico">＋</span><span>Nova kategorija</span></button>`;
         el.querySelectorAll('[data-c]').forEach((b) => (b.onclick = () => {
           v.categoryId = b.dataset.c;
+          v.kind = S.cat(v.categoryId).kind; // trošak, štednja ili prihod
           v.picked = true;
           paintCats();
           paintSuggest();
+          paintGoals();
         }));
         $('#e-fixed')?.addEventListener('click', () => { v.showFixed = true; paintCats(); });
         $('#e-add').onclick = openNewCat;
@@ -132,7 +139,7 @@ export function openEntrySheet({ tx = null, kind = 'expense', date = null, categ
       const runSuggest = () => {
         clearTimeout(sugTimer);
         sugTimer = setTimeout(() => {
-          sug = suggestCategory(v.note, v.kind);
+          sug = suggestCategory(v.note, v.mode === 'in' ? 'income' : 'expense');
           // Automatski primeni dok korisnik sam nije birao.
           if (sug && !v.picked) { v.categoryId = sug.categoryId; paintCats(); }
           paintSuggest();
@@ -192,15 +199,15 @@ export function openEntrySheet({ tx = null, kind = 'expense', date = null, categ
 
       el.querySelectorAll('.seg[data-k] button').forEach((b) => (b.onclick = () => {
         const k = b.closest('.seg').dataset.k;
-        if (k === 'kind' && b.dataset.v === 'transfer') {
+        if (k === 'mode' && b.dataset.v === 'transfer') {
           // Prebacivanje između računa ima svoj formular (nije trošak ni prihod).
           close();
-          setTimeout(() => import('./accounts.js?v=20261108112909').then((m) => m.openTransferForm({ amount: v.amount })), 220);
+          setTimeout(() => import('./accounts.js?v=20261108114937').then((m) => m.openTransferForm({ amount: v.amount })), 220);
           return;
         }
         v[k] = b.dataset.v;
         paintSeg(k);
-        if (k === 'kind') { v.picked = false; paintCats(); runSuggest(); paintAccLabel(); }
+        if (k === 'mode') { v.kind = v.mode === 'in' ? 'income' : 'expense'; v.picked = false; paintCats(); runSuggest(); paintAccLabel(); paintGoals(); }
         if (k === 'account') v.accountPicked = true;
         // Ko unosi → podrazumevano njegov račun (dok račun nije ručno izabran).
         if (k === 'by' && !v.accountPicked && v.account !== 'kes') { v.account = v.by; paintSeg('account'); }
@@ -213,7 +220,7 @@ export function openEntrySheet({ tx = null, kind = 'expense', date = null, categ
       noteEl.value = v.note;
       noteEl.oninput = () => { v.note = noteEl.value; runSuggest(); };
 
-      const paintGoals = () => {
+      function paintGoals() {
         const box = $('#e-goals');
         const goals = S.goalsOf();
         if (v.kind !== 'saving' || !goals.length) { box.innerHTML = ''; return; }
@@ -221,17 +228,16 @@ export function openEntrySheet({ tx = null, kind = 'expense', date = null, categ
           <button class="chip ${!v.goalId ? 'on' : ''}" data-g="">Bez cilja</button>
           ${goals.map((g) => `<button class="chip ${v.goalId === g.id ? 'on' : ''}" data-g="${g.id}">${g.icon || '🎯'} ${esc(g.name)}</button>`).join('')}</div>`;
         box.querySelectorAll('[data-g]').forEach((b) => (b.onclick = () => { v.goalId = b.dataset.g || null; paintGoals(); }));
-      };
-      el.querySelectorAll('.seg[data-k="kind"] button').forEach((b) => b.addEventListener('click', paintGoals));
+      }
       paintGoals();
 
       function paintAccLabel() { $('#e-acc-label').textContent = v.kind === 'income' ? 'Na račun' : 'Sa računa'; }
       paintAccLabel();
-      paintSeg('kind'); paintSeg('by'); paintSeg('account'); paintDate(); paintCats();
+      paintSeg('mode'); paintSeg('by'); paintSeg('account'); paintDate(); paintCats();
       if (v.note && !v.picked) runSuggest(); // npr. naziv prodavnice sa skeniranog računa
       $('#e-scan')?.addEventListener('click', () => {
         close();
-        setTimeout(() => import('./scanner.js?v=20261108112909').then((m) => m.openScanner()), 220);
+        setTimeout(() => import('./scanner.js?v=20261108114937').then((m) => m.openScanner()), 220);
       });
       if (!isEdit) setTimeout(() => amountEl.focus(), 280);
 
@@ -239,6 +245,7 @@ export function openEntrySheet({ tx = null, kind = 'expense', date = null, categ
         const amount = Number(v.amount);
         if (!amount) { shake(amountEl.parentElement); toast('Upiši iznos', 'warn'); return; }
         if (!v.categoryId) { shake($('#e-cats')); toast('Izaberi kategoriju', 'warn'); return; }
+        v.kind = S.cat(v.categoryId).kind;
         const data = { kind: v.kind, categoryId: v.categoryId, amount, date: v.date, note: v.note.trim(), by: v.by, account: v.account };
         if (!isEdit && prefill?.planLine) data.planLine = prefill.planLine;
         if (!isEdit && prefill?.createdAt) data.createdAt = prefill.createdAt;
@@ -253,7 +260,7 @@ export function openEntrySheet({ tx = null, kind = 'expense', date = null, categ
         if (billKey) afterBillPaid(billKey, billsBefore);
         feedback(data, isEdit);
         if (g && !wasDone && S.goalSaved(g) >= g.target) {
-          import('./goals.js?v=20261108112909').then((m) => m.celebrate());
+          import('./goals.js?v=20261108114937').then((m) => m.celebrate());
           setTimeout(() => toast(`🎉 <b>Cilj ostvaren: ${esc(g.name)}!</b>`, 'ok', 4500), 400);
         }
         if (again) {
