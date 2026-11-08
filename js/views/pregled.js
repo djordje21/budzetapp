@@ -1,17 +1,17 @@
 // Početni ekran: plan vs. stvarno za izabrani mesec.
-import * as S from '../store.js?v=20261108081259';
-import { summarize, pace, monthPhase } from '../calc.js?v=20261108081259';
-import { esc, fmt, fmtNum, fmtSigned, monthLabel, addMonths, MONTH_GEN } from '../util.js?v=20261108081259';
-import { countUp, animateBars, pct, toast } from '../ui.js?v=20261108081259';
-import { openEntrySheet } from './entry.js?v=20261108081259';
-import { txRow, setHistoryFilter } from './istorija.js?v=20261108081259';
-import { isPayable, paidTx, payItem, PAY_LABELS } from '../pay.js?v=20261108081259';
-import { openDueSheet } from './due-detail.js?v=20261108081259';
-import { cumulativeData, cumulativeChart, bindCumulative } from '../charts.js?v=20261108081259';
-import { accountsBlock, bindAccounts } from './accounts.js?v=20261108081259';
-import { goalsBlock, bindGoals } from './goals.js?v=20261108081259';
-import { openCategoryDetail } from './category-detail.js?v=20261108081259';
-import { openQuickEntry } from './quick.js?v=20261108081259';
+import * as S from '../store.js?v=20261108081454';
+import { summarize, pace, monthPhase } from '../calc.js?v=20261108081454';
+import { esc, fmt, fmtNum, fmtSigned, monthLabel, addMonths, MONTH_GEN } from '../util.js?v=20261108081454';
+import { countUp, animateBars, pct, toast } from '../ui.js?v=20261108081454';
+import { openEntrySheet } from './entry.js?v=20261108081454';
+import { txRow, setHistoryFilter } from './istorija.js?v=20261108081454';
+import { isPayable, paidTx, payItem, PAY_LABELS } from '../pay.js?v=20261108081454';
+import { openDueSheet } from './due-detail.js?v=20261108081454';
+import { cumulativeData, cumulativeChart, bindCumulative } from '../charts.js?v=20261108081454';
+import { accountsBlock, bindAccounts } from './accounts.js?v=20261108081454';
+import { goalsBlock, bindGoals } from './goals.js?v=20261108081454';
+import { openCategoryDetail } from './category-detail.js?v=20261108081454';
+import { openQuickEntry } from './quick.js?v=20261108081454';
 
 export function renderPregled(el, ctx) {
   const key = ctx.month;

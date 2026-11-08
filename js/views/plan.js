@@ -1,12 +1,12 @@
 // Plan za mesec: očekivani prihodi, troškovi i štednja.
-import * as S from '../store.js?v=20261108081259';
-import { summarize } from '../calc.js?v=20261108081259';
-import { esc, fmt, fmtNum, fmtSigned, monthLabel, addMonths, digitsOnly, MONTH_GEN } from '../util.js?v=20261108081259';
-import { openSheet, toast, confirmSheet, moneyInput } from '../ui.js?v=20261108081259';
-import { isPayable, paidTx, payItem, PAY_LABELS } from '../pay.js?v=20261108081259';
-import { openEntrySheet } from './entry.js?v=20261108081259';
-import { openQuickEntry } from './quick.js?v=20261108081259';
-import { monthPhase } from '../calc.js?v=20261108081259';
+import * as S from '../store.js?v=20261108081454';
+import { summarize } from '../calc.js?v=20261108081454';
+import { esc, fmt, fmtNum, fmtSigned, monthLabel, addMonths, digitsOnly, MONTH_GEN } from '../util.js?v=20261108081454';
+import { openSheet, toast, confirmSheet, moneyInput } from '../ui.js?v=20261108081454';
+import { isPayable, paidTx, payItem, PAY_LABELS } from '../pay.js?v=20261108081454';
+import { openEntrySheet } from './entry.js?v=20261108081454';
+import { openQuickEntry } from './quick.js?v=20261108081454';
+import { monthPhase } from '../calc.js?v=20261108081454';
 
 export function renderPlan(el, ctx) {
   const key = ctx.month;
@@ -30,8 +30,11 @@ export function renderPlan(el, ctx) {
         .sort((a, b) => sumOf(b[1]) - sumOf(a[1]))
         .map(([cid, arr]) => {
           const c = S.cat(cid);
+          // Jedna stavka u kategoriji: jedan red sa ikonicom (bez suvišnog naslova grupe).
+          if (arr.length === 1) return `<div class="plan-single">${itemRow(arr[0], key, c)}</div>`;
+          const w = arr.length < 5 ? 'stavke' : 'stavki';
           return `<div class="plan-group">
-            <div class="plan-group-head"><span>${c.icon} ${esc(c.name)}${arr.length > 1 ? ` <em>· ${arr.length} stavke</em>` : ''}</span><span>${arr.length > 1 ? 'ukupno ' : ''}${fmtNum(sumOf(arr))}</span></div>
+            <div class="plan-group-head"><span class="pgh-name">${c.icon} ${esc(c.name)} <em>· ${arr.length} ${w}</em></span><span class="pgh-sum">${fmtNum(sumOf(arr))}</span></div>
             ${arr.map((p) => itemRow(p, key)).join('')}
           </div>`;
         }).join('');
@@ -109,7 +112,7 @@ export function renderPlan(el, ctx) {
 
 const sumOf = (arr) => arr.reduce((s, p) => s + Number(p.amount), 0);
 
-function itemRow(p, key) {
+function itemRow(p, key, single = null) {
   const o = S.member(p.owner);
   let pay = '';
   const c0 = S.cat(p.categoryId);
@@ -122,8 +125,10 @@ function itemRow(p, key) {
       ? `<button class="pay-btn paid" data-paid="${tx.id}" title="Otvori unos">✓ ${PAY_LABELS[kind].done}</button>`
       : `<button class="pay-btn" data-pay="${p.id}">${PAY_LABELS[kind].act}</button>`;
   }
+  const sameName = single && p.name.trim().toLowerCase() === single.name.trim().toLowerCase();
   return `<div class="plan-item" role="button" tabindex="0" data-item="${p.id}">
-    <span class="pi-name">${esc(p.name)}</span>
+    ${single ? `<span class="cat-ico" style="--c:${single.color}">${single.icon}</span>` : ''}
+    <span class="pi-name">${esc(p.name)}${single && !sameName ? `<small>${esc(single.name)}</small>` : ''}</span>
     ${p.owner && p.owner !== 'zaj' ? `<span class="who" style="--c:${o.color}">${o.short}</span>` : ''}
     <span class="pi-amt">${fmtNum(p.amount)}</span>
     ${pay}

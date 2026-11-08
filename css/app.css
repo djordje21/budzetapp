@@ -719,3 +719,11 @@ input, textarea, select, .input, [contenteditable] { -webkit-user-select: text; 
 .lims-t { width: 100%; font-size: 12px; opacity: .85; }
 .lim { font-size: 12.5px; padding: 4px 9px; border-radius: 99px; background: color-mix(in srgb, var(--surface) 70%, transparent); white-space: nowrap; }
 .lim-over { color: var(--red); }
+
+/* Plan: kategorija sa jednom stavkom = jedan red */
+.plan-single .plan-item { padding: 10px 14px; }
+.plan-single + .plan-single, .plan-single + .plan-group, .plan-group + .plan-single { border-top: 1px solid var(--border); }
+.pi-name small { display: block; font-size: 12px; color: var(--muted); }
+.plan-group-head { align-items: baseline; gap: 10px; }
+.pgh-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pgh-sum { white-space: nowrap; flex-shrink: 0; }
