@@ -1,5 +1,5 @@
 // UI pomoćnici: donji panel (sheet), potvrda, obaveštenja, animacija brojeva.
-import { esc, fmtNum, digitsOnly, fmtDate } from './util.js?v=20261108084202';
+import { esc, fmtNum, digitsOnly, fmtDate } from './util.js?v=20261108084802';
 
 const reduceMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -145,4 +145,24 @@ export const dateInputHTML = (id, value = '') =>
 export function syncDateShow(root, id) {
   const i = root.querySelector('#' + id), show = root.querySelector('#' + id + '-show');
   if (i && show) show.textContent = i.value ? fmtDate(i.value) : 'izaberi datum';
+}
+
+// Konfete za proslave (cilj ostvaren, svi računi plaćeni).
+export function confetti() {
+  if (reduceMotion()) return;
+  const colors = ['#a78bfa', '#22d3ee', '#4ade80', '#fbbf24', '#f472b6', '#f87171'];
+  const box = document.createElement('div');
+  box.className = 'confetti';
+  for (let i = 0; i < 80; i++) {
+    const p = document.createElement('i');
+    p.style.left = Math.random() * 100 + '%';
+    p.style.background = colors[i % colors.length];
+    p.style.animationDelay = Math.random() * 0.4 + 's';
+    p.style.animationDuration = 1.6 + Math.random() * 1.2 + 's';
+    p.style.setProperty('--dx', (Math.random() * 160 - 80) + 'px');
+    p.style.setProperty('--r', Math.random() * 720 + 'deg');
+    box.appendChild(p);
+  }
+  document.body.appendChild(box);
+  setTimeout(() => box.remove(), 3500);
 }

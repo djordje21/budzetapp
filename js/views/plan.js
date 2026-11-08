@@ -1,12 +1,12 @@
 // Plan za mesec: očekivani prihodi, troškovi i štednja.
-import * as S from '../store.js?v=20261108084202';
-import { summarize } from '../calc.js?v=20261108084202';
-import { esc, fmt, fmtNum, fmtSigned, monthLabel, addMonths, digitsOnly, MONTH_GEN } from '../util.js?v=20261108084202';
-import { openSheet, toast, confirmSheet, moneyInput } from '../ui.js?v=20261108084202';
-import { isPayable, paidTx, payItem, PAY_LABELS } from '../pay.js?v=20261108084202';
-import { openEntrySheet } from './entry.js?v=20261108084202';
-import { openQuickEntry } from './quick.js?v=20261108084202';
-import { monthPhase } from '../calc.js?v=20261108084202';
+import * as S from '../store.js?v=20261108084802';
+import { summarize } from '../calc.js?v=20261108084802';
+import { esc, fmt, fmtNum, fmtSigned, monthLabel, addMonths, digitsOnly, MONTH_GEN } from '../util.js?v=20261108084802';
+import { openSheet, toast, confirmSheet, moneyInput } from '../ui.js?v=20261108084802';
+import { isPayable, paidTx, payItem, PAY_LABELS } from '../pay.js?v=20261108084802';
+import { openEntrySheet } from './entry.js?v=20261108084802';
+import { openQuickEntry } from './quick.js?v=20261108084802';
+import { monthPhase } from '../calc.js?v=20261108084802';
 
 export function renderPlan(el, ctx) {
   const key = ctx.month;
@@ -16,8 +16,9 @@ export function renderPlan(el, ctx) {
   const isDec = key.endsWith('-12');
   const unassigned = sum.balancePlan;
 
-  const section = (kind) => {
-    const items = plan.filter((p) => S.cat(p.categoryId).kind === kind);
+  const isBill = (p) => { const c = S.cat(p.categoryId); return c.kind === 'expense' && c.fixed; };
+  const section = (kind, title = S.KINDS[kind].plural) => {
+    const items = plan.filter((p) => S.cat(p.categoryId).kind === kind && !isBill(p));
     const total = items.reduce((s, p) => s + Number(p.amount), 0);
     let rows = '';
     if (kind === 'expense') {
@@ -41,11 +42,32 @@ export function renderPlan(el, ctx) {
     } else rows = items.map((p) => itemRow(p, key)).join('');
 
     return `
-      <div class="section-head"><h3>${S.KINDS[kind].plural}</h3><span class="t-${kind === 'income' ? 'green' : kind === 'saving' ? 'cyan' : 'red'}"><b>${fmtNum(total)}</b></span></div>
+      <div class="section-head"><h3>${title}</h3><span class="t-${kind === 'income' ? 'green' : kind === 'saving' ? 'cyan' : 'red'}"><b>${fmtNum(total)}</b></span></div>
       <section class="card list">
         ${rows || '<div class="empty-mini">Nema stavki.</div>'}
         <button class="add-line" data-add="${kind}">+ Dodaj ${S.KINDS[kind].acc}</button>
       </section>`;
+  };
+
+  // Računi i rate: šta je ostalo za plaćanje, a šta je plaćeno (sklopljeno).
+  const billsSection = () => {
+    const bills = plan.filter(isBill).sort((a, b) => b.amount - a.amount);
+    if (!bills.length) return '';
+    const future = monthPhase(key) === 'future';
+    const unpaid = future ? bills : bills.filter((p) => !paidTx(key, p));
+    const paid = future ? [] : bills.filter((p) => paidTx(key, p));
+    const paidSum = paid.reduce((s, p) => s + Number(paidTx(key, p).amount), 0);
+    const row = (p) => itemRow(p, key, S.cat(p.categoryId));
+    return `
+      <div class="section-head"><h3>${future ? 'Računi i rate' : `📌 Za plaćanje · ${unpaid.length}`}</h3><span class="t-red"><b>${fmtNum(sumOf(unpaid))}</b></span></div>
+      <section class="card list">
+        ${unpaid.length ? unpaid.map(row).join('') : '<div class="empty-mini all-paid">🎉 Svi računi i rate za ovaj mesec su plaćeni!</div>'}
+        <button class="add-line" data-add="expense">+ Dodaj račun ili ratu</button>
+      </section>
+      ${paid.length ? `<details class="paid-box">
+        <summary><span>✓ Plaćeno · ${paid.length}</span><span><b>${fmtNum(paidSum)}</b> RSD <i class="chev">›</i></span></summary>
+        <section class="card list">${paid.map(row).join('')}</section>
+      </details>` : ''}`;
   };
 
   const misplaced = findMisplacedPocket(plan);
@@ -66,7 +88,8 @@ export function renderPlan(el, ctx) {
     ${!plan.length && S.hasPlan(prevKey) ? `<button class="btn btn-primary btn-block" id="copy-prev">Kopiraj plan iz ${MONTH_GEN[Number(prevKey.slice(5)) - 1]}</button>` : ''}
 
     ${section('income')}
-    ${section('expense')}
+    ${billsSection()}
+    ${section('expense', 'Svakodnevni i ostali troškovi')}
     ${section('saving')}
 
     <div class="section-head"><h3>Alati</h3></div>

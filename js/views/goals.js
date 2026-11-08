@@ -1,10 +1,10 @@
 // Ciljevi štednje: kartice na Pregledu, detalj, forma, proslava.
-import * as S from '../store.js?v=20261108084202';
-import * as Sync from '../sync.js?v=20261108084202';
-import { esc, fmt, fmtNum, digitsOnly, currentMonthKey, monthLabel, MONTH_GEN } from '../util.js?v=20261108084202';
-import { openSheet, toast, confirmSheet, animateBars, pct, moneyInput } from '../ui.js?v=20261108084202';
-import { txRow } from './istorija.js?v=20261108084202';
-import { openEntrySheet } from './entry.js?v=20261108084202';
+import * as S from '../store.js?v=20261108084802';
+import * as Sync from '../sync.js?v=20261108084802';
+import { esc, fmt, fmtNum, digitsOnly, currentMonthKey, monthLabel, MONTH_GEN } from '../util.js?v=20261108084802';
+import { openSheet, toast, confirmSheet, animateBars, pct, moneyInput, confetti } from '../ui.js?v=20261108084802';
+import { txRow } from './istorija.js?v=20261108084802';
+import { openEntrySheet } from './entry.js?v=20261108084802';
 
 const ICONS = ['🎯', '🏖️', '✈️', '🚗', '🏠', '💍', '👶', '🎓', '💻', '🛋️', '🩺', '🎁'];
 
@@ -163,21 +163,4 @@ export function openGoalForm(g) {
 }
 
 // ---- Proslava ----
-export function celebrate() {
-  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-  const colors = ['#a78bfa', '#22d3ee', '#4ade80', '#fbbf24', '#f472b6', '#f87171'];
-  const box = document.createElement('div');
-  box.className = 'confetti';
-  for (let i = 0; i < 70; i++) {
-    const p = document.createElement('i');
-    p.style.left = Math.random() * 100 + '%';
-    p.style.background = colors[i % colors.length];
-    p.style.animationDelay = Math.random() * 0.4 + 's';
-    p.style.animationDuration = 1.6 + Math.random() * 1.2 + 's';
-    p.style.setProperty('--dx', (Math.random() * 160 - 80) + 'px');
-    p.style.setProperty('--r', Math.random() * 720 + 'deg');
-    box.appendChild(p);
-  }
-  document.body.appendChild(box);
-  setTimeout(() => box.remove(), 3500);
-}
+export const celebrate = () => confetti();
