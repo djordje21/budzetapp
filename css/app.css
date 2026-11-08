@@ -728,3 +728,8 @@ input, textarea, select, .input, [contenteditable] { -webkit-user-select: text; 
 .pgh-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .pgh-sum { white-space: nowrap; flex-shrink: 0; }
 .pace-line + .pace-line { margin-top: 6px; padding-top: 6px; border-top: 1px solid color-mix(in srgb, var(--text) 10%, transparent); }
+
+/* Polja za iznos: primer "0" nestaje kad je polje aktivno (kursor više ne stoji preko nule) */
+.amount-field input { caret-color: var(--accent); }
+.amount-field input:focus::placeholder { color: transparent; }
+.input:focus::placeholder { opacity: .45; }

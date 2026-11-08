@@ -1,10 +1,10 @@
 // Ciljevi štednje: kartice na Pregledu, detalj, forma, proslava.
-import * as S from '../store.js?v=20261108082134';
-import * as Sync from '../sync.js?v=20261108082134';
-import { esc, fmt, fmtNum, digitsOnly, currentMonthKey, monthLabel, MONTH_GEN } from '../util.js?v=20261108082134';
-import { openSheet, toast, confirmSheet, animateBars, pct, moneyInput } from '../ui.js?v=20261108082134';
-import { txRow } from './istorija.js?v=20261108082134';
-import { openEntrySheet } from './entry.js?v=20261108082134';
+import * as S from '../store.js?v=20261108082237';
+import * as Sync from '../sync.js?v=20261108082237';
+import { esc, fmt, fmtNum, digitsOnly, currentMonthKey, monthLabel, MONTH_GEN } from '../util.js?v=20261108082237';
+import { openSheet, toast, confirmSheet, animateBars, pct, moneyInput } from '../ui.js?v=20261108082237';
+import { txRow } from './istorija.js?v=20261108082237';
+import { openEntrySheet } from './entry.js?v=20261108082237';
 
 const ICONS = ['🎯', '🏖️', '✈️', '🚗', '🏠', '💍', '👶', '🎓', '💻', '🛋️', '🩺', '🎁'];
 

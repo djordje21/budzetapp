@@ -1,16 +1,16 @@
 // Ulazna tačka: navigacija, izbor meseca, tema.
-import * as S from './store.js?v=20261108082134';
-import { currentMonthKey, addMonths, monthLabel, MONTH_SHORT, esc } from './util.js?v=20261108082134';
-import { openSheet } from './ui.js?v=20261108082134';
-import { renderPregled } from './views/pregled.js?v=20261108082134';
-import { renderPlan } from './views/plan.js?v=20261108082134';
-import { renderIstorija } from './views/istorija.js?v=20261108082134';
-import { renderVise } from './views/vise.js?v=20261108082134';
-import { renderIzvestaji } from './views/izvestaji.js?v=20261108082134';
-import { openEntrySheet } from './views/entry.js?v=20261108082134';
-import { renderLogin } from './views/login.js?v=20261108082134';
-import * as Sync from './sync.js?v=20261108082134';
-import { VERSION } from './version.js?v=20261108082134';
+import * as S from './store.js?v=20261108082237';
+import { currentMonthKey, addMonths, monthLabel, MONTH_SHORT, esc } from './util.js?v=20261108082237';
+import { openSheet } from './ui.js?v=20261108082237';
+import { renderPregled } from './views/pregled.js?v=20261108082237';
+import { renderPlan } from './views/plan.js?v=20261108082237';
+import { renderIstorija } from './views/istorija.js?v=20261108082237';
+import { renderVise } from './views/vise.js?v=20261108082237';
+import { renderIzvestaji } from './views/izvestaji.js?v=20261108082237';
+import { openEntrySheet } from './views/entry.js?v=20261108082237';
+import { renderLogin } from './views/login.js?v=20261108082237';
+import * as Sync from './sync.js?v=20261108082237';
+import { VERSION } from './version.js?v=20261108082237';
 
 const views = {
   pregled: { render: renderPregled, title: 'Pregled' },
