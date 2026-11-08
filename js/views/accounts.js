@@ -1,10 +1,10 @@
 // Stanje na računima: Đorđe (OTP), Maksijana (OTP), Keš i zbir.
-import { ico } from '../icons.js?v=20261108120001';
-import * as S from '../store.js?v=20261108120001';
-import * as Sync from '../sync.js?v=20261108120001';
-import { esc, fmt, fmtNum, digitsOnly, todayISO, dayLabel, currentMonthKey, daysInMonth } from '../util.js?v=20261108120001';
-import { openEntrySheet } from './entry.js?v=20261108120001';
-import { openSheet, toast, confirmSheet, countUp, moneyInput, dateInputHTML, syncDateShow } from '../ui.js?v=20261108120001';
+import { ico } from '../icons.js?v=20261108121414';
+import * as S from '../store.js?v=20261108121414';
+import * as Sync from '../sync.js?v=20261108121414';
+import { esc, fmt, fmtNum, digitsOnly, todayISO, dayLabel, currentMonthKey, daysInMonth } from '../util.js?v=20261108121414';
+import { openEntrySheet } from './entry.js?v=20261108121414';
+import { openSheet, toast, confirmSheet, countUp, moneyInput, dateInputHTML, syncDateShow } from '../ui.js?v=20261108121414';
 
 const signed = (n) => (n < 0 ? '−' : '') + fmtNum(Math.abs(n));
 

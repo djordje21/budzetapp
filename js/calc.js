@@ -1,6 +1,6 @@
 // Proračuni: plan vs. stvarno za mesec.
-import * as S from './store.js?v=20261108120001';
-import { daysInMonth, currentMonthKey, todayISO } from './util.js?v=20261108120001';
+import * as S from './store.js?v=20261108121414';
+import { daysInMonth, currentMonthKey, todayISO } from './util.js?v=20261108121414';
 
 export const DAILY = new Set(['hrana', 'auto', 'izlasci', 'licno-dj', 'licno-m']);
 export const isDaily = (c) => c.kind === 'expense' && DAILY.has(c.id);

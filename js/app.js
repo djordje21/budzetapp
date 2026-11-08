@@ -1,16 +1,16 @@
 // Ulazna tačka: navigacija, izbor meseca, tema.
-import * as S from './store.js?v=20261108120001';
-import { currentMonthKey, addMonths, monthLabel, MONTH_SHORT, esc } from './util.js?v=20261108120001';
-import { openSheet, toast } from './ui.js?v=20261108120001';
-import { renderPregled } from './views/pregled.js?v=20261108120001';
-import { renderPlan } from './views/plan.js?v=20261108120001';
-import { renderIstorija } from './views/istorija.js?v=20261108120001';
-import { renderVise } from './views/vise.js?v=20261108120001';
-import { renderIzvestaji } from './views/izvestaji.js?v=20261108120001';
-import { openEntrySheet } from './views/entry.js?v=20261108120001';
-import { renderLogin } from './views/login.js?v=20261108120001';
-import * as Sync from './sync.js?v=20261108120001';
-import { VERSION } from './version.js?v=20261108120001';
+import * as S from './store.js?v=20261108121414';
+import { currentMonthKey, addMonths, monthLabel, MONTH_SHORT, esc } from './util.js?v=20261108121414';
+import { openSheet, toast } from './ui.js?v=20261108121414';
+import { renderPregled } from './views/pregled.js?v=20261108121414';
+import { renderPlan } from './views/plan.js?v=20261108121414';
+import { renderIstorija } from './views/istorija.js?v=20261108121414';
+import { renderVise } from './views/vise.js?v=20261108121414';
+import { renderIzvestaji } from './views/izvestaji.js?v=20261108121414';
+import { openEntrySheet } from './views/entry.js?v=20261108121414';
+import { renderLogin } from './views/login.js?v=20261108121414';
+import * as Sync from './sync.js?v=20261108121414';
+import { VERSION } from './version.js?v=20261108121414';
 
 const views = {
   pregled: { render: renderPregled, title: 'Pregled' },
@@ -34,6 +34,9 @@ function applyTheme() {
   const t = S.getState().settings.theme;
   if (t === 'auto') document.documentElement.removeAttribute('data-theme');
   else document.documentElement.setAttribute('data-theme', t);
+  // Statusna traka telefona (sat, baterija) prati izabranu temu.
+  const dark = t === 'dark' || (t === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+  document.getElementById('theme-color')?.setAttribute('content', dark ? '#0F1115' : '#F4F5F7');
 }
 
 function render() {

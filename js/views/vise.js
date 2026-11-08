@@ -1,9 +1,9 @@
 // Podešavanja: korisnik, tema, kategorije, backup.
-import { ico } from '../icons.js?v=20261108120001';
-import * as S from '../store.js?v=20261108120001';
-import { esc, todayISO, fmtDate, isoOf } from '../util.js?v=20261108120001';
-import { openSheet, toast, confirmSheet } from '../ui.js?v=20261108120001';
-import * as Sync from '../sync.js?v=20261108120001';
+import { ico } from '../icons.js?v=20261108121414';
+import * as S from '../store.js?v=20261108121414';
+import { esc, todayISO, fmtDate, isoOf } from '../util.js?v=20261108121414';
+import { openSheet, toast, confirmSheet } from '../ui.js?v=20261108121414';
+import * as Sync from '../sync.js?v=20261108121414';
 
 export function renderVise(el, ctx) {
   const st = S.getState();

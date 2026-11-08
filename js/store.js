@@ -1,7 +1,7 @@
 // Skladište podataka. Za sada lokalno (localStorage); kasnije se ovde uključuje Supabase
 // bez menjanja ekrana — svi ekrani koriste samo funkcije iz ovog fajla.
 
-import { uid, addMonths } from './util.js?v=20261108120001';
+import { uid, addMonths } from './util.js?v=20261108121414';
 
 const KEY = 'budzetapp_v2';
 
