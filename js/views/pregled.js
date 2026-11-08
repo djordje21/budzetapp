@@ -1,17 +1,18 @@
 // Početni ekran: plan vs. stvarno za izabrani mesec.
-import * as S from '../store.js?v=20261108091108';
-import { summarize, pace, monthPhase } from '../calc.js?v=20261108091108';
-import { esc, fmt, fmtNum, fmtSigned, monthLabel, addMonths, MONTH_GEN } from '../util.js?v=20261108091108';
-import { countUp, animateBars, pct, toast } from '../ui.js?v=20261108091108';
-import { openEntrySheet } from './entry.js?v=20261108091108';
-import { txRow, setHistoryFilter } from './istorija.js?v=20261108091108';
-import { isPayable, paidTx, payItem, PAY_LABELS } from '../pay.js?v=20261108091108';
-import { openDueSheet } from './due-detail.js?v=20261108091108';
-import { cumulativeData, cumulativeChart, bindCumulative } from '../charts.js?v=20261108091108';
-import { accountsBlock, bindAccounts } from './accounts.js?v=20261108091108';
-import { goalsBlock, bindGoals } from './goals.js?v=20261108091108';
-import { openCategoryDetail } from './category-detail.js?v=20261108091108';
-import { openQuickEntry } from './quick.js?v=20261108091108';
+import * as S from '../store.js?v=20261108091307';
+import { summarize, pace, monthPhase } from '../calc.js?v=20261108091307';
+import { esc, fmt, fmtNum, fmtSigned, monthLabel, addMonths, MONTH_GEN } from '../util.js?v=20261108091307';
+import { countUp, animateBars, pct, toast } from '../ui.js?v=20261108091307';
+import { openEntrySheet } from './entry.js?v=20261108091307';
+import { txRow, setHistoryFilter } from './istorija.js?v=20261108091307';
+import { isPayable, paidTx, payItem, PAY_LABELS } from '../pay.js?v=20261108091307';
+import { openDueSheet } from './due-detail.js?v=20261108091307';
+import { cumulativeData, cumulativeChart, bindCumulative } from '../charts.js?v=20261108091307';
+import { accountsBlock, bindAccounts } from './accounts.js?v=20261108091307';
+import { goalsBlock, bindGoals } from './goals.js?v=20261108091307';
+import { openCategoryDetail } from './category-detail.js?v=20261108091307';
+import { guideBlock, bindGuide } from './guide.js?v=20261108091307';
+import { openQuickEntry } from './quick.js?v=20261108091307';
 
 export function renderPregled(el, ctx) {
   const key = ctx.month;
@@ -20,7 +21,10 @@ export function renderPregled(el, ctx) {
   const prevKey = addMonths(key, -1);
 
   if (!sum.plan.length && !sum.txs.length) {
-    el.innerHTML = accountsBlock() + emptyMonth(key, prevKey) + goalsBlock();
+    const g = guideBlock(key);
+    const fresh = !Object.keys(S.getState().plans).length && !S.getState().transactions.length;
+    el.innerHTML = (fresh && g ? g : g + emptyMonth(key, prevKey)) + accountsBlock() + goalsBlock();
+    bindGuide(el, key);
     bindEmpty(el, ctx, key, prevKey);
     bindGoals(el);
     bindAccounts(el);
@@ -44,6 +48,7 @@ export function renderPregled(el, ctx) {
   // Grafikon toka ima smisla tek kad postoji nekoliko dana unosa.
   const showChart = phase !== 'future' && sum.varActual > 0 && new Set(sum.txs.map((t) => t.date)).size >= 3;
   el.innerHTML = `
+    ${guideBlock(key)}
     <section class="hero card clickable ${left < 0 ? 'hero-over' : ''}" role="button" tabindex="0" data-go="report">
       <div class="hero-label">${left < 0 ? `Plan troškova za ${mName} je prekoračen za` : `Ostalo u planu troškova za ${mName}`}</div>
       <div class="hero-value" id="hero-val">0</div>
@@ -111,6 +116,7 @@ export function renderPregled(el, ctx) {
     cum.innerHTML = cumulativeChart(data, cum.clientWidth || 340);
     bindCumulative(el.querySelector('#cum-card'), data, key);
   }
+  bindGuide(el, key);
   bindAccounts(el);
   bindGoals(el);
   el.querySelectorAll('[data-cat]').forEach((r) => (r.onclick = () => openCategoryDetail(key, r.dataset.cat)));

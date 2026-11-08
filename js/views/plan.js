@@ -1,12 +1,12 @@
 // Plan za mesec: očekivani prihodi, troškovi i štednja.
-import * as S from '../store.js?v=20261108091108';
-import { summarize } from '../calc.js?v=20261108091108';
-import { esc, fmt, fmtNum, fmtSigned, monthLabel, addMonths, digitsOnly, MONTH_GEN } from '../util.js?v=20261108091108';
-import { openSheet, toast, confirmSheet, moneyInput } from '../ui.js?v=20261108091108';
-import { isPayable, paidTx, payItem, PAY_LABELS } from '../pay.js?v=20261108091108';
-import { openEntrySheet } from './entry.js?v=20261108091108';
-import { openQuickEntry } from './quick.js?v=20261108091108';
-import { monthPhase } from '../calc.js?v=20261108091108';
+import * as S from '../store.js?v=20261108091307';
+import { summarize } from '../calc.js?v=20261108091307';
+import { esc, fmt, fmtNum, fmtSigned, monthLabel, addMonths, digitsOnly, MONTH_GEN } from '../util.js?v=20261108091307';
+import { openSheet, toast, confirmSheet, moneyInput } from '../ui.js?v=20261108091307';
+import { isPayable, paidTx, payItem, PAY_LABELS } from '../pay.js?v=20261108091307';
+import { openEntrySheet } from './entry.js?v=20261108091307';
+import { openQuickEntry } from './quick.js?v=20261108091307';
+import { monthPhase } from '../calc.js?v=20261108091307';
 
 export function renderPlan(el, ctx) {
   const key = ctx.month;
@@ -77,6 +77,7 @@ export function renderPlan(el, ctx) {
       <div class="fix-list">${misplaced.map((m) => `<span>${esc(m.item.name)} → ${S.cat(m.to).icon} ${esc(S.cat(m.to).name)}</span>`).join('')}</div>
       <button class="btn btn-primary btn-sm" id="fix-pocket">Prebaci</button>
     </div>` : ''}
+    ${!plan.length ? '<div class="hint plan-intro">📋 <b>Plan</b> je koliko očekujete da <b>zaradite</b> i <b>potrošite</b> ovog meseca. Dodajte plate, račune, hranu, gorivo... Stvarne troškove kasnije unosite preko dugmeta <b>+</b>.</div>' : ''}
     <section class="card plan-summary">
       <div class="ps-row"><span>Planirani prihodi</span><b class="t-green">${fmtNum(sum.tot.income.plan)}</b></div>
       <div class="ps-row"><span>Planirani troškovi</span><b class="t-red">${sum.tot.expense.plan ? '−' : ''}${fmtNum(sum.tot.expense.plan)}</b></div>

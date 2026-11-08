@@ -779,3 +779,15 @@ input, textarea, select, .input, [contenteditable] { -webkit-user-select: text; 
 .danger-zone summary::-webkit-details-marker { display: none; }
 .danger-zone[open] summary { color: var(--text); }
 .dz-note { padding: 12px 14px; font-size: 13px; color: var(--muted); line-height: 1.45; }
+
+/* Vodič za prvi put */
+.guide { padding: 14px; margin: 4px 0 12px; border-color: color-mix(in srgb, var(--accent) 45%, var(--border)); }
+.guide-head { display: flex; justify-content: space-between; align-items: baseline; font-size: 16px; }
+.guide-intro { font-size: 13px; color: var(--muted); line-height: 1.5; margin: 6px 0 8px; }
+.guide-step { display: flex; align-items: center; gap: 12px; width: 100%; text-align: left; padding: 10px 4px; border-top: 1px solid var(--border); font-size: 14px; }
+.guide-step.done { opacity: .55; }
+.guide-step.done b { text-decoration: line-through; }
+.gs-num { flex-shrink: 0; width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; font-weight: 800; font-size: 13px; background: var(--accent-soft); color: var(--accent); }
+.guide-step.done .gs-num { background: var(--green-soft); color: var(--green); }
+.guide-hide { display: block; margin: 6px auto 0; font-size: 12.5px; color: var(--muted); padding: 6px; }
+.plan-intro { margin: 4px 0 10px; }
