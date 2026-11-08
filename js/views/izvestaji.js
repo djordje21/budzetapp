@@ -1,12 +1,12 @@
 // Izveštaji: dan, nedelja, mesec, kvartal, polugodište, godina.
-import * as S from '../store.js?v=20261108053932';
-import { PERIODS, periodOf, shiftAnchor, prevPeriod, txInPeriod, planInPeriod, monthsCovered } from '../period.js?v=20261108053932';
-import { esc, fmt, fmtNum, fmtSigned, todayISO, currentMonthKey, parseISO, isoOf, MONTH_SHORT, pad } from '../util.js?v=20261108053932';
-import { animateBars, pct } from '../ui.js?v=20261108053932';
-import { donutData, donutChart, bindDonut } from '../charts.js?v=20261108053932';
-import { txRow } from './istorija.js?v=20261108053932';
-import { openCategoryDetail, openCategoryPeriod } from './category-detail.js?v=20261108053932';
-import { openEntrySheet } from './entry.js?v=20261108053932';
+import * as S from '../store.js?v=20261108054707';
+import { PERIODS, periodOf, shiftAnchor, prevPeriod, txInPeriod, planInPeriod, monthsCovered } from '../period.js?v=20261108054707';
+import { esc, fmt, fmtNum, fmtSigned, todayISO, currentMonthKey, parseISO, isoOf, MONTH_SHORT, pad } from '../util.js?v=20261108054707';
+import { animateBars, pct } from '../ui.js?v=20261108054707';
+import { donutData, donutChart, bindDonut } from '../charts.js?v=20261108054707';
+import { txRow } from './istorija.js?v=20261108054707';
+import { openCategoryDetail, openCategoryPeriod } from './category-detail.js?v=20261108054707';
+import { openEntrySheet } from './entry.js?v=20261108054707';
 
 const R = { type: 'month', anchor: null };
 const DOW = ['Pon', 'Uto', 'Sre', 'Čet', 'Pet', 'Sub', 'Ned'];
@@ -25,8 +25,8 @@ export function renderIzvestaji(el, ctx) {
   // Tekući period se poredi sa planom do danas (srazmerno), budući nema poređenja.
   const partial = today >= p.start && today < p.end;
   const future = today < p.start;
-  const plan = future ? { byCat: {}, tot: { income: 0, expense: 0, saving: 0 } } : planInPeriod(partial ? { ...p, end: today } : p, { lumpFull: partial });
-  const planWord = partial ? 'plana do danas' : 'plana';
+  const plan = future ? { byCat: {}, tot: { income: 0, expense: 0, saving: 0 } } : planInPeriod(partial ? { ...p, end: today } : p, { lumpFull: partial && !short });
+  const planWord = !partial ? 'plana' : short ? 'srazmernog plana' : R.type === 'month' ? 'plana za mesec' : 'plana zaključno sa ovim mesecom';
 
   const inc = sumBy(txs, (t) => t.kind === 'income');
   const exp = sumBy(txs, (t) => t.kind === 'expense');
@@ -90,7 +90,7 @@ export function renderIzvestaji(el, ctx) {
     ${exp > 0 ? `<div class="section-head"><h3>Raspodela troškova</h3></div>
     <section class="card pad" id="donut-card">${donutChart(donutData(txs))}</section>` : ''}
 
-    <div class="section-head"><h3>Po kategorijama</h3><span class="muted">${short ? 'udeo' : partial ? 'stvarno · plan do danas' : 'stvarno · plan'}</span></div>
+    <div class="section-head"><h3>Po kategorijama</h3><span class="muted">${short ? 'udeo' : partial && R.type !== 'month' ? 'stvarno · plan do kraja ovog meseca' : 'stvarno · plan'}</span></div>
     <section class="card list">${categoryRows(txs, plan, short, exp)}</section>
 
     <div class="section-head"><h3>Po osobi</h3></div>

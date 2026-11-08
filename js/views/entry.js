@@ -1,9 +1,9 @@
 // Brzi unos stvarnog troška / prihoda / štednje (i izmena postojećeg unosa).
-import * as S from '../store.js?v=20261108053932';
-import { openSheet, toast, confirmSheet, moneyInput } from '../ui.js?v=20261108053932';
-import { esc, fmt, fmtNum, digitsOnly, todayISO, isoOf } from '../util.js?v=20261108053932';
-import { summarize } from '../calc.js?v=20261108053932';
-import { suggestCategory } from '../suggest.js?v=20261108053932';
+import * as S from '../store.js?v=20261108054707';
+import { openSheet, toast, confirmSheet, moneyInput } from '../ui.js?v=20261108054707';
+import { esc, fmt, fmtNum, digitsOnly, todayISO, isoOf } from '../util.js?v=20261108054707';
+import { summarize } from '../calc.js?v=20261108054707';
+import { suggestCategory } from '../suggest.js?v=20261108054707';
 
 const ICONS = ['📌', '☕', '🍕', '🎬', '✈️', '🐶', '👶', '📚', '💊', '🎮', '🔧', '💇'];
 const COLORS = ['#0ea5e9', '#d946ef', '#f97316', '#22c55e', '#6366f1', '#f43f5e', '#14b8a6', '#eab308'];
@@ -223,7 +223,7 @@ export function openEntrySheet({ tx = null, kind = 'expense', date = null, categ
       if (v.note && !v.picked) runSuggest(); // npr. naziv prodavnice sa skeniranog računa
       $('#e-scan')?.addEventListener('click', () => {
         close();
-        setTimeout(() => import('./scanner.js?v=20261108053932').then((m) => m.openScanner()), 220);
+        setTimeout(() => import('./scanner.js?v=20261108054707').then((m) => m.openScanner()), 220);
       });
       if (!isEdit) setTimeout(() => amountEl.focus(), 280);
 
@@ -242,7 +242,7 @@ export function openEntrySheet({ tx = null, kind = 'expense', date = null, categ
         else await S.addTransaction(data);
         feedback(data, isEdit);
         if (g && !wasDone && S.goalSaved(g) >= g.target) {
-          import('./goals.js?v=20261108053932').then((m) => m.celebrate());
+          import('./goals.js?v=20261108054707').then((m) => m.celebrate());
           setTimeout(() => toast(`🎉 <b>Cilj ostvaren: ${esc(g.name)}!</b>`, 'ok', 4500), 400);
         }
         if (again) {

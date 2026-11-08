@@ -1,6 +1,6 @@
 // Grafikoni (SVG, bez biblioteka): tok potrošnje kroz mesec i raspodela po kategorijama.
-import * as S from './store.js?v=20261108053932';
-import { esc, fmtNum, daysInMonth, todayISO, currentMonthKey, pad } from './util.js?v=20261108053932';
+import * as S from './store.js?v=20261108054707';
+import { esc, fmtNum, daysInMonth, todayISO, currentMonthKey, pad } from './util.js?v=20261108054707';
 
 const shortNum = (n) => (n >= 1e6 ? (n / 1e6).toFixed(1).replace('.0', '').replace('.', ',') + 'M' : n >= 1e3 ? Math.round(n / 1e3) + 'k' : String(Math.round(n)));
 function niceMax(v) {

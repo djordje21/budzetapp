@@ -1,6 +1,6 @@
 // Periodi za izveštaje: dan, nedelja, mesec, kvartal, polugodište, godina.
-import * as S from './store.js?v=20261108053932';
-import { isoOf, parseISO, pad, MONTH_NAMES, MONTH_SHORT, MONTH_GEN, DAY_NAMES, daysInMonth } from './util.js?v=20261108053932';
+import * as S from './store.js?v=20261108054707';
+import { isoOf, parseISO, pad, MONTH_NAMES, MONTH_SHORT, MONTH_GEN, DAY_NAMES, daysInMonth } from './util.js?v=20261108054707';
 
 export const PERIODS = [
   ['day', 'Dan'], ['week', 'Nedelja'], ['month', 'Mesec'],
@@ -81,9 +81,8 @@ export function planInPeriod(p, { lumpFull = false } = {}) {
   for (const { key, share } of monthsCovered(p)) {
     for (const it of S.planOf(key)) {
       const c = S.cat(it.categoryId);
-      // Rate, računi, plata i štednja stižu odjednom — u "planu do danas" ceo mesečni iznos, ne deo po danima.
-      const lump = c.fixed || c.kind !== 'expense';
-      const a = Number(it.amount) * (lumpFull && lump ? 1 : share);
+      // lumpFull: započeti mesec se poredi sa celim mesečnim planom (kao na Pregledu), ne sa delom po danima.
+      const a = Number(it.amount) * (lumpFull ? 1 : share);
       byCat[c.id] = (byCat[c.id] || 0) + a;
       tot[c.kind] += a;
     }
