@@ -1,14 +1,14 @@
 // Izveštaji: dan, nedelja, mesec, kvartal, polugodište, godina.
-import { ico } from '../icons.js?v=20261108203432';
-import * as S from '../store.js?v=20261108203432';
-import { PERIODS, periodOf, shiftAnchor, prevPeriod, txInPeriod, planInPeriod, monthsCovered } from '../period.js?v=20261108203432';
-import { esc, fmt, fmtNum, fmtSigned, todayISO, currentMonthKey, parseISO, isoOf, MONTH_SHORT, pad, fmtDate } from '../util.js?v=20261108203432';
-import { animateBars, pct } from '../ui.js?v=20261108203432';
-import { donutData, donutChart, bindDonut } from '../charts.js?v=20261108203432';
-import { txRow } from './istorija.js?v=20261108203432';
-import { isDaily } from '../calc.js?v=20261108203432';
-import { openCategoryDetail, openCategoryPeriod } from './category-detail.js?v=20261108203432';
-import { openEntrySheet } from './entry.js?v=20261108203432';
+import { ico } from '../icons.js?v=20261108204516';
+import * as S from '../store.js?v=20261108204516';
+import { PERIODS, periodOf, shiftAnchor, prevPeriod, txInPeriod, planInPeriod, monthsCovered } from '../period.js?v=20261108204516';
+import { esc, fmt, fmtNum, fmtSigned, todayISO, currentMonthKey, parseISO, isoOf, MONTH_SHORT, pad, fmtDate } from '../util.js?v=20261108204516';
+import { animateBars, pct } from '../ui.js?v=20261108204516';
+import { donutData, donutChart, bindDonut } from '../charts.js?v=20261108204516';
+import { txRow } from './istorija.js?v=20261108204516';
+import { isDaily } from '../calc.js?v=20261108204516';
+import { openCategoryDetail, openCategoryPeriod } from './category-detail.js?v=20261108204516';
+import { openEntrySheet } from './entry.js?v=20261108204516';
 
 const R = { type: 'month', anchor: null };
 // 1 trošak, 2–4 troška, 5+ troškova (21 trošak, 22 troška...)

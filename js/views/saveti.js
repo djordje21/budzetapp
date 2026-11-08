@@ -1,9 +1,9 @@
 // Saveti: konkretni predlozi na osnovu vaše potrošnje ovog meseca + par opštih pravila.
-import * as S from '../store.js?v=20261108203432';
-import { summarize, pace, monthPhase } from '../calc.js?v=20261108203432';
-import { esc, fmt, fmtNum, currentMonthKey, daysInMonth, todayISO } from '../util.js?v=20261108203432';
-import { unpaidBills } from '../pay.js?v=20261108203432';
-import { goalStats } from './goals.js?v=20261108203432';
+import * as S from '../store.js?v=20261108204516';
+import { summarize, pace, monthPhase } from '../calc.js?v=20261108204516';
+import { esc, fmt, fmtNum, currentMonthKey, daysInMonth, todayISO } from '../util.js?v=20261108204516';
+import { unpaidBills } from '../pay.js?v=20261108204516';
+import { goalStats } from './goals.js?v=20261108204516';
 
 const GENERAL = [
   ['🐷', 'Prvo platite sebe', 'Kad legne plata, odmah uplatite štednju — pre računa i kupovine. Šta ostane, troši se.'],
@@ -13,7 +13,9 @@ const GENERAL = [
   ['🧯', 'Rezerva za nepredviđeno', 'Cilj: 3 mesečna troška na posebnom računu. Tako servis auta ili zubar ne ruše plan.'],
 ];
 
-export function renderSaveti(el, ctx) {
+// Svi saveti za tekući mesec: upozorenja (na osnovu potrošnje) + opšte dobre navike.
+// id je stabilan (bez iznosa), da "✕ do sutra" važi i kad se iznos promeni.
+export function buildTips() {
   const key = currentMonthKey();
   const sum = summarize(key);
   const p = pace(sum);
@@ -57,9 +59,43 @@ export function renderSaveti(el, ctx) {
 
   if (!out.length && monthPhase(key) === 'current') out.push(['good', '👌', 'Sve je u planu', 'Nema prekoračenja ni zaboravljenih računa. Samo tako nastavite.']);
 
+  const mk = ([kind, icon, title, text]) => ({ id: icon + title.replace(/[\d.,]+/g, '#'), kind, icon, title, text });
+  return {
+    alerts: out.filter((o) => o[0] !== 'good').map(mk),
+    good: out.filter((o) => o[0] === 'good').map(mk),
+    general: GENERAL.map(([icon, title, text]) => mk(['tip', icon, title, text])),
+  };
+}
+
+const tipHTML = (t) => `<div class="tip tip-${t.kind}"><span class="tip-i">${t.icon}</span><span class="grow"><b>${t.title}</b><br><span class="muted small">${t.text}</span></span></div>`;
+
+export function renderSaveti(el) {
+  const { alerts, good, general } = buildTips();
   el.innerHTML = `
     <div class="section-head"><h3>Za ovaj mesec</h3></div>
-    <section class="card list tips">${out.map(([k, i, t, d]) => `<div class="tip tip-${k}"><span class="tip-i">${i}</span><span class="grow"><b>${t}</b><br><span class="muted small">${d}</span></span></div>`).join('')}</section>
+    <section class="card list tips">${[...alerts, ...good].map(tipHTML).join('')}</section>
     <div class="section-head"><h3>Dobre navike</h3></div>
-    <section class="card list tips">${GENERAL.map(([i, t, d]) => `<div class="tip"><span class="tip-i">${i}</span><span class="grow"><b>${t}</b><br><span class="muted small">${d}</span></span></div>`).join('')}</section>`;
+    <section class="card list tips">${general.map(tipHTML).join('')}</section>`;
 }
+
+// ---- Savet na glavnoj kartici: svaki put drugi, ✕ sklanja do sutra ----
+const HID = 'budzet_tips_hidden';
+const today = () => todayISO();
+function hiddenToday() {
+  try { const o = JSON.parse(localStorage.getItem(HID) || '{}'); return new Set(Object.keys(o).filter((k) => o[k] === today())); } catch { return new Set(); }
+}
+export function hideTip(id) {
+  try { const o = JSON.parse(localStorage.getItem(HID) || '{}'); for (const k of Object.keys(o)) if (o[k] !== today()) delete o[k]; o[id] = today(); localStorage.setItem(HID, JSON.stringify(o)); } catch {}
+}
+// Redosled: prvo upozorenja, pa korisni saveti; svako otvaranje aplikacije pomera na sledeći.
+export function currentTip(seq) {
+  const { alerts, good, general } = buildTips();
+  const hidden = hiddenToday();
+  const list = [...alerts, ...good, ...general].filter((t) => !hidden.has(t.id));
+  if (!list.length) return null;
+  const nAlerts = alerts.filter((t) => !hidden.has(t.id)).length;
+  // Upozorenja se smenjuju češće: ako ih ima, svako drugo otvaranje je upozorenje.
+  const i = nAlerts && seq % 2 === 0 ? Math.floor(seq / 2) % nAlerts : seq % list.length;
+  return { tip: list[i], pos: list.indexOf(list[i]) + 1, total: list.length };
+}
+

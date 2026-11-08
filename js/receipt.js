@@ -1,6 +1,6 @@
 // Prepoznavanje QR kodova: IPS (računi za struju, telefon...) i fiskalni račun (radnje, restorani).
-import * as S from './store.js?v=20261108203432';
-import { isoOf } from './util.js?v=20261108203432';
+import * as S from './store.js?v=20261108204516';
+import { isoOf } from './util.js?v=20261108204516';
 
 // ---- Ćirilica → latinica ----
 const CYR = { А: 'A', Б: 'B', В: 'V', Г: 'G', Д: 'D', Ђ: 'Đ', Е: 'E', Ж: 'Ž', З: 'Z', И: 'I', Ј: 'J', К: 'K', Л: 'L', Љ: 'Lj', М: 'M', Н: 'N', Њ: 'Nj', О: 'O', П: 'P', Р: 'R', С: 'S', Т: 'T', Ћ: 'Ć', У: 'U', Ф: 'F', Х: 'H', Ц: 'C', Ч: 'Č', Џ: 'Dž', Ш: 'Š' };

@@ -987,3 +987,16 @@ b, strong { font-weight: 700; }
 .tip-good { background: var(--green-soft); }
 .goals-page .goal-scroll { flex-direction: column; margin: 0; padding: 0; overflow: visible; }
 .goals-page .goal-card { flex: none; max-width: none; width: 100%; }
+
+/* Savet na glavnoj kartici */
+.tip-box { position: relative; padding: 12px 40px 10px 14px; transition: opacity .2s, transform .2s; }
+.tip-box.tip-out { opacity: 0; transform: translateX(20px); }
+.tip-x { position: absolute; top: 6px; right: 6px; width: 30px; height: 30px; border-radius: 9px; color: inherit; opacity: .7; font-size: 14px; }
+.tip-x:active { background: rgba(255, 255, 255, .15); }
+.tb-title { font-size: 14px; }
+.tb-text { font-size: 13px; opacity: .85; margin-top: 3px; line-height: 1.45; }
+.tb-foot { display: flex; justify-content: space-between; margin-top: 8px; font-size: 12px; opacity: .75; }
+.tb-all { color: inherit; font-weight: 700; text-decoration: none; }
+.hero .tip-bad { background: rgba(242, 134, 124, .22); }
+.hero .tip-warn { background: rgba(232, 180, 92, .2); }
+.hero .tip-good { background: rgba(95, 208, 143, .18); }

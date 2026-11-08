@@ -1,19 +1,20 @@
 // Početni ekran: plan vs. stvarno za izabrani mesec.
-import { ico } from '../icons.js?v=20261108203432';
-import * as S from '../store.js?v=20261108203432';
-import { summarize, pace, monthPhase } from '../calc.js?v=20261108203432';
-import { esc, fmt, fmtNum, fmtSigned, monthLabel, addMonths, MONTH_GEN } from '../util.js?v=20261108203432';
-import { countUp, animateBars, pct, toast } from '../ui.js?v=20261108203432';
-import { openEntrySheet } from './entry.js?v=20261108203432';
-import { txRow, setHistoryFilter } from './istorija.js?v=20261108203432';
-import { isPayable, paidTx, payItem, PAY_LABELS } from '../pay.js?v=20261108203432';
-import { openDueSheet } from './due-detail.js?v=20261108203432';
-import { cumulativeData, cumulativeChart, bindCumulative } from '../charts.js?v=20261108203432';
-import { accountsBlock, bindAccounts } from './accounts.js?v=20261108203432';
-import { goalsBlock, bindGoals } from './goals.js?v=20261108203432';
-import { openCategoryDetail } from './category-detail.js?v=20261108203432';
-import { guideBlock, bindGuide } from './guide.js?v=20261108203432';
-import { openQuickEntry } from './quick.js?v=20261108203432';
+import { ico } from '../icons.js?v=20261108204516';
+import * as S from '../store.js?v=20261108204516';
+import { summarize, pace, monthPhase } from '../calc.js?v=20261108204516';
+import { esc, fmt, fmtNum, fmtSigned, monthLabel, addMonths, MONTH_GEN } from '../util.js?v=20261108204516';
+import { countUp, animateBars, pct, toast } from '../ui.js?v=20261108204516';
+import { openEntrySheet } from './entry.js?v=20261108204516';
+import { txRow, setHistoryFilter } from './istorija.js?v=20261108204516';
+import { isPayable, paidTx, payItem, PAY_LABELS } from '../pay.js?v=20261108204516';
+import { openDueSheet } from './due-detail.js?v=20261108204516';
+import { cumulativeData, cumulativeChart, bindCumulative } from '../charts.js?v=20261108204516';
+import { accountsBlock, bindAccounts } from './accounts.js?v=20261108204516';
+import { goalsBlock, bindGoals } from './goals.js?v=20261108204516';
+import { openCategoryDetail } from './category-detail.js?v=20261108204516';
+import { currentTip, hideTip } from './saveti.js?v=20261108204516';
+import { guideBlock, bindGuide } from './guide.js?v=20261108204516';
+import { openQuickEntry } from './quick.js?v=20261108204516';
 
 export function renderPregled(el, ctx) {
   const key = ctx.month;
@@ -26,6 +27,7 @@ export function renderPregled(el, ctx) {
     const fresh = !Object.keys(S.getState().plans).length && !S.getState().transactions.length;
     el.innerHTML = (fresh && g ? g : g + emptyMonth(key, prevKey)) + accountsBlock() + goalsBlock();
     bindGuide(el, key);
+  bindTip(el);
     bindEmpty(el, ctx, key, prevKey);
     bindGoals(el);
     bindAccounts(el);
@@ -55,7 +57,7 @@ export function renderPregled(el, ctx) {
       <div class="hero-value" id="hero-val">0</div>
       <div class="hero-sub">Potrošeno <b>${fmtNum(tot.expense.actual)}</b> od planiranih <b>${fmtNum(tot.expense.plan)}</b> RSD</div>
       <div class="bar bar-lg"><div class="bar-fill ${left < 0 ? 'is-over' : ''}" data-w="${pct(tot.expense.actual, tot.expense.plan)}"></div></div>
-      ${paceMsg(p, phase, sum)}
+      ${phase === 'current' ? tipBox() : paceMsg(p, phase, sum)}
     </section>
 
     ${accountsBlock()}
@@ -118,6 +120,7 @@ export function renderPregled(el, ctx) {
     bindCumulative(el.querySelector('#cum-card'), data, key);
   }
   bindGuide(el, key);
+  bindTip(el);
   bindAccounts(el);
   bindGoals(el);
   el.querySelectorAll('[data-cat]').forEach((r) => (r.onclick = () => openCategoryDetail(key, r.dataset.cat)));
@@ -195,6 +198,33 @@ function catRow(r) {
 }
 
 const longName = (c) => ({ hrana: 'Hrana', auto: 'Gorivo', izlasci: 'Izlasci', 'licno-dj': 'Džeparac Đorđa', 'licno-m': 'Džeparac Maksijane' }[c.id] || c.name);
+
+// Savet na glavnoj kartici (svako otvaranje drugi, ✕ sklanja do sutra).
+const tipSeq = () => { try { return Number(localStorage.getItem('budzet_tip_seq') || 0); } catch { return 0; } };
+function tipBox() {
+  const c = currentTip(tipSeq());
+  if (!c) return '';
+  const t = c.tip;
+  return `<div class="hint tip-box tip-${t.kind}" id="tip-box" data-tip="${esc(t.id)}">
+    <button class="tip-x" aria-label="Skloni do sutra">✕</button>
+    <div class="tb-title">${t.icon} <b>${t.title}</b></div>
+    <div class="tb-text">${t.text}</div>
+    <div class="tb-foot"><span>${c.pos} / ${c.total}</span><a href="#/saveti" class="tb-all">Svi saveti →</a></div>
+  </div>`;
+}
+function bindTip(el) {
+  const box = el.querySelector('#tip-box');
+  if (!box) return;
+  box.addEventListener('click', (e) => e.stopPropagation()); // ne otvaraj izveštaj
+  box.querySelector('.tip-x').onclick = () => {
+    hideTip(box.dataset.tip);
+    box.classList.add('tip-out');
+    setTimeout(() => {
+      const html = tipBox();
+      if (html) { box.outerHTML = html; bindTip(el); } else box.remove();
+    }, 220);
+  };
+}
 
 function paceMsg(p, phase, sum) {
   if (phase === 'future') return `<div class="hint">📅 Budući mesec — ovo je plan. Stvarni unosi kreću kad mesec počne.</div>`;
