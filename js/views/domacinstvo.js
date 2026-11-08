@@ -1,8 +1,8 @@
 // Domaćinstvo: članovi (Đorđe i Maksijana), ko je šta uneo ovog meseca, da li je sve sačuvano.
-import * as S from '../store.js?v=20261108134755';
-import * as Sync from '../sync.js?v=20261108134755';
-import { txOfMonth } from '../calc.js?v=20261108134755';
-import { esc, fmt, fmtNum, monthLabel, dayLabel } from '../util.js?v=20261108134755';
+import * as S from '../store.js?v=20261108141149';
+import * as Sync from '../sync.js?v=20261108141149';
+import { txOfMonth } from '../calc.js?v=20261108141149';
+import { esc, fmt, fmtNum, monthLabel, dayLabel } from '../util.js?v=20261108141149';
 
 export function renderDomacinstvo(el, ctx) {
   const key = ctx.month;
