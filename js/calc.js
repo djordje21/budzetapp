@@ -1,6 +1,6 @@
 // Proračuni: plan vs. stvarno za mesec.
-import * as S from './store.js?v=20261108081454';
-import { daysInMonth, currentMonthKey, todayISO } from './util.js?v=20261108081454';
+import * as S from './store.js?v=20261108081746';
+import { daysInMonth, currentMonthKey, todayISO } from './util.js?v=20261108081746';
 
 export const DAILY = new Set(['hrana', 'auto', 'izlasci', 'licno-dj', 'licno-m']);
 export const isDaily = (c) => c.kind === 'expense' && DAILY.has(c.id);
@@ -72,7 +72,7 @@ export function pace(sum) {
   // Dnevni limit po kategoriji do kraja meseca (samo kategorije koje imaju plan).
   const limits = sum.cats
     .filter((r) => isDaily(r.cat) && r.plan > 0)
-    .map((r) => ({ cat: r.cat, left: r.plan - r.actual, perDay: Math.max(0, r.plan - r.actual) / daysLeft }))
+    .map((r) => ({ cat: r.cat, plan: r.plan, actual: r.actual, left: r.plan - r.actual, pct: r.actual / r.plan, perDay: Math.max(0, r.plan - r.actual) / daysLeft }))
     .sort((a, b) => b.perDay - a.perDay);
   return { day, dim, daysLeft, timePct, spentPct, remaining, status, limits };
 }

@@ -727,3 +727,4 @@ input, textarea, select, .input, [contenteditable] { -webkit-user-select: text; 
 .plan-group-head { align-items: baseline; gap: 10px; }
 .pgh-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .pgh-sum { white-space: nowrap; flex-shrink: 0; }
+.pace-line + .pace-line { margin-top: 6px; padding-top: 6px; border-top: 1px solid color-mix(in srgb, var(--text) 10%, transparent); }

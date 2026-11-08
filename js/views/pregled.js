@@ -1,17 +1,17 @@
 // Početni ekran: plan vs. stvarno za izabrani mesec.
-import * as S from '../store.js?v=20261108081454';
-import { summarize, pace, monthPhase } from '../calc.js?v=20261108081454';
-import { esc, fmt, fmtNum, fmtSigned, monthLabel, addMonths, MONTH_GEN } from '../util.js?v=20261108081454';
-import { countUp, animateBars, pct, toast } from '../ui.js?v=20261108081454';
-import { openEntrySheet } from './entry.js?v=20261108081454';
-import { txRow, setHistoryFilter } from './istorija.js?v=20261108081454';
-import { isPayable, paidTx, payItem, PAY_LABELS } from '../pay.js?v=20261108081454';
-import { openDueSheet } from './due-detail.js?v=20261108081454';
-import { cumulativeData, cumulativeChart, bindCumulative } from '../charts.js?v=20261108081454';
-import { accountsBlock, bindAccounts } from './accounts.js?v=20261108081454';
-import { goalsBlock, bindGoals } from './goals.js?v=20261108081454';
-import { openCategoryDetail } from './category-detail.js?v=20261108081454';
-import { openQuickEntry } from './quick.js?v=20261108081454';
+import * as S from '../store.js?v=20261108081746';
+import { summarize, pace, monthPhase } from '../calc.js?v=20261108081746';
+import { esc, fmt, fmtNum, fmtSigned, monthLabel, addMonths, MONTH_GEN } from '../util.js?v=20261108081746';
+import { countUp, animateBars, pct, toast } from '../ui.js?v=20261108081746';
+import { openEntrySheet } from './entry.js?v=20261108081746';
+import { txRow, setHistoryFilter } from './istorija.js?v=20261108081746';
+import { isPayable, paidTx, payItem, PAY_LABELS } from '../pay.js?v=20261108081746';
+import { openDueSheet } from './due-detail.js?v=20261108081746';
+import { cumulativeData, cumulativeChart, bindCumulative } from '../charts.js?v=20261108081746';
+import { accountsBlock, bindAccounts } from './accounts.js?v=20261108081746';
+import { goalsBlock, bindGoals } from './goals.js?v=20261108081746';
+import { openCategoryDetail } from './category-detail.js?v=20261108081746';
+import { openQuickEntry } from './quick.js?v=20261108081746';
 
 export function renderPregled(el, ctx) {
   const key = ctx.month;
@@ -195,7 +195,7 @@ function catRow(r) {
   </div>`;
 }
 
-const shortName = (c) => ({ hrana: 'hrana', auto: 'gorivo', izlasci: 'izlasci', 'licno-dj': 'Đorđe', 'licno-m': 'Maksijana' }[c.id] || c.name);
+const longName = (c) => ({ hrana: 'Hrana', auto: 'Gorivo', izlasci: 'Izlasci', 'licno-dj': 'Džeparac Đorđa', 'licno-m': 'Džeparac Maksijane' }[c.id] || c.name);
 
 function paceMsg(p, phase, sum) {
   if (phase === 'future') return `<div class="hint">📅 Budući mesec — ovo je plan. Stvarni unosi kreću kad mesec počne.</div>`;
@@ -207,16 +207,18 @@ function paceMsg(p, phase, sum) {
   }
   if (!p) return '';
   const t = Math.round(p.timePct * 100), s = Math.round(p.spentPct * 100);
-  const round = (n) => Math.max(0, Math.round(n / 50) * 50);
-  const lim = p.limits.map((l) => l.left < 0
-    ? `<span class="lim lim-over">${l.cat.icon} ${esc(shortName(l.cat))} <b>preko ${fmtNum(-l.left)}</b></span>`
-    : `<span class="lim">${l.cat.icon} ${esc(shortName(l.cat))} <b>${fmtNum(round(l.perDay))}</b></span>`).join('');
-  const limBlock = lim ? `<div class="lims"><div class="lims-t">Dnevno najviše do kraja meseca (${p.daysLeft} ${p.daysLeft === 1 ? 'dan' : 'dana'}):</div>${lim}</div>` : '';
-  if (p.status === 'over')
-    return `<div class="hint hint-bad">⚠️ Svakodnevni troškovi su već ${fmt(-p.remaining)} preko plana.${limBlock}</div>`;
-  if (p.status === 'fast')
-    return `<div class="hint hint-warn">🏃 Trošite brže od plana: ${s}% plana za svakodnevne troškove, a prošlo je ${t}% meseca.${limBlock}</div>`;
-  return `<div class="hint hint-good">👌 U ritmu ste: ${s}% plana za svakodnevne troškove, a prošlo je ${t}% meseca.${limBlock}</div>`;
+  const name = (c) => `${c.icon} ${esc(longName(c))}`;
+  const perDayOk = (c) => c.id === 'hrana' || c.id.startsWith('licno-'); // troši se zaista svakog dana
+  const over = p.limits.filter((l) => l.left < 0);
+  const fast = p.limits.filter((l) => l.left >= 0 && l.actual > 0 && l.pct > p.timePct + 0.15);
+  const parts = [];
+  for (const l of over) parts.push(`⚠️ <b>${name(l.cat)}</b> ${l.cat.id === 'izlasci' ? 'su' : 'je'} <b>${fmtNum(-l.left)} RSD preko plana</b>.`);
+  for (const l of fast) {
+    const tail = perDayOk(l.cat) ? `, oko <b>${fmtNum(Math.round(l.perDay / 50) * 50)} dnevno</b>` : '';
+    parts.push(`🏃 <b>${name(l.cat)}</b> ide brže od plana: potrošeno ${Math.round(l.pct * 100)}% plana, a prošlo je ${t}% meseca. Do kraja meseca ostaje <b>${fmtNum(l.left)}</b>${tail}.`);
+  }
+  if (parts.length) return `<div class="hint ${over.length ? 'hint-bad' : 'hint-warn'}">${parts.map((x) => `<div class="pace-line">${x}</div>`).join('')}</div>`;
+  return `<div class="hint hint-good">👌 U ritmu ste. Za hranu, gorivo, izlaske i džeparac potrošili ste ${s}% plana, a prošlo je ${t}% meseca.</div>`;
 }
 
 function emptyMonth(key, prevKey) {
