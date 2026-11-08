@@ -1,8 +1,8 @@
 // Podešavanja: korisnik, tema, kategorije, backup.
-import * as S from '../store.js?v=20261108085601';
-import { esc, todayISO, fmtDate, isoOf } from '../util.js?v=20261108085601';
-import { openSheet, toast, confirmSheet } from '../ui.js?v=20261108085601';
-import * as Sync from '../sync.js?v=20261108085601';
+import * as S from '../store.js?v=20261108090443';
+import { esc, todayISO, fmtDate, isoOf } from '../util.js?v=20261108090443';
+import { openSheet, toast, confirmSheet } from '../ui.js?v=20261108090443';
+import * as Sync from '../sync.js?v=20261108090443';
 
 export function renderVise(el, ctx) {
   const st = S.getState();
@@ -42,11 +42,18 @@ export function renderVise(el, ctx) {
     <div class="section-head"><h3>Podaci</h3></div>
     <section class="card list">
       ${Sync.enabled ? '' : '<div class="sync-row"><span class="dot dot-pending"></span><span class="grow"><b>Lokalno</b><br><span class="muted small">Podaci su samo na ovom uređaju.</span></span></div>'}
-      <button class="tool-row" id="export">⬇️ Izvezi backup (.json)</button>
-      <button class="tool-row" id="import"><span class="grow">⬆️ Uvezi backup<br><span class="muted small">radi i sa starim budzet2026 backupom</span></span></button>
-      <input type="file" id="import-file" accept=".json,application/json" hidden>
-      <button class="tool-row t-red" id="reset">🗑️ Obriši sve podatke</button>
+      <button class="tool-row" id="export"><span class="grow">💾 Sačuvaj rezervnu kopiju<br><span class="muted small">fajl sa svim podacima, za svaki slučaj</span></span></button>
     </section>
+
+    <details class="danger-zone">
+      <summary>⚠️ Napredno <span class="muted small">— vraćanje i brisanje podataka</span></summary>
+      <section class="card list">
+        <p class="dz-note">Ove opcije menjaju podatke <b>za oba korisnika</b>. Pre svake, aplikacija sama sačuva rezervnu kopiju na ovaj telefon.</p>
+        <button class="tool-row" id="import"><span class="grow">📂 Vrati podatke iz rezervne kopije<br><span class="muted small">i iz stare aplikacije budzet2026</span></span></button>
+        <input type="file" id="import-file" accept=".json,application/json" hidden>
+        <button class="tool-row t-red" id="reset">🗑️ Obriši sve podatke</button>
+      </section>
+    </details>
 
     <p class="muted small center mt-lg">Budžet · verzija 2.1</p>
   `;
@@ -78,15 +85,7 @@ export function renderVise(el, ctx) {
   el.querySelectorAll('[data-cat]').forEach((b) => (b.onclick = () => openCategorySheet(S.cat(b.dataset.cat))));
   el.querySelectorAll('[data-newcat]').forEach((b) => (b.onclick = () => openCategorySheet(null, b.dataset.newcat)));
 
-  el.querySelector('#export').onclick = () => {
-    const blob = new Blob([S.exportJSON()], { type: 'application/json' });
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = `budzet-backup-${todayISO()}.json`;
-    a.click();
-    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
-    toast('Backup preuzet', 'ok');
-  };
+  el.querySelector('#export').onclick = () => { downloadBackup(); toast('Rezervna kopija sačuvana u Preuzimanja (Downloads)', 'ok', 3500); };
   const file = el.querySelector('#import-file');
   el.querySelector('#import').onclick = () => file.click();
   file.onchange = async (e) => {
@@ -96,11 +95,13 @@ export function renderVise(el, ctx) {
     try {
       const data = JSON.parse(await f.text());
       if (S.isNewFormat(data)) {
-        if (!(await confirmSheet({ title: 'Uvezi backup?', text: 'Svi trenutni podaci na ovom uređaju biće zamenjeni podacima iz backupa.', ok: 'Uvezi' }))) return;
+        if (!(await confirmSheet({ title: 'Vrati podatke iz kopije?', text: `Svi trenutni podaci <b>za oba korisnika</b> biće zamenjeni podacima iz kopije (${esc(f.name)}). Trenutni podaci se prvo sačuvaju kao rezervna kopija.`, ok: 'Vrati', danger: true }))) return;
+        downloadBackup('pre-vracanja');
         await S.importNew(data);
         toast('Backup uvezen ✅', 'ok');
       } else if (S.isOldFormat(data)) {
         if (!(await confirmSheet({ title: 'Uvezi stari backup?', text: 'Stavke iz stare aplikacije postaju <b>plan</b> za januar–decembar 2026. Vanredni troškovi postaju stvarni unosi. Postojeći plan za 2026. biće zamenjen.', ok: 'Uvezi' }))) return;
+        downloadBackup('pre-uvoza');
         await S.importOld(data, 2026);
         toast('Stari backup uvezen ✅', 'ok');
       } else throw new Error('Nepoznat format');
@@ -108,12 +109,42 @@ export function renderVise(el, ctx) {
       toast('Fajl nije ispravan backup.', 'bad');
     }
   };
-  el.querySelector('#reset').onclick = async () => {
-    if (await confirmSheet({ title: 'Obriši sve?', text: Sync.enabled ? 'Brišu se plan, unosi i beleške <b>za oba korisnika</b>, u bazi. Preporuka: prvo izvezi backup.' : 'Brišu se plan, unosi i beleške na ovom uređaju. Preporuka: prvo izvezi backup.', ok: 'Obriši sve', danger: true })) {
-      await S.resetAll();
-      toast('Podaci obrisani', 'ok');
-    }
-  };
+  el.querySelector('#reset').onclick = () => openResetSheet();
+}
+
+function downloadBackup(tag = '') {
+  const blob = new Blob([S.exportJSON()], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `budzet-kopija-${todayISO()}${tag ? '-' + tag : ''}.json`;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+
+// Brisanje svega: mora da se ukuca reč OBRIŠI.
+function openResetSheet() {
+  openSheet({
+    title: 'Obriši sve podatke?',
+    body: `
+      <p class="sheet-text">Brišu se plan, svi unosi, ciljevi, stanja računa i beleške${Sync.enabled ? ' — <b>za oba korisnika</b>, u bazi' : ''}. Ovo se ne može poništiti.</p>
+      <p class="sheet-text">Pre brisanja aplikacija sačuva rezervnu kopiju na ovaj telefon.</p>
+      <div class="field-label">Za potvrdu ukucaj <b>OBRIŠI</b></div>
+      <input class="input" id="r-word" autocomplete="off" autocapitalize="characters" placeholder="OBRIŠI">
+      <div class="btn-row"><button class="btn btn-ghost" id="r-no">Odustani</button><button class="btn btn-danger" id="r-yes" disabled>Obriši sve</button></div>`,
+    onMount(el, close) {
+      const w = el.querySelector('#r-word'), yes = el.querySelector('#r-yes');
+      const ok = () => ['OBRIŠI', 'OBRISI'].includes(w.value.trim().toUpperCase());
+      w.oninput = () => (yes.disabled = !ok());
+      el.querySelector('#r-no').onclick = close;
+      yes.onclick = async () => {
+        if (!ok()) return;
+        downloadBackup('pre-brisanja');
+        await S.resetAll();
+        close();
+        toast('Podaci obrisani. Rezervna kopija je u Preuzimanjima.', 'ok', 4000);
+      };
+    },
+  });
 }
 
 const COLORS = ['#ef4444', '#f97316', '#eab308', '#22c55e', '#14b8a6', '#0ea5e9', '#6366f1', '#8b5cf6', '#d946ef', '#f43f5e', '#94a3b8'];

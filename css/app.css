@@ -772,3 +772,10 @@ input, textarea, select, .input, [contenteditable] { -webkit-user-select: text; 
   70% { opacity: 1; }
   100% { transform: translate(var(--tx), calc(var(--ty) + 30px)) rotate(var(--r)) scale(1); opacity: 0; }
 }
+
+/* Napredno (opasne opcije) */
+.danger-zone { margin-top: 14px; }
+.danger-zone summary { list-style: none; cursor: pointer; padding: 12px 4px; font-weight: 700; font-size: 14px; color: var(--muted); }
+.danger-zone summary::-webkit-details-marker { display: none; }
+.danger-zone[open] summary { color: var(--text); }
+.dz-note { padding: 12px 14px; font-size: 13px; color: var(--muted); line-height: 1.45; }

@@ -1,10 +1,10 @@
 // Brzi unos stvarnog troška / prihoda / štednje (i izmena postojećeg unosa).
-import * as S from '../store.js?v=20261108085601';
-import { openSheet, toast, confirmSheet, moneyInput, dateInputHTML, syncDateShow } from '../ui.js?v=20261108085601';
-import { esc, fmt, fmtNum, digitsOnly, todayISO, isoOf } from '../util.js?v=20261108085601';
-import { summarize } from '../calc.js?v=20261108085601';
-import { unpaidBills, afterBillPaid } from '../pay.js?v=20261108085601';
-import { suggestCategory } from '../suggest.js?v=20261108085601';
+import * as S from '../store.js?v=20261108090443';
+import { openSheet, toast, confirmSheet, moneyInput, dateInputHTML, syncDateShow } from '../ui.js?v=20261108090443';
+import { esc, fmt, fmtNum, digitsOnly, todayISO, isoOf } from '../util.js?v=20261108090443';
+import { summarize } from '../calc.js?v=20261108090443';
+import { unpaidBills, afterBillPaid } from '../pay.js?v=20261108090443';
+import { suggestCategory } from '../suggest.js?v=20261108090443';
 
 const ICONS = ['📌', '☕', '🍕', '🎬', '✈️', '🐶', '👶', '📚', '💊', '🎮', '🔧', '💇'];
 const COLORS = ['#0ea5e9', '#d946ef', '#f97316', '#22c55e', '#6366f1', '#f43f5e', '#14b8a6', '#eab308'];
@@ -195,7 +195,7 @@ export function openEntrySheet({ tx = null, kind = 'expense', date = null, categ
         if (k === 'kind' && b.dataset.v === 'transfer') {
           // Prebacivanje između računa ima svoj formular (nije trošak ni prihod).
           close();
-          setTimeout(() => import('./accounts.js?v=20261108085601').then((m) => m.openTransferForm({ amount: v.amount })), 220);
+          setTimeout(() => import('./accounts.js?v=20261108090443').then((m) => m.openTransferForm({ amount: v.amount })), 220);
           return;
         }
         v[k] = b.dataset.v;
@@ -231,7 +231,7 @@ export function openEntrySheet({ tx = null, kind = 'expense', date = null, categ
       if (v.note && !v.picked) runSuggest(); // npr. naziv prodavnice sa skeniranog računa
       $('#e-scan')?.addEventListener('click', () => {
         close();
-        setTimeout(() => import('./scanner.js?v=20261108085601').then((m) => m.openScanner()), 220);
+        setTimeout(() => import('./scanner.js?v=20261108090443').then((m) => m.openScanner()), 220);
       });
       if (!isEdit) setTimeout(() => amountEl.focus(), 280);
 
@@ -253,7 +253,7 @@ export function openEntrySheet({ tx = null, kind = 'expense', date = null, categ
         if (billKey) afterBillPaid(billKey, billsBefore);
         feedback(data, isEdit);
         if (g && !wasDone && S.goalSaved(g) >= g.target) {
-          import('./goals.js?v=20261108085601').then((m) => m.celebrate());
+          import('./goals.js?v=20261108090443').then((m) => m.celebrate());
           setTimeout(() => toast(`🎉 <b>Cilj ostvaren: ${esc(g.name)}!</b>`, 'ok', 4500), 400);
         }
         if (again) {
