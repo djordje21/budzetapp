@@ -1,16 +1,17 @@
 // Početni ekran: plan vs. stvarno za izabrani mesec.
-import * as S from '../store.js?v=20261107221027';
-import { summarize, pace, monthPhase } from '../calc.js?v=20261107221027';
-import { esc, fmt, fmtNum, fmtSigned, monthLabel, addMonths, MONTH_GEN } from '../util.js?v=20261107221027';
-import { countUp, animateBars, pct, toast } from '../ui.js?v=20261107221027';
-import { openEntrySheet } from './entry.js?v=20261107221027';
-import { txRow, setHistoryFilter } from './istorija.js?v=20261107221027';
-import { isPayable, paidTx, payItem, PAY_LABELS } from '../pay.js?v=20261107221027';
-import { openDueSheet } from './due-detail.js?v=20261107221027';
-import { cumulativeData, cumulativeChart, bindCumulative } from '../charts.js?v=20261107221027';
-import { accountsBlock, bindAccounts } from './accounts.js?v=20261107221027';
-import { goalsBlock, bindGoals } from './goals.js?v=20261107221027';
-import { openCategoryDetail } from './category-detail.js?v=20261107221027';
+import * as S from '../store.js?v=20261108053527';
+import { summarize, pace, monthPhase } from '../calc.js?v=20261108053527';
+import { esc, fmt, fmtNum, fmtSigned, monthLabel, addMonths, MONTH_GEN } from '../util.js?v=20261108053527';
+import { countUp, animateBars, pct, toast } from '../ui.js?v=20261108053527';
+import { openEntrySheet } from './entry.js?v=20261108053527';
+import { txRow, setHistoryFilter } from './istorija.js?v=20261108053527';
+import { isPayable, paidTx, payItem, PAY_LABELS } from '../pay.js?v=20261108053527';
+import { openDueSheet } from './due-detail.js?v=20261108053527';
+import { cumulativeData, cumulativeChart, bindCumulative } from '../charts.js?v=20261108053527';
+import { accountsBlock, bindAccounts } from './accounts.js?v=20261108053527';
+import { goalsBlock, bindGoals } from './goals.js?v=20261108053527';
+import { openCategoryDetail } from './category-detail.js?v=20261108053527';
+import { openQuickEntry } from './quick.js?v=20261108053527';
 
 export function renderPregled(el, ctx) {
   const key = ctx.month;
@@ -72,7 +73,7 @@ export function renderPregled(el, ctx) {
 
     <div class="section-head"><h3>Po kategorijama</h3><span class="muted">stvarno / plan</span></div>
     <section class="card list">
-      ${expenseCats.length ? expenseCats.map(catRow).join('') : '<div class="empty-mini">Nema troškova u planu.</div>'}
+      ${(quickOk = phase !== 'future', expenseCats.length) ? expenseCats.map(catRow).join('') : '<div class="empty-mini">Nema troškova u planu.</div>'}
     </section>
 
     ${goalsBlock()}
@@ -121,6 +122,10 @@ export function renderPregled(el, ctx) {
   bindAccounts(el);
   bindGoals(el);
   el.querySelectorAll('[data-cat]').forEach((r) => (r.onclick = () => openCategoryDetail(key, r.dataset.cat)));
+  el.querySelectorAll('[data-qcat]').forEach((b) => (b.onclick = (e) => {
+    e.stopPropagation();
+    openQuickEntry({ categoryId: b.dataset.qcat, key });
+  }));
   el.querySelector('#note').oninput = (e) => S.setNote(key, e.target.value);
   el.querySelector('#first-entry')?.addEventListener('click', () => openEntrySheet());
   el.querySelectorAll('[data-tx]').forEach((r) => (r.onclick = () => {
@@ -163,6 +168,7 @@ function stat(label, actual, plan, color, go) {
   </div>`;
 }
 
+let quickOk = true;
 function catRow(r) {
   const over = r.actual - r.plan;
   let note = '';
@@ -176,7 +182,7 @@ function catRow(r) {
         <span class="cat-amt"><b>${fmtNum(r.actual)}</b><span class="muted"> / ${fmtNum(r.plan)}</span></span></div>
       <div class="bar bar-sm"><div class="bar-fill ${over > 0 || r.plan === 0 ? 'is-over' : ''}" style="--c:${r.cat.color}" data-w="${pct(r.actual, r.plan)}"></div></div>
     </div>
-    <span class="chev">›</span>
+    ${!r.cat.fixed && r.cat.kind === 'expense' && quickOk ? `<button class="quick-add" data-qcat="${r.cat.id}" aria-label="Brzi unos: ${esc(r.cat.name)}">+</button>` : '<span class="chev">›</span>'}
   </div>`;
 }
 

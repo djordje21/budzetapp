@@ -1,11 +1,12 @@
 // Plan za mesec: očekivani prihodi, troškovi i štednja.
-import * as S from '../store.js?v=20261107221027';
-import { summarize } from '../calc.js?v=20261107221027';
-import { esc, fmt, fmtNum, fmtSigned, monthLabel, addMonths, digitsOnly, MONTH_GEN } from '../util.js?v=20261107221027';
-import { openSheet, toast, confirmSheet, moneyInput } from '../ui.js?v=20261107221027';
-import { isPayable, paidTx, payItem, PAY_LABELS } from '../pay.js?v=20261107221027';
-import { openEntrySheet } from './entry.js?v=20261107221027';
-import { monthPhase } from '../calc.js?v=20261107221027';
+import * as S from '../store.js?v=20261108053527';
+import { summarize } from '../calc.js?v=20261108053527';
+import { esc, fmt, fmtNum, fmtSigned, monthLabel, addMonths, digitsOnly, MONTH_GEN } from '../util.js?v=20261108053527';
+import { openSheet, toast, confirmSheet, moneyInput } from '../ui.js?v=20261108053527';
+import { isPayable, paidTx, payItem, PAY_LABELS } from '../pay.js?v=20261108053527';
+import { openEntrySheet } from './entry.js?v=20261108053527';
+import { openQuickEntry } from './quick.js?v=20261108053527';
+import { monthPhase } from '../calc.js?v=20261108053527';
 
 export function renderPlan(el, ctx) {
   const key = ctx.month;
@@ -70,6 +71,11 @@ export function renderPlan(el, ctx) {
     const item = plan.find((p) => p.id === r.dataset.item);
     if (item) openPlanItemSheet(key, item);
   }));
+  el.querySelectorAll('[data-quick]').forEach((b) => (b.onclick = (e) => {
+    e.stopPropagation();
+    const item = plan.find((p) => p.id === b.dataset.quick);
+    if (item) openQuickEntry({ categoryId: item.categoryId, name: item.name, key });
+  }));
   el.querySelectorAll('[data-pay]').forEach((b) => (b.onclick = (e) => {
     e.stopPropagation();
     const item = plan.find((p) => p.id === b.dataset.pay);
@@ -106,7 +112,10 @@ const sumOf = (arr) => arr.reduce((s, p) => s + Number(p.amount), 0);
 function itemRow(p, key) {
   const o = S.member(p.owner);
   let pay = '';
-  if (isPayable(p) && monthPhase(key) !== 'future') {
+  const c0 = S.cat(p.categoryId);
+  if (c0.kind === 'expense' && !c0.fixed && monthPhase(key) !== 'future') {
+    pay = `<button class="pay-btn" data-quick="${p.id}">+ Unesi</button>`;
+  } else if (isPayable(p) && monthPhase(key) !== 'future') {
     const kind = S.cat(p.categoryId).kind;
     const tx = paidTx(key, p);
     pay = tx

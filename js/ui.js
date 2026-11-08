@@ -1,5 +1,5 @@
 // UI pomoćnici: donji panel (sheet), potvrda, obaveštenja, animacija brojeva.
-import { esc, fmtNum, digitsOnly } from './util.js?v=20261107221027';
+import { esc, fmtNum, digitsOnly } from './util.js?v=20261108053527';
 
 const reduceMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
