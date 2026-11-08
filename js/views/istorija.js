@@ -1,8 +1,8 @@
 // Istorija stvarnih unosa za mesec, grupisano po danima, sa filterima.
-import * as S from '../store.js?v=20261108112459';
-import { txOfMonth } from '../calc.js?v=20261108112459';
-import { esc, fmtNum, dayLabel, monthLabel } from '../util.js?v=20261108112459';
-import { openEntrySheet } from './entry.js?v=20261108112459';
+import * as S from '../store.js?v=20261108112909';
+import { txOfMonth } from '../calc.js?v=20261108112909';
+import { esc, fmtNum, dayLabel, monthLabel } from '../util.js?v=20261108112909';
+import { openEntrySheet } from './entry.js?v=20261108112909';
 
 const filters = { who: 'all', kind: 'all', cat: 'all' };
 export const setHistoryFilter = (f) => Object.assign(filters, { who: 'all', kind: 'all', cat: 'all' }, f);
@@ -103,7 +103,7 @@ export function renderIstorija(el, ctx) {
   el.querySelector('#add-first')?.addEventListener('click', () => openEntrySheet());
   el.querySelectorAll('[data-tr]').forEach((r) => (r.onclick = () => {
     const x = (S.getState().transfers || []).find((t) => t.id === r.dataset.tr);
-    if (x) import('./accounts.js?v=20261108112459').then((m) => m.openTransferForm({ tr: x }));
+    if (x) import('./accounts.js?v=20261108112909').then((m) => m.openTransferForm({ tr: x }));
   }));
   el.querySelectorAll('[data-tx]').forEach((r) => (r.onclick = () => {
     const tx = S.getState().transactions.find((t) => t.id === r.dataset.tx);

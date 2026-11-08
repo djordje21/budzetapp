@@ -1,12 +1,22 @@
 // Plan za mesec: očekivani prihodi, troškovi i štednja.
-import * as S from '../store.js?v=20261108112459';
-import { summarize } from '../calc.js?v=20261108112459';
-import { esc, fmt, fmtNum, fmtSigned, monthLabel, addMonths, digitsOnly, MONTH_GEN , dayLabel } from '../util.js?v=20261108112459';
-import { openSheet, toast, confirmSheet, moneyInput } from '../ui.js?v=20261108112459';
-import { isPayable, paidTx, payItem, PAY_LABELS } from '../pay.js?v=20261108112459';
-import { openEntrySheet } from './entry.js?v=20261108112459';
-import { openQuickEntry } from './quick.js?v=20261108112459';
-import { monthPhase } from '../calc.js?v=20261108112459';
+import * as S from '../store.js?v=20261108112909';
+import { summarize } from '../calc.js?v=20261108112909';
+import { esc, fmt, fmtNum, fmtSigned, monthLabel, addMonths, digitsOnly, MONTH_GEN , dayLabel } from '../util.js?v=20261108112909';
+import { openSheet, toast, confirmSheet, moneyInput } from '../ui.js?v=20261108112909';
+import { isPayable, paidTx, payItem, PAY_LABELS } from '../pay.js?v=20261108112909';
+import { openEntrySheet } from './entry.js?v=20261108112909';
+import { openQuickEntry } from './quick.js?v=20261108112909';
+import { monthPhase } from '../calc.js?v=20261108112909';
+
+// Sekcija kao padajući meni: naslov sa zbirom uvek vidljiv; zatvorene sekcije se trajno pamte.
+const SEC_KEY = 'budzet_sec_closed';
+const closedSecs = () => { try { return new Set(JSON.parse(localStorage.getItem(SEC_KEY) || '["tools"]')); } catch { return new Set(['tools']); } };
+function sec(id, title, right, body) {
+  return `<details class="sec" data-sec="${id}" ${closedSecs().has(id) ? '' : 'open'}>
+    <summary class="section-head sec-head"><h3>${title}</h3><span class="sec-right">${right}<i class="chev sec-chev">›</i></span></summary>
+    ${body}
+  </details>`;
+}
 
 export function renderPlan(el, ctx) {
   const key = ctx.month;
@@ -47,12 +57,11 @@ export function renderPlan(el, ctx) {
         }).join('');
     } else rows = items.map((p) => itemRow(p, key)).join('');
 
-    return `
-      <div class="section-head"><h3>${title}</h3><span class="t-${kind === 'income' ? 'green' : kind === 'saving' ? 'cyan' : 'red'}"><b>${fmtNum(total)}</b></span></div>
+    return sec(kind, title, `<b class="t-${kind === 'income' ? 'green' : kind === 'saving' ? 'cyan' : 'red'}">${fmtNum(total)}</b>`, `
       <section class="card list">
         ${rows || '<div class="empty-mini">Nema stavki.</div>'}
         <button class="add-line" data-add="${kind}">+ Dodaj ${S.KINDS[kind].acc}</button>
-      </section>`;
+      </section>`);
   };
 
   // Računi i rate: šta je ostalo za plaćanje, a šta je plaćeno (sklopljeno).
@@ -64,8 +73,7 @@ export function renderPlan(el, ctx) {
     const paid = future ? [] : bills.filter((p) => paidTx(key, p));
     const paidSum = paid.reduce((s, p) => s + Number(paidTx(key, p).amount), 0);
     const row = (p) => itemRow(p, key, S.cat(p.categoryId));
-    return `
-      <div class="section-head"><h3>${future ? 'Računi i rate' : `📌 Za plaćanje · ${unpaid.length}`}</h3><span class="t-red"><b>${fmtNum(sumOf(unpaid))}</b></span></div>
+    return sec('bills', future ? 'Računi i rate' : `📌 Za plaćanje · ${unpaid.length}`, `<b class="t-red">${fmtNum(sumOf(unpaid))}</b>`, `
       <section class="card list">
         ${unpaid.length ? unpaid.map(row).join('') : '<div class="empty-mini all-paid">🎉 Svi računi i rate za ovaj mesec su plaćeni!</div>'}
         <button class="add-line" data-add="expense">+ Dodaj račun ili ratu</button>
@@ -73,7 +81,7 @@ export function renderPlan(el, ctx) {
       ${paid.length ? `<details class="paid-box">
         <summary><span>✓ Plaćeno · ${paid.length}</span><span><b>${fmtNum(paidSum)}</b> RSD <i class="chev">›</i></span></summary>
         <section class="card list">${paid.map(row).join('')}</section>
-      </details>` : ''}`;
+      </details>` : ''}`);
   };
 
   const misplaced = findMisplacedPocket(plan);
@@ -99,11 +107,10 @@ export function renderPlan(el, ctx) {
     ${section('expense', 'Svakodnevni i ostali troškovi')}
     ${section('saving')}
 
-    <div class="section-head"><h3>Alati</h3></div>
-    <section class="card list">
+    ${sec('tools', 'Alati', '', `<section class="card list">
       ${S.hasPlan(prevKey) && plan.length ? `<button class="tool-row" id="copy-prev2">📋 Zameni plan planom iz ${MONTH_GEN[Number(prevKey.slice(5)) - 1]}</button>` : ''}
       ${!isDec && plan.length ? `<button class="tool-row" id="copy-fwd">⏭️ Kopiraj ovaj plan na sve mesece do kraja ${key.slice(0, 4)}.</button>` : ''}
-    </section>
+    </section>`)}
   `;
 
   el.querySelectorAll('[data-item]').forEach((r) => (r.onclick = () => {
@@ -115,6 +122,11 @@ export function renderPlan(el, ctx) {
     for (const m of misplaced) moved += await S.moveLineToCategory(key, m.item.line, m.item.categoryId, m.to, m.item.name);
     toast(`✅ Džeparac prebačen${moved ? ` · i ${moved} ${moved === 1 ? 'unos' : 'unosa'}` : ''}`, 'ok', 3500);
   });
+  el.querySelectorAll('.sec').forEach((d) => d.addEventListener('toggle', () => {
+    const set = closedSecs();
+    d.open ? set.delete(d.dataset.sec) : set.add(d.dataset.sec);
+    try { localStorage.setItem(SEC_KEY, JSON.stringify([...set])); } catch {}
+  }));
   el.querySelectorAll('.plan-fold').forEach((d) => d.addEventListener('toggle', () => {
     const set = openFolds();
     d.open ? set.add(d.dataset.fold) : set.delete(d.dataset.fold);

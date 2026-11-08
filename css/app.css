@@ -805,3 +805,12 @@ input, textarea, select, .input, [contenteditable] { -webkit-user-select: text; 
 .plan-fold[open] .fold-head { background: var(--surface-2); }
 .fold-body .plan-item { padding: 8px 14px 8px 64px; }
 .fold-body { animation: fadeUp .2s ease-out; }
+
+/* Plan: sekcije kao padajući meni */
+.sec-head { list-style: none; cursor: pointer; }
+.sec-head::-webkit-details-marker { display: none; }
+.sec-right { display: inline-flex; align-items: baseline; gap: 6px; }
+.sec-chev { font-style: normal; color: var(--faint); transition: transform .2s; display: inline-block; }
+.sec[open] .sec-chev { transform: rotate(90deg); }
+.sec:not([open]) .sec-head { padding-bottom: 6px; border-bottom: 1px solid var(--border); }
+.sec > .card, .sec > .paid-box { animation: fadeUp .2s ease-out; }
