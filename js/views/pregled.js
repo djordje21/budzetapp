@@ -1,17 +1,17 @@
 // Početni ekran: plan vs. stvarno za izabrani mesec.
-import * as S from '../store.js?v=20261108090443';
-import { summarize, pace, monthPhase } from '../calc.js?v=20261108090443';
-import { esc, fmt, fmtNum, fmtSigned, monthLabel, addMonths, MONTH_GEN } from '../util.js?v=20261108090443';
-import { countUp, animateBars, pct, toast } from '../ui.js?v=20261108090443';
-import { openEntrySheet } from './entry.js?v=20261108090443';
-import { txRow, setHistoryFilter } from './istorija.js?v=20261108090443';
-import { isPayable, paidTx, payItem, PAY_LABELS } from '../pay.js?v=20261108090443';
-import { openDueSheet } from './due-detail.js?v=20261108090443';
-import { cumulativeData, cumulativeChart, bindCumulative } from '../charts.js?v=20261108090443';
-import { accountsBlock, bindAccounts } from './accounts.js?v=20261108090443';
-import { goalsBlock, bindGoals } from './goals.js?v=20261108090443';
-import { openCategoryDetail } from './category-detail.js?v=20261108090443';
-import { openQuickEntry } from './quick.js?v=20261108090443';
+import * as S from '../store.js?v=20261108090647';
+import { summarize, pace, monthPhase } from '../calc.js?v=20261108090647';
+import { esc, fmt, fmtNum, fmtSigned, monthLabel, addMonths, MONTH_GEN } from '../util.js?v=20261108090647';
+import { countUp, animateBars, pct, toast } from '../ui.js?v=20261108090647';
+import { openEntrySheet } from './entry.js?v=20261108090647';
+import { txRow, setHistoryFilter } from './istorija.js?v=20261108090647';
+import { isPayable, paidTx, payItem, PAY_LABELS } from '../pay.js?v=20261108090647';
+import { openDueSheet } from './due-detail.js?v=20261108090647';
+import { cumulativeData, cumulativeChart, bindCumulative } from '../charts.js?v=20261108090647';
+import { accountsBlock, bindAccounts } from './accounts.js?v=20261108090647';
+import { goalsBlock, bindGoals } from './goals.js?v=20261108090647';
+import { openCategoryDetail } from './category-detail.js?v=20261108090647';
+import { openQuickEntry } from './quick.js?v=20261108090647';
 
 export function renderPregled(el, ctx) {
   const key = ctx.month;
@@ -40,41 +40,31 @@ export function renderPregled(el, ctx) {
     .sort((a, b) => b.date.localeCompare(a.date) || (b.createdAt || '').localeCompare(a.createdAt || ''))
     .slice(0, 5);
 
+  const mName = monthLabel(key).split(' ')[0].toLowerCase();
+  // Grafikon toka ima smisla tek kad postoji nekoliko dana unosa.
+  const showChart = phase !== 'future' && sum.varActual > 0 && new Set(sum.txs.map((t) => t.date)).size >= 3;
   el.innerHTML = `
-    ${accountsBlock()}
-
     <section class="hero card clickable ${left < 0 ? 'hero-over' : ''}" role="button" tabindex="0" data-go="report">
-      <div class="hero-label">${left < 0 ? 'Prekoračen plan troškova' : 'Preostalo od plana troškova'}</div>
+      <div class="hero-label">${left < 0 ? `Plan troškova za ${mName} je prekoračen za` : `Ostalo u planu troškova za ${mName}`}</div>
       <div class="hero-value" id="hero-val">0</div>
-      <div class="hero-sub">Potrošeno <b>${fmtNum(tot.expense.actual)}</b> od <b>${fmtNum(tot.expense.plan)}</b> RSD</div>
-      <div class="bar bar-lg"><div class="bar-fill ${left < 0 ? 'is-over' : ''}" data-w="${pct(tot.expense.actual, tot.expense.plan)}"></div>
-        ${p ? `<div class="bar-marker" style="left:${(p.timePct * 100).toFixed(1)}%" title="Danas"></div>` : ''}
-      </div>
+      <div class="hero-sub">Potrošeno <b>${fmtNum(tot.expense.actual)}</b> od planiranih <b>${fmtNum(tot.expense.plan)}</b> RSD</div>
+      <div class="bar bar-lg"><div class="bar-fill ${left < 0 ? 'is-over' : ''}" data-w="${pct(tot.expense.actual, tot.expense.plan)}"></div></div>
       ${paceMsg(p, phase, sum)}
     </section>
 
-    <section class="stat-grid">
-      ${stat('Prihodi', tot.income.actual, tot.income.plan, 'green', 'income')}
-      ${stat('Troškovi', tot.expense.actual, tot.expense.plan, 'red', 'expense')}
-      ${stat('Štednja', tot.saving.actual, tot.saving.plan, 'cyan', 'saving')}
-      <div class="stat card clickable" role="button" tabindex="0" data-go="report">
-        <div class="stat-label">Bilans</div>
-        <div class="stat-val ${sum.balanceActual < 0 ? 't-red' : 't-accent'}">${fmtSigned(sum.balanceActual)}</div>
-        <div class="stat-sub">plan ${fmtSigned(sum.balancePlan)}</div>
-      </div>
-    </section>
-
-    ${phase !== 'future' && (sum.varPlan > 0 || sum.varActual > 0) ? `
-    <div class="section-head"><h3>Tok potrošnje</h3><span class="legend"><i class="lg-line"></i>Stvarno <i class="lg-dash"></i>Plan</span></div>
-    <section class="card chart-card" id="cum-card"><div class="chart" id="cum"></div><div class="chart-tip" hidden></div>
-      <p class="chart-note">Svakodnevni troškovi (hrana, gorivo, izlasci, džeparac), zbirno od 1. u mesecu</p></section>` : ''}
+    ${accountsBlock()}
 
     ${dueBlock(key, sum, phase)}
 
-    <div class="section-head"><h3>Po kategorijama</h3><span class="muted">potrošeno od plana</span></div>
+    <div class="section-head"><h3>Gde ide novac</h3><span class="muted">potrošeno od plana</span></div>
     <section class="card list">
       ${(quickOk = phase !== 'future', rowPlan = sum.plan, rowKey = key, rowFuture = phase === 'future', expenseCats.length) ? expenseCats.map(catRow).join('') : '<div class="empty-mini">Nema troškova u planu.</div>'}
     </section>
+
+    ${showChart ? `
+    <div class="section-head"><h3>Tok potrošnje</h3><span class="legend"><i class="lg-line"></i>Stvarno <i class="lg-dash"></i>Plan</span></div>
+    <section class="card chart-card" id="cum-card"><div class="chart" id="cum"></div><div class="chart-tip" hidden></div>
+      <p class="chart-note">Hrana, gorivo, izlasci i džeparac — koliko je potrošeno od 1. u mesecu, naspram plana</p></section>` : ''}
 
     ${goalsBlock()}
 
@@ -141,12 +131,12 @@ function dueBlock(key, sum, phase) {
   const due = sum.plan.filter((p) => isPayable(p) && !paidTx(key, p));
   const all = sum.plan.filter(isPayable);
   if (!all.length) return '';
-  if (!due.length) return `<div class="hint hint-good due-done">✅ Sve fiksne stavke za ovaj mesec su evidentirane.</div>`;
+  if (!due.length) return `<div class="hint hint-good due-done">✅ Sve je plaćeno i primljeno za ovaj mesec.</div>`;
   const order = { income: 0, expense: 1, saving: 2 };
   due.sort((a, b) => order[S.cat(a.categoryId).kind] - order[S.cat(b.categoryId).kind] || b.amount - a.amount);
   const total = due.filter((p) => S.cat(p.categoryId).kind === 'expense').reduce((s, p) => s + Number(p.amount), 0);
   return `
-    <div class="section-head"><h3>Čeka evidenciju · ${due.length}/${all.length}</h3>${total ? `<span class="muted">računi ${fmtNum(total)}</span>` : ''}</div>
+    <div class="section-head"><h3>Za platiti i primiti · ${due.length}</h3></div>
     <section class="card list">
       ${due.map((p, i) => {
         const c = S.cat(p.categoryId);
@@ -222,6 +212,7 @@ function paceMsg(p, phase, sum) {
     parts.push(`🏃 <b>${name(l.cat)}</b>: potrošeno ${fmtNum(l.actual)} RSD, a po planu je do danas trebalo oko ${fmtNum(r50(l.plan * p.timePct))} — <b>${fmtNum(ahead)} više</b>. Do kraja meseca ostaje <b>${fmtNum(l.left)}</b>${tail}.`);
   }
   if (parts.length) return `<div class="hint ${over.length ? 'hint-bad' : 'hint-warn'}">${parts.map((x) => `<div class="pace-line">${x}</div>`).join('')}</div>`;
+  if (!sum.varActual) return `<div class="hint">📝 Još nema unetih troškova za hranu, gorivo, izlaske i džeparac ovog meseca. Unesite ih preko <b>+</b> čim potrošite.</div>`;
   const expected = r50(sum.varPlan * p.timePct);
   const under = expected - sum.varActual;
   return `<div class="hint hint-good">👌 U ritmu ste. Hrana, gorivo, izlasci i džeparac: potrošeno <b>${fmtNum(sum.varActual)} RSD</b>, a po planu je do danas moglo oko ${fmtNum(expected)}${under >= 1000 ? ` — <b>${fmtNum(r50(under))} manje</b>` : ''}.</div>`;
