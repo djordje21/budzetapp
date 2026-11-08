@@ -1015,3 +1015,24 @@ button.tip:active { background: var(--surface-2); }
 .ls-h { font-size: 19px; font-weight: 700; letter-spacing: -.01em; margin-bottom: 8px; }
 .ls-t { font-size: 15.5px; line-height: 1.6; color: var(--text); min-height: 110px; }
 .lesson.ls-in .ls-h, .lesson.ls-in .ls-t { animation: fadeUp .3s ease-out; }
+
+/* Kalendar */
+.view-switch { margin: 4px 0 10px; }
+.cal { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; padding: 10px 8px; }
+.cal-dow { text-align: center; font-size: 11px; font-weight: 700; color: var(--faint); padding-bottom: 4px; letter-spacing: .04em; }
+.cal-cell { position: relative; min-height: 58px; border-radius: 10px; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding: 5px 2px 4px; gap: 3px; background: var(--surface-2); color: var(--text); }
+.cal-cell.empty { background: none; }
+.cal-cell.future { opacity: .7; }
+.cal-cell.today { box-shadow: inset 0 0 0 2px var(--gold); background: var(--gold-soft); }
+.cal-cell:active { transform: scale(.95); }
+.cal-n { font-size: 13px; font-weight: 700; }
+.cal-mk { display: flex; gap: 3px; }
+.cal-sp { font-size: 10.5px; font-weight: 600; color: var(--muted); }
+.mk { display: inline-block; width: 7px; height: 7px; border-radius: 50%; }
+.mk-in { background: var(--green); }
+.mk-out { background: var(--red); }
+.mk.done { background: none; border: 1.5px solid var(--green); width: 6px; height: 6px; }
+.mk.late { box-shadow: 0 0 0 2px var(--red-soft); animation: pulse 1.6s ease-in-out infinite; }
+@keyframes pulse { 50% { transform: scale(1.35); } }
+.cal-legend { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 12px; color: var(--muted); margin: 8px 4px 0; }
+.cal-legend .mk { vertical-align: middle; margin-right: 3px; }

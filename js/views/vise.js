@@ -1,9 +1,9 @@
 // Podešavanja: korisnik, tema, kategorije, backup.
-import { ico } from '../icons.js?v=20261108205259';
-import * as S from '../store.js?v=20261108205259';
-import { esc, todayISO, fmtDate, isoOf } from '../util.js?v=20261108205259';
-import { openSheet, toast, confirmSheet } from '../ui.js?v=20261108205259';
-import * as Sync from '../sync.js?v=20261108205259';
+import { ico } from '../icons.js?v=20261108210214';
+import * as S from '../store.js?v=20261108210214';
+import { esc, todayISO, fmtDate, isoOf } from '../util.js?v=20261108210214';
+import { openSheet, toast, confirmSheet } from '../ui.js?v=20261108210214';
+import * as Sync from '../sync.js?v=20261108210214';
 
 // Jedan ekran, tri dela: Nalog, Kategorije, Podešavanja (bira se rutom iz menija).
 export function renderVise(el, ctx) {

@@ -30,6 +30,7 @@ const P = {
   expense: '<path d="M12 21V9M7 14l5-5 5 5M4 3h16"/>',
   menu: '<path d="M4 7h16M4 12h16M4 17h16"/>',
   bank: '<path d="M3 21h18M5 21V10M19 21V10M9 21v-6M15 21v-6M12 3l9 5H3z"/>',
+  calendar: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>',
   goal: '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/>',
 };
 const ALIAS = { 'licno-dj': 'user', 'licno-m': 'user', dj: 'card', m: 'card', kes: 'cash' };

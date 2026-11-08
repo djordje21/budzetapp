@@ -1,8 +1,8 @@
 // Kratke serije finansijskih saveta (3–4 kartice) sa akcijom na kraju.
-import * as S from '../store.js?v=20261108205259';
-import { summarize } from '../calc.js?v=20261108205259';
-import { esc, fmt, currentMonthKey } from '../util.js?v=20261108205259';
-import { openSheet, toast } from '../ui.js?v=20261108205259';
+import * as S from '../store.js?v=20261108210214';
+import { summarize } from '../calc.js?v=20261108210214';
+import { esc, fmt, currentMonthKey } from '../util.js?v=20261108210214';
+import { openSheet, toast } from '../ui.js?v=20261108210214';
 
 // Mesečni fiksni troškovi (rate, računi, hrana, gorivo, džeparac...) — za računanje rezerve.
 function monthlyNeeds() {
@@ -28,7 +28,7 @@ export const LESSONS = {
       ['Pravilo', 'Za sve što <b>nije u planu i košta preko 5.000 RSD</b> — sačekajte 24 sata. Ako vam i sutra treba, kupite bez griže savesti.'],
       ['Za veće stvari', 'Preko 30.000 RSD: pravilo <b>30 dana</b>. Zapišite stvar kao cilj štednje. Ako posle mesec dana i dalje želite — skupljate za nju, bez duga.'],
     ],
-    action: { label: 'Napravi cilj za veću kupovinu', run: () => import('./goals.js?v=20261108205259').then((m) => m.openGoalForm(null)) },
+    action: { label: 'Napravi cilj za veću kupovinu', run: () => import('./goals.js?v=20261108210214').then((m) => m.openGoalForm(null)) },
   },
   'nedeljna': {
     icon: '📅', title: 'Nedeljna provera',
@@ -37,7 +37,7 @@ export const LESSONS = {
       ['Ritual od 5 minuta', '1) Otvorite OTP aplikaciju. 2) U Budžetu: meni → <b>Stanje na računima</b> → Proveri. 3) Ako ima razlike, setite se i unesite šta fali.'],
       ['Isto vreme, zajedno', 'Najbolje <b>nedeljom uveče, vas dvoje</b>. Kao kratak brifing pre smene — pet minuta i obe strane znaju gde su.'],
     ],
-    action: { label: 'Proveri stanje sada', run: () => import('./accounts.js?v=20261108205259').then((m) => m.openAccounts()) },
+    action: { label: 'Proveri stanje sada', run: () => import('./accounts.js?v=20261108210214').then((m) => m.openAccounts()) },
   },
   'nabavka': {
     icon: '🛒', title: 'Lista za nabavku',
@@ -46,7 +46,7 @@ export const LESSONS = {
       ['Nedeljni jelovnik', 'Isplanirajte 4–5 večera za nedelju. Lista se pravi iz jelovnika, a ostaci se koriste — manje bacanja, manje kupovine.'],
       ['Pravila u marketu', 'Ne kupujte gladni. Jedna velika nabavka nedeljno + male dopune (hleb, mleko). Akcija se računa samo ako je stvar i bila na listi.'],
     ],
-    action: { label: 'Pogledaj potrošnju na hranu', run: () => import('./category-detail.js?v=20261108205259').then((m) => m.openCategoryDetail(currentMonthKey(), 'hrana')) },
+    action: { label: 'Pogledaj potrošnju na hranu', run: () => import('./category-detail.js?v=20261108210214').then((m) => m.openCategoryDetail(currentMonthKey(), 'hrana')) },
   },
   'rezerva': {
     icon: '🧯', title: 'Rezerva za nepredviđeno',

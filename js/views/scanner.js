@@ -1,11 +1,11 @@
 // Skener QR koda: kamera (ili slika iz galerije) → IPS račun ili fiskalni račun → popunjen unos.
-import * as S from '../store.js?v=20261108205259';
-import * as Sync from '../sync.js?v=20261108205259';
-import { openSheet, toast, confirmSheet } from '../ui.js?v=20261108205259';
-import { esc, fmtNum, currentMonthKey } from '../util.js?v=20261108205259';
-import { parseQR, matchPlanItem, toLatin } from '../receipt.js?v=20261108205259';
-import { paidTx } from '../pay.js?v=20261108205259';
-import { openEntrySheet } from './entry.js?v=20261108205259';
+import * as S from '../store.js?v=20261108210214';
+import * as Sync from '../sync.js?v=20261108210214';
+import { openSheet, toast, confirmSheet } from '../ui.js?v=20261108210214';
+import { esc, fmtNum, currentMonthKey } from '../util.js?v=20261108210214';
+import { parseQR, matchPlanItem, toLatin } from '../receipt.js?v=20261108210214';
+import { paidTx } from '../pay.js?v=20261108210214';
+import { openEntrySheet } from './entry.js?v=20261108210214';
 
 const hasNative = () => 'BarcodeDetector' in window;
 let jsQRLoaded = null;

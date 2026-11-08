@@ -1,9 +1,9 @@
 // Saveti: konkretni predlozi na osnovu vaše potrošnje ovog meseca + par opštih pravila.
-import * as S from '../store.js?v=20261108205259';
-import { summarize, pace, monthPhase } from '../calc.js?v=20261108205259';
-import { esc, fmt, fmtNum, currentMonthKey, daysInMonth, todayISO } from '../util.js?v=20261108205259';
-import { unpaidBills, paidTx } from '../pay.js?v=20261108205259';
-import { goalStats } from './goals.js?v=20261108205259';
+import * as S from '../store.js?v=20261108210214';
+import { summarize, pace, monthPhase } from '../calc.js?v=20261108210214';
+import { esc, fmt, fmtNum, currentMonthKey, daysInMonth, todayISO } from '../util.js?v=20261108210214';
+import { unpaidBills, paidTx } from '../pay.js?v=20261108210214';
+import { goalStats } from './goals.js?v=20261108210214';
 
 const GENERAL = [
   ['🐷', 'Prvo platite sebe', 'Kad legne plata, odmah uplatite štednju — pre računa i kupovine. Šta ostane, troši se.', 'platite-sebe'],
@@ -97,10 +97,10 @@ const tipHTML = (t, i) => `<button class="tip tip-${t.kind}" data-i="${i}"><span
 
 // Dodir na savet: opšti → serija kartica; upozorenje → mesto gde se rešava.
 export function openTip(t) {
-  if (t.lesson) return import('./lessons.js?v=20261108205259').then((m) => m.openLesson(t.lesson));
+  if (t.lesson) return import('./lessons.js?v=20261108210214').then((m) => m.openLesson(t.lesson));
   const a = t.action || '';
-  if (a.startsWith('cat:')) return import('./category-detail.js?v=20261108205259').then((m) => m.openCategoryDetail(currentMonthKey(), a.slice(4)));
-  if (a === 'accounts') return import('./accounts.js?v=20261108205259').then((m) => m.openAccounts());
+  if (a.startsWith('cat:')) return import('./category-detail.js?v=20261108210214').then((m) => m.openCategoryDetail(currentMonthKey(), a.slice(4)));
+  if (a === 'accounts') return import('./accounts.js?v=20261108210214').then((m) => m.openAccounts());
   if (a === 'goals') { location.hash = '#/ciljevi'; return; }
   if (a === 'plan') { location.hash = '#/plan'; }
 }

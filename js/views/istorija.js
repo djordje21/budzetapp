@@ -1,11 +1,13 @@
 // Istorija stvarnih unosa za mesec, grupisano po danima, sa filterima.
-import { ico } from '../icons.js?v=20261108205259';
-import * as S from '../store.js?v=20261108205259';
-import { txOfMonth } from '../calc.js?v=20261108205259';
-import { esc, fmtNum, dayLabel, monthLabel } from '../util.js?v=20261108205259';
-import { openEntrySheet } from './entry.js?v=20261108205259';
+import { ico } from '../icons.js?v=20261108210214';
+import * as S from '../store.js?v=20261108210214';
+import { txOfMonth } from '../calc.js?v=20261108210214';
+import { esc, fmtNum, dayLabel, monthLabel } from '../util.js?v=20261108210214';
+import { openEntrySheet } from './entry.js?v=20261108210214';
 
 const filters = { who: 'all', kind: 'all', cat: 'all' };
+let view = 'list'; // 'list' | 'cal'
+export const setHistoryView = (v) => (view = v);
 export const setHistoryFilter = (f) => Object.assign(filters, { who: 'all', kind: 'all', cat: 'all' }, f);
 
 export function txRow(t, { showDate = false } = {}) {
@@ -40,6 +42,14 @@ export function trRow(x) {
 
 export function renderIstorija(el, ctx) {
   const key = ctx.month;
+  if (view === 'cal') {
+    import('./kalendar.js?v=20261108210214').then((m) => {
+      el.innerHTML = viewSwitch() + m.calendarHTML(key);
+      bindSwitch(el, ctx);
+      m.bindCalendar(el, key);
+    });
+    return;
+  }
   const all = txOfMonth(key);
   const transfers = (S.getState().transfers || []).filter((x) => x.date.startsWith(key))
     .filter((x) => filters.who === 'all' || x.by === filters.who)
@@ -61,7 +71,7 @@ export function renderIstorija(el, ctx) {
 
   const usedCats = [...new Set(all.map((t) => t.categoryId))].map(S.cat);
 
-  el.innerHTML = `
+  el.innerHTML = viewSwitch() + `
     <div class="filters">
       <div class="chips">
         ${[['all', 'Svi'], ...S.MEMBERS.map((m) => [m.id, m.name])].map(([v, l]) =>
@@ -93,6 +103,7 @@ export function renderIstorija(el, ctx) {
       </section>`}
   `;
 
+  bindSwitch(el, ctx);
   el.querySelectorAll('[data-f]').forEach((b) => (b.onclick = () => {
     filters[b.dataset.f] = b.dataset.v;
     renderIstorija(el, ctx);
@@ -104,10 +115,16 @@ export function renderIstorija(el, ctx) {
   el.querySelector('#add-first')?.addEventListener('click', () => openEntrySheet());
   el.querySelectorAll('[data-tr]').forEach((r) => (r.onclick = () => {
     const x = (S.getState().transfers || []).find((t) => t.id === r.dataset.tr);
-    if (x) import('./accounts.js?v=20261108205259').then((m) => m.openTransferForm({ tr: x }));
+    if (x) import('./accounts.js?v=20261108210214').then((m) => m.openTransferForm({ tr: x }));
   }));
   el.querySelectorAll('[data-tx]').forEach((r) => (r.onclick = () => {
     const tx = S.getState().transactions.find((t) => t.id === r.dataset.tx);
     if (tx) openEntrySheet({ tx });
   }));
+}
+
+// Prekidač Lista | Kalendar
+const viewSwitch = () => `<div class="seg seg-2 view-switch"><button data-view="list" class="${view === 'list' ? 'on' : ''}">Lista</button><button data-view="cal" class="${view === 'cal' ? 'on' : ''}">Kalendar</button></div>`;
+function bindSwitch(el, ctx) {
+  el.querySelectorAll('[data-view]').forEach((b) => (b.onclick = () => { view = b.dataset.view; renderIstorija(el, ctx); }));
 }
