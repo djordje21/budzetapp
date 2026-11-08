@@ -1,17 +1,17 @@
 // Početni ekran: plan vs. stvarno za izabrani mesec.
-import * as S from '../store.js?v=20261108090647';
-import { summarize, pace, monthPhase } from '../calc.js?v=20261108090647';
-import { esc, fmt, fmtNum, fmtSigned, monthLabel, addMonths, MONTH_GEN } from '../util.js?v=20261108090647';
-import { countUp, animateBars, pct, toast } from '../ui.js?v=20261108090647';
-import { openEntrySheet } from './entry.js?v=20261108090647';
-import { txRow, setHistoryFilter } from './istorija.js?v=20261108090647';
-import { isPayable, paidTx, payItem, PAY_LABELS } from '../pay.js?v=20261108090647';
-import { openDueSheet } from './due-detail.js?v=20261108090647';
-import { cumulativeData, cumulativeChart, bindCumulative } from '../charts.js?v=20261108090647';
-import { accountsBlock, bindAccounts } from './accounts.js?v=20261108090647';
-import { goalsBlock, bindGoals } from './goals.js?v=20261108090647';
-import { openCategoryDetail } from './category-detail.js?v=20261108090647';
-import { openQuickEntry } from './quick.js?v=20261108090647';
+import * as S from '../store.js?v=20261108091108';
+import { summarize, pace, monthPhase } from '../calc.js?v=20261108091108';
+import { esc, fmt, fmtNum, fmtSigned, monthLabel, addMonths, MONTH_GEN } from '../util.js?v=20261108091108';
+import { countUp, animateBars, pct, toast } from '../ui.js?v=20261108091108';
+import { openEntrySheet } from './entry.js?v=20261108091108';
+import { txRow, setHistoryFilter } from './istorija.js?v=20261108091108';
+import { isPayable, paidTx, payItem, PAY_LABELS } from '../pay.js?v=20261108091108';
+import { openDueSheet } from './due-detail.js?v=20261108091108';
+import { cumulativeData, cumulativeChart, bindCumulative } from '../charts.js?v=20261108091108';
+import { accountsBlock, bindAccounts } from './accounts.js?v=20261108091108';
+import { goalsBlock, bindGoals } from './goals.js?v=20261108091108';
+import { openCategoryDetail } from './category-detail.js?v=20261108091108';
+import { openQuickEntry } from './quick.js?v=20261108091108';
 
 export function renderPregled(el, ctx) {
   const key = ctx.month;
@@ -165,7 +165,7 @@ let rowPlan = [], rowKey = '', rowFuture = false;
 function catRow(r) {
   const over = r.actual - r.plan;
   let note = '';
-  if (r.plan === 0) note = '<span class="tag tag-warn">van plana</span>';
+  if (r.plan === 0) note = '<span class="tag tag-warn">nije u planu</span>';
   else if (over > 0) note = `<span class="tag tag-red">+${fmtNum(over)} preko</span>`;
   // Grupa sa više stavki u planu (npr. Računi: A1, MTS, Struja...) — reci šta je unutra.
   const items = rowPlan.filter((p) => p.categoryId === r.cat.id);
@@ -231,7 +231,7 @@ function emptyMonth(key, prevKey) {
         ${canCopy ? `<button class="btn btn-primary" id="copy-prev">Kopiraj plan iz ${MONTH_GEN[Number(prevKey.slice(5)) - 1]}</button>` : ''}
         <a class="btn ${canCopy ? 'btn-soft' : 'btn-primary'}" href="#/plan">Napravi plan</a>
         <button class="btn btn-ghost" id="add-now">Samo unesi trošak</button>
-        ${nothingAtAll ? '<a class="btn btn-ghost" href="#/vise">Uvezi stari backup</a>' : ''}
+        ${nothingAtAll ? '<a class="btn btn-ghost" href="#/vise">Prebaci podatke iz stare aplikacije</a>' : ''}
       </div>
     </section>`;
 }

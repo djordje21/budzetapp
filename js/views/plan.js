@@ -1,12 +1,12 @@
 // Plan za mesec: očekivani prihodi, troškovi i štednja.
-import * as S from '../store.js?v=20261108090647';
-import { summarize } from '../calc.js?v=20261108090647';
-import { esc, fmt, fmtNum, fmtSigned, monthLabel, addMonths, digitsOnly, MONTH_GEN } from '../util.js?v=20261108090647';
-import { openSheet, toast, confirmSheet, moneyInput } from '../ui.js?v=20261108090647';
-import { isPayable, paidTx, payItem, PAY_LABELS } from '../pay.js?v=20261108090647';
-import { openEntrySheet } from './entry.js?v=20261108090647';
-import { openQuickEntry } from './quick.js?v=20261108090647';
-import { monthPhase } from '../calc.js?v=20261108090647';
+import * as S from '../store.js?v=20261108091108';
+import { summarize } from '../calc.js?v=20261108091108';
+import { esc, fmt, fmtNum, fmtSigned, monthLabel, addMonths, digitsOnly, MONTH_GEN } from '../util.js?v=20261108091108';
+import { openSheet, toast, confirmSheet, moneyInput } from '../ui.js?v=20261108091108';
+import { isPayable, paidTx, payItem, PAY_LABELS } from '../pay.js?v=20261108091108';
+import { openEntrySheet } from './entry.js?v=20261108091108';
+import { openQuickEntry } from './quick.js?v=20261108091108';
+import { monthPhase } from '../calc.js?v=20261108091108';
 
 export function renderPlan(el, ctx) {
   const key = ctx.month;
@@ -81,7 +81,7 @@ export function renderPlan(el, ctx) {
       <div class="ps-row"><span>Planirani prihodi</span><b class="t-green">${fmtNum(sum.tot.income.plan)}</b></div>
       <div class="ps-row"><span>Planirani troškovi</span><b class="t-red">${sum.tot.expense.plan ? '−' : ''}${fmtNum(sum.tot.expense.plan)}</b></div>
       <div class="ps-row"><span>Štednja i investicije</span><b class="t-cyan">${sum.tot.saving.plan ? '−' : ''}${fmtNum(sum.tot.saving.plan)}</b></div>
-      <div class="ps-row ps-total"><span>Neraspoređeno</span><b class="${unassigned < 0 ? 't-red' : 't-accent'}">${fmtSigned(unassigned)} RSD</b></div>
+      <div class="ps-row ps-total"><span>Ostaje bez namene</span><b class="${unassigned < 0 ? 't-red' : 't-accent'}">${fmtSigned(unassigned)} RSD</b></div>
       ${planHint(sum)}
     </section>
 

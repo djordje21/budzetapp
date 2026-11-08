@@ -1,13 +1,13 @@
 // Izveštaji: dan, nedelja, mesec, kvartal, polugodište, godina.
-import * as S from '../store.js?v=20261108090647';
-import { PERIODS, periodOf, shiftAnchor, prevPeriod, txInPeriod, planInPeriod, monthsCovered } from '../period.js?v=20261108090647';
-import { esc, fmt, fmtNum, fmtSigned, todayISO, currentMonthKey, parseISO, isoOf, MONTH_SHORT, pad, fmtDate } from '../util.js?v=20261108090647';
-import { animateBars, pct } from '../ui.js?v=20261108090647';
-import { donutData, donutChart, bindDonut } from '../charts.js?v=20261108090647';
-import { txRow } from './istorija.js?v=20261108090647';
-import { isDaily } from '../calc.js?v=20261108090647';
-import { openCategoryDetail, openCategoryPeriod } from './category-detail.js?v=20261108090647';
-import { openEntrySheet } from './entry.js?v=20261108090647';
+import * as S from '../store.js?v=20261108091108';
+import { PERIODS, periodOf, shiftAnchor, prevPeriod, txInPeriod, planInPeriod, monthsCovered } from '../period.js?v=20261108091108';
+import { esc, fmt, fmtNum, fmtSigned, todayISO, currentMonthKey, parseISO, isoOf, MONTH_SHORT, pad, fmtDate } from '../util.js?v=20261108091108';
+import { animateBars, pct } from '../ui.js?v=20261108091108';
+import { donutData, donutChart, bindDonut } from '../charts.js?v=20261108091108';
+import { txRow } from './istorija.js?v=20261108091108';
+import { isDaily } from '../calc.js?v=20261108091108';
+import { openCategoryDetail, openCategoryPeriod } from './category-detail.js?v=20261108091108';
+import { openEntrySheet } from './entry.js?v=20261108091108';
 
 const R = { type: 'month', anchor: null };
 // 1 trošak, 2–4 troška, 5+ troškova (21 trošak, 22 troška...)
@@ -74,7 +74,7 @@ export function renderIzvestaji(el, ctx) {
     <section class="stat-grid">
       ${mini('Prihodi', inc, plan.tot.income, 'green', short)}
       ${mini('Štednja', sav, plan.tot.saving, 'cyan', short)}
-      <div class="stat card"><div class="stat-label">Bilans</div>
+      <div class="stat card"><div class="stat-label">Ostalo od prihoda</div>
         <div class="stat-val ${inc - exp - sav < 0 ? 't-red' : 't-accent'}">${fmtSigned(inc - exp - sav)}</div>
         <div class="stat-sub">prihodi − troškovi − štednja</div></div>
       ${R.type === 'day' ? (() => {
@@ -108,7 +108,7 @@ export function renderIzvestaji(el, ctx) {
     <div class="section-head"><h3>${R.type === 'day' ? 'Svi unosi' : 'Najveći troškovi'}</h3></div>
     <section class="card list">${topRows(txs)}</section>
 
-    <button class="btn btn-ghost btn-block" id="csv">⬇️ Preuzmi CSV za Excel</button>
+    <button class="btn btn-ghost btn-block" id="csv">⬇️ Preuzmi tabelu za Excel</button>
   `;
 
   // Grafik se crta posle ubacivanja da bi znao širinu.
@@ -245,7 +245,7 @@ function categoryRows(txs, plan, short, total) {
     const share = total ? Math.round((a / total) * 100) : 0;
     let tag = '';
     if (!short && p > 0) tag = a > p ? `<span class="tag tag-red">+${fmtNum(a - p)}</span>` : '';
-    else if (!short && p === 0 && a > 0) tag = '<span class="tag tag-warn">van plana</span>';
+    else if (!short && p === 0 && a > 0) tag = '<span class="tag tag-warn">nije u planu</span>';
     return `<div class="cat-row clickable" role="button" tabindex="0" data-rcat="${c.id}">
       <span class="cat-ico" style="--c:${c.color}">${c.icon}</span>
       <div class="cat-main">
@@ -318,7 +318,7 @@ function insightsBlock({ p, txs, ptx, plan, inc, exp, sav, short, elapsed }) {
   if ((R.type === 'week' || R.type === 'month') && elapsed > 1) {
     const daysWith = new Set(txs.filter(isVar).map((t) => t.date)).size;
     const free = elapsed - daysWith;
-    if (free > 0) out.push(['🌿', `${free} ${free === 1 ? 'dan' : 'dana'} bez promenljivih troškova.`, free >= elapsed / 3 ? 'good' : '']);
+    if (free > 0) out.push(['🌿', `${free} ${free === 1 ? 'dan' : 'dana'} bez troškova za hranu, gorivo i izlaske.`, free >= elapsed / 3 ? 'good' : '']);
   }
   const leak = sumBy(txs, (t) => t.categoryId === 'iscurelo');
   if (leak > 0) out.push(['💧', `Iscurelo (neobjašnjene razlike na računima): <b>${fmt(leak)}</b>${exp ? ` (${Math.round((leak / exp) * 100)}% troškova)` : ''}. Unosite troškove odmah, dok se sećate.`, 'bad']);

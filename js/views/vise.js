@@ -1,8 +1,8 @@
 // Podešavanja: korisnik, tema, kategorije, backup.
-import * as S from '../store.js?v=20261108090647';
-import { esc, todayISO, fmtDate, isoOf } from '../util.js?v=20261108090647';
-import { openSheet, toast, confirmSheet } from '../ui.js?v=20261108090647';
-import * as Sync from '../sync.js?v=20261108090647';
+import * as S from '../store.js?v=20261108091108';
+import { esc, todayISO, fmtDate, isoOf } from '../util.js?v=20261108091108';
+import { openSheet, toast, confirmSheet } from '../ui.js?v=20261108091108';
+import * as Sync from '../sync.js?v=20261108091108';
 
 export function renderVise(el, ctx) {
   const st = S.getState();
@@ -30,10 +30,10 @@ export function renderVise(el, ctx) {
     ${Object.entries(S.KINDS).map(([kind, k]) => `
       <section class="card list">
         <div class="list-title">${k.plural}</div>
-        ${S.categoriesOf(kind, { includeArchived: true }).map((c) => `
+        ${S.categoriesOf(kind, { includeArchived: true }).filter((c) => c.id !== 'iscurelo').map((c) => `
           <button class="tool-row cat-edit ${c.archived ? 'archived' : ''}" data-cat="${c.id}">
             <span class="cat-ico" style="--c:${c.color}">${c.icon}</span>
-            <span class="grow">${esc(c.name)}${c.fixed ? ' <span class="tag">fiksni</span>' : ''}${c.archived ? ' <span class="tag">sakriveno</span>' : ''}</span>
+            <span class="grow">${esc(c.name)}${c.fixed ? ' <span class="tag">mesečni račun</span>' : ''}${c.archived ? ' <span class="tag">sakriveno</span>' : ''}</span>
             <span class="muted">›</span>
           </button>`).join('')}
         <button class="add-line" data-newcat="${kind}">+ Nova kategorija</button>
@@ -62,7 +62,7 @@ export function renderVise(el, ctx) {
     await Sync.flush();
     await Sync.pull();
     const st = Sync.getStatus();
-    toast(st.state === 'synced' ? 'Sinhronizovano ✅' : 'Sinhronizacija nije uspela', st.state === 'synced' ? 'ok' : 'bad');
+    toast(st.state === 'synced' ? 'Podaci osveženi ✅' : 'Osvežavanje nije uspelo — proveri internet', st.state === 'synced' ? 'ok' : 'bad');
   });
   el.querySelector('#discard')?.addEventListener('click', async () => {
     if (await confirmSheet({ title: 'Odbaci neposlate izmene?', text: 'Izmene koje nisu stigle do baze biće odbačene, a podaci ponovo preuzeti iz baze.', ok: 'Odbaci', danger: true })) {
@@ -103,10 +103,10 @@ export function renderVise(el, ctx) {
         if (!(await confirmSheet({ title: 'Uvezi stari backup?', text: 'Stavke iz stare aplikacije postaju <b>plan</b> za januar–decembar 2026. Vanredni troškovi postaju stvarni unosi. Postojeći plan za 2026. biće zamenjen.', ok: 'Uvezi' }))) return;
         downloadBackup('pre-uvoza');
         await S.importOld(data, 2026);
-        toast('Stari backup uvezen ✅', 'ok');
+        toast('Podaci iz stare aplikacije prebačeni ✅', 'ok');
       } else throw new Error('Nepoznat format');
     } catch (err) {
-      toast('Fajl nije ispravan backup.', 'bad');
+      toast('Ovaj fajl nije rezervna kopija budžeta.', 'bad');
     }
   };
   el.querySelector('#reset').onclick = () => openResetSheet();
@@ -161,7 +161,7 @@ function openCategorySheet(c, kind) {
       </div>
       <div class="field-label">Boja</div>
       <div class="swatches">${COLORS.map((col) => `<button class="swatch" data-col="${col}" style="--c:${col}" aria-label="${col}"></button>`).join('')}</div>
-      ${kind === 'expense' ? `<label class="check"><input type="checkbox" id="c-fixed"><span><b>Fiksni trošak</b> — plaća se jednom mesečno (rata, račun). Ne računa se u dnevni ritam potrošnje.</span></label>` : ''}
+      ${kind === 'expense' ? `<label class="check"><input type="checkbox" id="c-fixed"><span><b>Račun ili rata</b> — plaća se jednom mesečno (rata, račun). Ne računa se u dnevni ritam potrošnje.</span></label>` : ''}
       ${c ? `<label class="check"><input type="checkbox" id="c-arch"><span>Sakrij kategoriju (ostaje u istoriji)</span></label>` : ''}
       <div class="btn-row sticky-actions"><button class="btn btn-primary" id="c-save">Sačuvaj</button></div>`,
     onMount(el, close) {
@@ -194,11 +194,11 @@ function openCategorySheet(c, kind) {
 function accountBlock() {
   const st = Sync.getStatus();
   const me = S.member(S.getState().settings.currentUser);
-  const label = { synced: 'Sinhronizovano', syncing: 'Sinhronizujem…', pending: 'Čeka slanje', offline: 'Bez interneta — izmene čekaju', error: 'Greška pri sinhronizaciji', idle: 'Povezivanje…' }[st.state] || st.state;
+  const label = { synced: 'Sve je sačuvano', syncing: 'Čuvam…', pending: 'Čuva se…', offline: 'Nema interneta — izmene će se sačuvati kad se veza vrati', error: 'Greška pri čuvanju', idle: 'Povezivanje…' }[st.state] || st.state;
   const dot = st.state === 'error' ? 'dot-error' : st.state === 'offline' || st.pending ? 'dot-pending' : 'dot-ok';
   const when = st.lastSync ? `${fmtDate(isoOf(new Date(st.lastSync)))} ${new Date(st.lastSync).toTimeString().slice(0, 5)}` : '—';
   return `
-    <div class="section-head"><h3>Nalog i sinhronizacija</h3></div>
+    <div class="section-head"><h3>Nalog</h3></div>
     <section class="card list" data-sync-text>
       <div class="sync-row">
         <span class="who who-lg" style="--c:${me.color}">${me.short}</span>
@@ -207,9 +207,10 @@ function accountBlock() {
       <div class="sync-row">
         <span class="dot ${dot}"></span>
         <span class="grow"><b>${label}</b>${st.pending ? ` · ${st.pending} na čekanju` : ''}<br>
-          <span class="muted small">Poslednja sinhronizacija: ${when}${st.error ? '<br>' + esc(st.error) : ''}</span></span>
+          <span class="muted small">Poslednje čuvanje: ${when}${st.error ? '<br>' + esc(st.error) : ''}</span></span>
       </div>
-      <button class="tool-row" id="sync-now">🔄 Sinhronizuj sada</button>
+      <div class="sync-row muted small">Tačkica na tvom krugu gore desno: 🟢 sačuvano · 🟡 čuva se / nema interneta · 🔴 greška</div>
+      <button class="tool-row" id="sync-now">🔄 Osveži podatke</button>
       ${st.state === 'error' && st.pending ? '<button class="tool-row t-red" id="discard">⚠️ Odbaci neposlate izmene</button>' : ''}
       <button class="tool-row" id="logout">🚪 Odjavi se</button>
     </section>`;

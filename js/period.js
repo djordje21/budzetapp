@@ -1,6 +1,6 @@
 // Periodi za izveštaje: dan, nedelja, mesec, kvartal, polugodište, godina.
-import * as S from './store.js?v=20261108090647';
-import { isoOf, parseISO, pad, MONTH_NAMES, MONTH_SHORT, MONTH_GEN, DAY_NAMES, daysInMonth, fmtDate } from './util.js?v=20261108090647';
+import * as S from './store.js?v=20261108091108';
+import { isoOf, parseISO, pad, MONTH_NAMES, MONTH_SHORT, MONTH_GEN, DAY_NAMES, daysInMonth, fmtDate } from './util.js?v=20261108091108';
 
 export const PERIODS = [
   ['day', 'Dan'], ['week', 'Nedelja'], ['month', 'Mesec'],
@@ -30,10 +30,10 @@ function labelOf(type, a, b) {
   const y = a.getFullYear();
   if (type === 'day') return `${DAY_NAMES[a.getDay()]}, ${fmtDate(isoOf(a))}`;
   if (type === 'week') return `${fmtDate(isoOf(a))} – ${fmtDate(isoOf(b))}`;
-  if (type === 'month') return `${MONTH_NAMES[a.getMonth()]} ${y}.`;
-  if (type === 'quarter') return `Q${Math.floor(a.getMonth() / 3) + 1} ${y}. · ${MONTH_SHORT[a.getMonth()].toLowerCase()}–${MONTH_SHORT[b.getMonth()].toLowerCase()}`;
-  if (type === 'half') return `${a.getMonth() < 6 ? '1.' : '2.'} polugodište ${y}.`;
-  return `${y}. godina`;
+  if (type === 'month') return `${MONTH_NAMES[a.getMonth()]} ${y}`;
+  if (type === 'quarter') return `${Math.floor(a.getMonth() / 3) + 1}. kvartal ${y} · ${MONTH_SHORT[a.getMonth()].toLowerCase()}–${MONTH_SHORT[b.getMonth()].toLowerCase()}`;
+  if (type === 'half') return `${a.getMonth() < 6 ? '1.' : '2.'} polugodište ${y}`;
+  return `Godina ${y}`;
 }
 
 export function shiftAnchor(type, anchorISO, dir) {
