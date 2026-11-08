@@ -1,18 +1,22 @@
 // Izveštaji: dan, nedelja, mesec, kvartal, polugodište, godina.
-import * as S from '../store.js?v=20261108085345';
-import { PERIODS, periodOf, shiftAnchor, prevPeriod, txInPeriod, planInPeriod, monthsCovered } from '../period.js?v=20261108085345';
-import { esc, fmt, fmtNum, fmtSigned, todayISO, currentMonthKey, parseISO, isoOf, MONTH_SHORT, pad, fmtDate } from '../util.js?v=20261108085345';
-import { animateBars, pct } from '../ui.js?v=20261108085345';
-import { donutData, donutChart, bindDonut } from '../charts.js?v=20261108085345';
-import { txRow } from './istorija.js?v=20261108085345';
-import { openCategoryDetail, openCategoryPeriod } from './category-detail.js?v=20261108085345';
-import { openEntrySheet } from './entry.js?v=20261108085345';
+import * as S from '../store.js?v=20261108085601';
+import { PERIODS, periodOf, shiftAnchor, prevPeriod, txInPeriod, planInPeriod, monthsCovered } from '../period.js?v=20261108085601';
+import { esc, fmt, fmtNum, fmtSigned, todayISO, currentMonthKey, parseISO, isoOf, MONTH_SHORT, pad, fmtDate } from '../util.js?v=20261108085601';
+import { animateBars, pct } from '../ui.js?v=20261108085601';
+import { donutData, donutChart, bindDonut } from '../charts.js?v=20261108085601';
+import { txRow } from './istorija.js?v=20261108085601';
+import { isDaily } from '../calc.js?v=20261108085601';
+import { openCategoryDetail, openCategoryPeriod } from './category-detail.js?v=20261108085601';
+import { openEntrySheet } from './entry.js?v=20261108085601';
 
 const R = { type: 'month', anchor: null };
+// 1 trošak, 2–4 troška, 5+ troškova (21 trošak, 22 troška...)
+const troskova = (n) => `${n} ${n % 10 === 1 && n % 100 !== 11 ? 'trošak' : [2, 3, 4].includes(n % 10) && ![12, 13, 14].includes(n % 100) ? 'troška' : 'troškova'}`;
+const PREV_WORD = { day: 'nego juče', week: 'nego prošle nedelje', month: 'nego prošlog meseca', quarter: 'nego prošlog kvartala', half: 'nego prošlog polugodišta', year: 'nego prošle godine' };
 const DOW = ['Pon', 'Uto', 'Sre', 'Čet', 'Pet', 'Sub', 'Ned'];
 
 const sumBy = (arr, f) => arr.reduce((s, t) => s + (f(t) ? Number(t.amount) : 0), 0);
-const isVar = (t) => t.kind === 'expense' && !S.cat(t.categoryId).fixed;
+const isVar = (t) => isDaily(S.cat(t.categoryId));
 
 export function renderIzvestaji(el, ctx) {
   if (!R.anchor) R.anchor = ctx.month === currentMonthKey() ? todayISO() : `${ctx.month}-01`;
@@ -33,14 +37,14 @@ export function renderIzvestaji(el, ctx) {
   const sav = sumBy(txs, (t) => t.kind === 'saving');
   const pexp = sumBy(ptx, (t) => t.kind === 'expense');
   const varExp = sumBy(txs, isVar);
-  const varPlan = Object.entries(plan.byCat).reduce((s, [id, a]) => { const c = S.cat(id); return s + (c.kind === 'expense' && !c.fixed ? a : 0); }, 0);
+  const varPlan = Object.entries(plan.byCat).reduce((s, [id, a]) => s + (isDaily(S.cat(id)) ? a : 0), 0);
 
   // Proteklih dana u periodu (za prosek): budući dani se ne računaju.
   const elapsed = today < p.start ? 0 : today > p.end ? p.days : Math.round((parseISO(today) - parseISO(p.start)) / 864e5) + 1;
   const avg = elapsed ? exp / elapsed : 0;
 
   const cmpAct = short ? varExp : exp;
-  const cmpPlan = short ? varPlan : plan.tot.expense;
+  const cmpPlan = R.type === 'day' ? 0 : short ? varPlan : plan.tot.expense;
   const diff = cmpPlan - cmpAct;
   const change = pexp ? (exp - pexp) / pexp : null;
 
@@ -58,12 +62,12 @@ export function renderIzvestaji(el, ctx) {
       <div class="hero-label">Troškovi</div>
       <div class="hero-value">${fmt(exp)}</div>
       <div class="hero-sub">
-        ${cmpPlan > 0 ? `${short ? 'Promenljivi: ' : ''}<b>${fmtNum(cmpAct)}</b> od ${planWord} <b>${fmtNum(cmpPlan)}</b>` : future ? 'Period još nije počeo' : 'Nema plana za ovaj period'}
+        ${R.type === 'day' ? `${troskova(txs.filter((t) => t.kind === 'expense').length)} ovog dana` : cmpPlan > 0 ? `${short ? 'Hrana, gorivo, izlasci, džeparac: ' : ''}<b>${fmtNum(cmpAct)}</b> od ${planWord} <b>${fmtNum(cmpPlan)}</b>` : future ? 'Period još nije počeo' : 'Nema plana za ovaj period'}
       </div>
       ${cmpPlan > 0 ? `<div class="bar bar-lg"><div class="bar-fill ${diff < 0 ? 'is-over' : ''}" data-w="${pct(cmpAct, cmpPlan)}"></div></div>` : ''}
       <div class="kpi-row">
         ${cmpPlan > 0 ? `<span class="tag ${diff < 0 ? 'tag-red' : 'tag-good'}">${diff < 0 ? '▲ ' + fmtNum(-diff) + ' preko plana' : '▼ ' + fmtNum(diff) + ' ispod plana'}</span>` : ''}
-        ${change !== null ? `<span class="tag">${exp - pexp > 0 ? '▲' : '▼'} ${fmtNum(Math.abs(exp - pexp))} (${exp - pexp > 0 ? '+' : '−'}${Math.abs(Math.round(change * 100))}%) ${exp - pexp > 0 ? 'više' : 'manje'} nego prethodni period</span>` : ''}
+        ${change !== null ? `<span class="tag">${exp - pexp > 0 ? '▲' : '▼'} ${fmtNum(Math.abs(exp - pexp))} (${exp - pexp > 0 ? '+' : '−'}${Math.abs(Math.round(change * 100))}%) ${exp - pexp > 0 ? 'više' : 'manje'} ${PREV_WORD[R.type]}</span>` : ''}
       </div>
     </section>
 
@@ -73,9 +77,14 @@ export function renderIzvestaji(el, ctx) {
       <div class="stat card"><div class="stat-label">Bilans</div>
         <div class="stat-val ${inc - exp - sav < 0 ? 't-red' : 't-accent'}">${fmtSigned(inc - exp - sav)}</div>
         <div class="stat-sub">prihodi − troškovi − štednja</div></div>
-      <div class="stat card"><div class="stat-label">Prosek dnevno</div>
+      ${R.type === 'day' ? (() => {
+        const big = txs.filter((t) => t.kind === 'expense').sort((a, b) => b.amount - a.amount)[0];
+        return `<div class="stat card"><div class="stat-label">Najveći trošak</div>
+          <div class="stat-val">${big ? fmtNum(big.amount) : '—'}</div>
+          <div class="stat-sub">${big ? esc(big.note || S.cat(big.categoryId).name) : 'nema troškova'}</div></div>`;
+      })() : `<div class="stat card"><div class="stat-label">Prosek dnevno</div>
         <div class="stat-val">${fmtNum(avg)}</div>
-        <div class="stat-sub">${elapsed ? `za ${elapsed} ${elapsed === 1 ? 'dan' : 'dana'}` : 'period nije počeo'}</div></div>
+        <div class="stat-sub">${elapsed ? `za ${elapsed} ${elapsed === 1 ? 'dan' : 'dana'}` : 'period nije počeo'}</div></div>`}
     </section>
 
     ${R.type === 'day' ? '' : `
@@ -163,7 +172,7 @@ function buildChart(p, txs, plan, W) {
     }
     every = R.type === 'week' ? 1 : 5;
     // Dnevni plan promenljivih troškova
-    const varPlan = Object.entries(plan.byCat).reduce((s, [id, a]) => { const c = S.cat(id); return s + (c.kind === 'expense' && !c.fixed ? a : 0); }, 0);
+    const varPlan = Object.entries(plan.byCat).reduce((s, [id, a]) => s + (isDaily(S.cat(id)) ? a : 0), 0);
     ref = varPlan / p.days || null;
   } else {
     plans = [];
