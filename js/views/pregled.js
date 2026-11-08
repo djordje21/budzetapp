@@ -1,17 +1,17 @@
 // Početni ekran: plan vs. stvarno za izabrani mesec.
-import * as S from '../store.js?v=20261108054707';
-import { summarize, pace, monthPhase } from '../calc.js?v=20261108054707';
-import { esc, fmt, fmtNum, fmtSigned, monthLabel, addMonths, MONTH_GEN } from '../util.js?v=20261108054707';
-import { countUp, animateBars, pct, toast } from '../ui.js?v=20261108054707';
-import { openEntrySheet } from './entry.js?v=20261108054707';
-import { txRow, setHistoryFilter } from './istorija.js?v=20261108054707';
-import { isPayable, paidTx, payItem, PAY_LABELS } from '../pay.js?v=20261108054707';
-import { openDueSheet } from './due-detail.js?v=20261108054707';
-import { cumulativeData, cumulativeChart, bindCumulative } from '../charts.js?v=20261108054707';
-import { accountsBlock, bindAccounts } from './accounts.js?v=20261108054707';
-import { goalsBlock, bindGoals } from './goals.js?v=20261108054707';
-import { openCategoryDetail } from './category-detail.js?v=20261108054707';
-import { openQuickEntry } from './quick.js?v=20261108054707';
+import * as S from '../store.js?v=20261108055649';
+import { summarize, pace, monthPhase } from '../calc.js?v=20261108055649';
+import { esc, fmt, fmtNum, fmtSigned, monthLabel, addMonths, MONTH_GEN } from '../util.js?v=20261108055649';
+import { countUp, animateBars, pct, toast } from '../ui.js?v=20261108055649';
+import { openEntrySheet } from './entry.js?v=20261108055649';
+import { txRow, setHistoryFilter } from './istorija.js?v=20261108055649';
+import { isPayable, paidTx, payItem, PAY_LABELS } from '../pay.js?v=20261108055649';
+import { openDueSheet } from './due-detail.js?v=20261108055649';
+import { cumulativeData, cumulativeChart, bindCumulative } from '../charts.js?v=20261108055649';
+import { accountsBlock, bindAccounts } from './accounts.js?v=20261108055649';
+import { goalsBlock, bindGoals } from './goals.js?v=20261108055649';
+import { openCategoryDetail } from './category-detail.js?v=20261108055649';
+import { openQuickEntry } from './quick.js?v=20261108055649';
 
 export function renderPregled(el, ctx) {
   const key = ctx.month;
@@ -71,9 +71,9 @@ export function renderPregled(el, ctx) {
 
     ${dueBlock(key, sum, phase)}
 
-    <div class="section-head"><h3>Po kategorijama</h3><span class="muted">stvarno / plan</span></div>
+    <div class="section-head"><h3>Po kategorijama</h3><span class="muted">potrošeno od plana</span></div>
     <section class="card list">
-      ${(quickOk = phase !== 'future', expenseCats.length) ? expenseCats.map(catRow).join('') : '<div class="empty-mini">Nema troškova u planu.</div>'}
+      ${(quickOk = phase !== 'future', rowPlan = sum.plan, rowKey = key, rowFuture = phase === 'future', expenseCats.length) ? expenseCats.map(catRow).join('') : '<div class="empty-mini">Nema troškova u planu.</div>'}
     </section>
 
     ${goalsBlock()}
@@ -169,17 +169,26 @@ function stat(label, actual, plan, color, go) {
 }
 
 let quickOk = true;
+let rowPlan = [], rowKey = '', rowFuture = false;
 function catRow(r) {
   const over = r.actual - r.plan;
   let note = '';
   if (r.plan === 0) note = '<span class="tag tag-warn">van plana</span>';
   else if (over > 0) note = `<span class="tag tag-red">+${fmtNum(over)} preko</span>`;
-  else if (r.cat.fixed && r.actual === 0) note = '<span class="tag">nije plaćeno</span>';
+  // Grupa sa više stavki u planu (npr. Računi: A1, MTS, Struja...) — reci šta je unutra.
+  const items = rowPlan.filter((p) => p.categoryId === r.cat.id);
+  let sub = '';
+  if (items.length > 1 || r.cat.fixed) {
+    const paidN = r.cat.fixed ? items.filter((p) => paidTx(rowKey, p)).length : 0;
+    const w = items.length === 1 ? 'stavka' : items.length < 5 ? 'stavke' : 'stavki';
+    sub = `${items.length} ${w}${r.cat.fixed && items.length && !rowFuture ? ` · plaćeno ${paidN} od ${items.length}` : ''}`;
+  }
   return `<div class="cat-row clickable" role="button" tabindex="0" data-cat="${r.cat.id}">
     <span class="cat-ico" style="--c:${r.cat.color}">${r.cat.icon}</span>
     <div class="cat-main">
       <div class="cat-top"><span class="cat-name">${esc(r.cat.name)}</span>${note}
-        <span class="cat-amt"><b>${fmtNum(r.actual)}</b><span class="muted"> / ${fmtNum(r.plan)}</span></span></div>
+        <span class="cat-amt"><b>${fmtNum(r.actual)}</b><span class="muted"> od ${fmtNum(r.plan)}</span></span></div>
+      ${sub ? `<div class="cat-sub">${sub}</div>` : ''}
       <div class="bar bar-sm"><div class="bar-fill ${over > 0 || r.plan === 0 ? 'is-over' : ''}" style="--c:${r.cat.color}" data-w="${pct(r.actual, r.plan)}"></div></div>
     </div>
     ${!r.cat.fixed && r.cat.kind === 'expense' && quickOk ? `<button class="quick-add" data-qcat="${r.cat.id}" aria-label="Brzi unos: ${esc(r.cat.name)}">+</button>` : '<span class="chev">›</span>'}

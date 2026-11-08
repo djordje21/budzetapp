@@ -709,3 +709,8 @@ input, textarea, select, .input, [contenteditable] { -webkit-user-select: text; 
 .toast-warn .toast-btn { background: var(--surface); }
 .plan-edit-hint { margin-top: 4px; }
 .plan-edit-hint .link { display: block; margin-top: 4px; padding: 0; font-size: 13px; }
+
+.cat-sub { font-size: 12px; color: var(--muted); margin-top: 1px; }
+.plan-group-head { text-transform: uppercase; letter-spacing: .5px; font-size: 12px; background: var(--surface-2); padding: 8px 14px; }
+.plan-group-head em { font-style: normal; text-transform: none; letter-spacing: 0; font-weight: 500; }
+.plan-group + .plan-group { border-top: none; }

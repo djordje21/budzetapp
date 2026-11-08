@@ -1,12 +1,12 @@
 // Plan za mesec: očekivani prihodi, troškovi i štednja.
-import * as S from '../store.js?v=20261108054707';
-import { summarize } from '../calc.js?v=20261108054707';
-import { esc, fmt, fmtNum, fmtSigned, monthLabel, addMonths, digitsOnly, MONTH_GEN } from '../util.js?v=20261108054707';
-import { openSheet, toast, confirmSheet, moneyInput } from '../ui.js?v=20261108054707';
-import { isPayable, paidTx, payItem, PAY_LABELS } from '../pay.js?v=20261108054707';
-import { openEntrySheet } from './entry.js?v=20261108054707';
-import { openQuickEntry } from './quick.js?v=20261108054707';
-import { monthPhase } from '../calc.js?v=20261108054707';
+import * as S from '../store.js?v=20261108055649';
+import { summarize } from '../calc.js?v=20261108055649';
+import { esc, fmt, fmtNum, fmtSigned, monthLabel, addMonths, digitsOnly, MONTH_GEN } from '../util.js?v=20261108055649';
+import { openSheet, toast, confirmSheet, moneyInput } from '../ui.js?v=20261108055649';
+import { isPayable, paidTx, payItem, PAY_LABELS } from '../pay.js?v=20261108055649';
+import { openEntrySheet } from './entry.js?v=20261108055649';
+import { openQuickEntry } from './quick.js?v=20261108055649';
+import { monthPhase } from '../calc.js?v=20261108055649';
 
 export function renderPlan(el, ctx) {
   const key = ctx.month;
@@ -31,7 +31,7 @@ export function renderPlan(el, ctx) {
         .map(([cid, arr]) => {
           const c = S.cat(cid);
           return `<div class="plan-group">
-            <div class="plan-group-head"><span>${c.icon} ${esc(c.name)}</span><span>${fmtNum(sumOf(arr))}</span></div>
+            <div class="plan-group-head"><span>${c.icon} ${esc(c.name)}${arr.length > 1 ? ` <em>· ${arr.length} stavke</em>` : ''}</span><span>${arr.length > 1 ? 'ukupno ' : ''}${fmtNum(sumOf(arr))}</span></div>
             ${arr.map((p) => itemRow(p, key)).join('')}
           </div>`;
         }).join('');
