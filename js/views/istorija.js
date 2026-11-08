@@ -1,8 +1,8 @@
 // Istorija stvarnih unosa za mesec, grupisano po danima, sa filterima.
-import * as S from '../store.js?v=20261108081746';
-import { txOfMonth } from '../calc.js?v=20261108081746';
-import { esc, fmtNum, dayLabel, monthLabel } from '../util.js?v=20261108081746';
-import { openEntrySheet } from './entry.js?v=20261108081746';
+import * as S from '../store.js?v=20261108082000';
+import { txOfMonth } from '../calc.js?v=20261108082000';
+import { esc, fmtNum, dayLabel, monthLabel } from '../util.js?v=20261108082000';
+import { openEntrySheet } from './entry.js?v=20261108082000';
 
 const filters = { who: 'all', kind: 'all', cat: 'all' };
 export const setHistoryFilter = (f) => Object.assign(filters, { who: 'all', kind: 'all', cat: 'all' }, f);

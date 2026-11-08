@@ -1,12 +1,12 @@
 // Izveštaji: dan, nedelja, mesec, kvartal, polugodište, godina.
-import * as S from '../store.js?v=20261108081746';
-import { PERIODS, periodOf, shiftAnchor, prevPeriod, txInPeriod, planInPeriod, monthsCovered } from '../period.js?v=20261108081746';
-import { esc, fmt, fmtNum, fmtSigned, todayISO, currentMonthKey, parseISO, isoOf, MONTH_SHORT, pad } from '../util.js?v=20261108081746';
-import { animateBars, pct } from '../ui.js?v=20261108081746';
-import { donutData, donutChart, bindDonut } from '../charts.js?v=20261108081746';
-import { txRow } from './istorija.js?v=20261108081746';
-import { openCategoryDetail, openCategoryPeriod } from './category-detail.js?v=20261108081746';
-import { openEntrySheet } from './entry.js?v=20261108081746';
+import * as S from '../store.js?v=20261108082000';
+import { PERIODS, periodOf, shiftAnchor, prevPeriod, txInPeriod, planInPeriod, monthsCovered } from '../period.js?v=20261108082000';
+import { esc, fmt, fmtNum, fmtSigned, todayISO, currentMonthKey, parseISO, isoOf, MONTH_SHORT, pad } from '../util.js?v=20261108082000';
+import { animateBars, pct } from '../ui.js?v=20261108082000';
+import { donutData, donutChart, bindDonut } from '../charts.js?v=20261108082000';
+import { txRow } from './istorija.js?v=20261108082000';
+import { openCategoryDetail, openCategoryPeriod } from './category-detail.js?v=20261108082000';
+import { openEntrySheet } from './entry.js?v=20261108082000';
 
 const R = { type: 'month', anchor: null };
 const DOW = ['Pon', 'Uto', 'Sre', 'Čet', 'Pet', 'Sub', 'Ned'];
@@ -63,7 +63,7 @@ export function renderIzvestaji(el, ctx) {
       ${cmpPlan > 0 ? `<div class="bar bar-lg"><div class="bar-fill ${diff < 0 ? 'is-over' : ''}" data-w="${pct(cmpAct, cmpPlan)}"></div></div>` : ''}
       <div class="kpi-row">
         ${cmpPlan > 0 ? `<span class="tag ${diff < 0 ? 'tag-red' : 'tag-good'}">${diff < 0 ? '▲ ' + fmtNum(-diff) + ' preko plana' : '▼ ' + fmtNum(diff) + ' ispod plana'}</span>` : ''}
-        ${change !== null ? `<span class="tag">${change > 0 ? '▲' : '▼'} ${Math.abs(Math.round(change * 100))}% vs prethodni period</span>` : ''}
+        ${change !== null ? `<span class="tag">${exp - pexp > 0 ? '▲' : '▼'} ${fmtNum(Math.abs(exp - pexp))} ${exp - pexp > 0 ? 'više' : 'manje'} nego prethodni period</span>` : ''}
       </div>
     </section>
 
@@ -285,7 +285,7 @@ function insightsBlock({ p, txs, ptx, plan, inc, exp, sav, short, elapsed }) {
   const top = Object.entries(act).sort((a, b) => b[1] - a[1])[0];
   if (top && exp) {
     const c = S.cat(top[0]);
-    out.push(['📊', `Najviše je otišlo na <b>${esc(c.name)}</b>: ${fmt(top[1])} (${Math.round((top[1] / exp) * 100)}% troškova).`]);
+    out.push(['📊', `Najviše je otišlo na <b>${esc(c.name)}</b>: ${fmt(top[1])} od ukupno ${fmt(exp)} troškova.`]);
   }
   if (!short) {
     const over = Object.entries(act)
@@ -302,8 +302,8 @@ function insightsBlock({ p, txs, ptx, plan, inc, exp, sav, short, elapsed }) {
 
   if (!short && inc > 0) {
     const rate = sav / inc;
-    if (rate >= 0.2) out.push(['🏆', `Uštedeli ste <b>${Math.round(rate * 100)}%</b> prihoda — odlično.`, 'good']);
-    else if (rate > 0) out.push(['🐷', `Štednja je ${Math.round(rate * 100)}% prihoda. Cilj od 20% bi značio još ${fmt(inc * 0.2 - sav)}.`]);
+    if (rate >= 0.2) out.push(['🏆', `Uštedeli ste <b>${fmt(sav)}</b> od ${fmt(inc)} prihoda — odlično.`, 'good']);
+    else if (rate > 0) out.push(['🐷', `Uštedeli ste ${fmt(sav)} od ${fmt(inc)} prihoda. Za petinu prihoda (preporuka) fali još <b>${fmt(inc * 0.2 - sav)}</b>.`]);
     else out.push(['🐷', 'U ovom periodu nije evidentirana štednja.']);
   }
   if ((R.type === 'week' || R.type === 'month') && elapsed > 1) {
@@ -312,7 +312,7 @@ function insightsBlock({ p, txs, ptx, plan, inc, exp, sav, short, elapsed }) {
     if (free > 0) out.push(['🌿', `${free} ${free === 1 ? 'dan' : 'dana'} bez promenljivih troškova.`, free >= elapsed / 3 ? 'good' : '']);
   }
   const leak = sumBy(txs, (t) => t.categoryId === 'iscurelo');
-  if (leak > 0) out.push(['💧', `Iscurelo (neobjašnjene razlike na računima): <b>${fmt(leak)}</b>${exp ? ` — ${Math.round((leak / exp) * 100)}% troškova` : ''}. Unosite troškove odmah, dok se sećate.`, 'bad']);
+  if (leak > 0) out.push(['💧', `Iscurelo (neobjašnjene razlike na računima): <b>${fmt(leak)}</b>. Unosite troškove odmah, dok se sećate.`, 'bad']);
   if (!txs.length) out.push(['📝', 'U ovom periodu nema unosa. Unesi troškove preko dugmeta + da bi izveštaj imao smisla.']);
   if (!out.length) return '';
   return `<div class="section-head"><h3>Uvidi</h3></div>
