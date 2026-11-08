@@ -1,7 +1,7 @@
 // Skladište podataka. Za sada lokalno (localStorage); kasnije se ovde uključuje Supabase
 // bez menjanja ekrana — svi ekrani koriste samo funkcije iz ovog fajla.
 
-import { uid, addMonths } from './util.js?v=20261108204516';
+import { uid, addMonths } from './util.js?v=20261108205259';
 
 const KEY = 'budzetapp_v2';
 
@@ -194,7 +194,7 @@ export async function savePlanItem(key, item, { applyForward = false } = {}) {
     for (const k of forwardKeys(key)) {
       const pl = [...planOf(k)];
       const j = pl.findIndex((x) => x.line === saved.line);
-      const data = { categoryId: saved.categoryId, name: saved.name, amount: saved.amount, owner: saved.owner };
+      const data = { categoryId: saved.categoryId, name: saved.name, amount: saved.amount, owner: saved.owner, ...('day' in saved ? { day: saved.day } : {}) };
       if (j >= 0) pl[j] = { ...pl[j], ...data };
       else pl.push({ ...data, id: uid(), line: saved.line });
       state.plans[k] = pl;
@@ -227,6 +227,15 @@ export async function moveLineToCategory(fromKey, line, oldCat, newCat, itemName
   });
   persist();
   return moved;
+}
+
+// Dan uplate/roka važi za istu stavku i u narednim mesecima (plata stiže istog dana svakog meseca).
+export async function setLineDay(fromKey, line, day) {
+  for (const k of Object.keys(state.plans)) {
+    if (k <= fromKey) continue;
+    state.plans[k] = state.plans[k].map((p) => (p.line === line ? { ...p, day } : p));
+  }
+  persist();
 }
 
 // Za "Poništi": snimak celog plana pre izmene.

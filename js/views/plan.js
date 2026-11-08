@@ -1,13 +1,13 @@
 // Plan za mesec: očekivani prihodi, troškovi i štednja.
-import { ico } from '../icons.js?v=20261108204516';
-import * as S from '../store.js?v=20261108204516';
-import { summarize } from '../calc.js?v=20261108204516';
-import { esc, fmt, fmtNum, fmtSigned, monthLabel, addMonths, digitsOnly, MONTH_GEN , dayLabel } from '../util.js?v=20261108204516';
-import { openSheet, toast, confirmSheet, moneyInput } from '../ui.js?v=20261108204516';
-import { isPayable, paidTx, payItem, PAY_LABELS } from '../pay.js?v=20261108204516';
-import { openEntrySheet } from './entry.js?v=20261108204516';
-import { openQuickEntry } from './quick.js?v=20261108204516';
-import { monthPhase } from '../calc.js?v=20261108204516';
+import { ico } from '../icons.js?v=20261108205259';
+import * as S from '../store.js?v=20261108205259';
+import { summarize } from '../calc.js?v=20261108205259';
+import { esc, fmt, fmtNum, fmtSigned, monthLabel, addMonths, digitsOnly, MONTH_GEN , dayLabel } from '../util.js?v=20261108205259';
+import { openSheet, toast, confirmSheet, moneyInput } from '../ui.js?v=20261108205259';
+import { isPayable, paidTx, payItem, PAY_LABELS } from '../pay.js?v=20261108205259';
+import { openEntrySheet } from './entry.js?v=20261108205259';
+import { openQuickEntry } from './quick.js?v=20261108205259';
+import { monthPhase } from '../calc.js?v=20261108205259';
 
 // Sekcija kao padajući meni: naslov sa zbirom uvek vidljiv; zatvorene sekcije se trajno pamte.
 const SEC_KEY = 'budzet_sec_closed';
@@ -182,6 +182,8 @@ export function renderPlan(el, ctx) {
 
 const sumOf = (arr) => arr.reduce((s, p) => s + Number(p.amount), 0);
 
+const dayNote = (p) => (p.day ? (S.cat(p.categoryId).kind === 'income' ? `stiže ${p.day}.` : `rok ${p.day}.`) : '');
+
 function itemRow(p, key, single = null) {
   const o = S.member(p.owner);
   let pay = '';
@@ -198,7 +200,7 @@ function itemRow(p, key, single = null) {
   const sameName = single && p.name.trim().toLowerCase() === single.name.trim().toLowerCase();
   return `<div class="plan-item" role="button" tabindex="0" data-item="${p.id}">
     ${single ? `<span class="cat-ico" style="--c:${single.color}">${ico(single)}</span>` : ''}
-    <span class="pi-name">${esc(p.name)}${single && !sameName ? `<small>${esc(single.name)}</small>` : ''}</span>
+    <span class="pi-name">${esc(p.name)}${dayNote(p) || (single && !sameName) ? `<small>${[single && !sameName ? esc(single.name) : '', dayNote(p)].filter(Boolean).join(' · ')}</small>` : ''}</span>
     ${p.owner && p.owner !== 'zaj' ? `<span class="who" style="--c:${o.color}">${o.short}</span>` : ''}
     <span class="pi-amt">${fmtNum(p.amount)}</span>
     ${pay}
@@ -253,6 +255,11 @@ export function openPlanItemSheet(key, item, kind = null, presetCat = null) {
         ${S.OWNERS.map((o) => `<button data-v="${o.id}">${esc(o.name)}</button>`).join('')}
       </div>
 
+      <div id="p-day-box">
+        <div class="field-label" id="p-day-label">Dan u mesecu <span class="muted">(opciono)</span></div>
+        <div class="day-row"><input class="input day-input" id="p-day" inputmode="numeric" maxlength="2" placeholder="npr. 5"><span class="muted small" id="p-day-hint"></span></div>
+      </div>
+
       ${!isDec ? `<label class="check"><input type="checkbox" id="p-fwd" ${item ? '' : 'checked'}>
         <span>${item ? 'Primeni izmenu i na naredne mesece' : 'Dodaj i u naredne mesece'} do kraja ${key.slice(0, 4)}.</span></label>` : ''}
 
@@ -267,6 +274,17 @@ export function openPlanItemSheet(key, item, kind = null, presetCat = null) {
       const amt = $('#p-amount');
       amt.value = v.amount ? fmtNum(v.amount) : '';
       moneyInput(amt, (d) => (v.amount = d), 10);
+      // Dan u mesecu: za prihode "kad stiže", za račune/rate/štednju "rok plaćanja"; ostalo bez dana.
+      const paintDay = () => {
+        const c = S.cat($('#p-cat').value);
+        const show = c.kind === 'income' || c.kind === 'saving' || c.fixed;
+        $('#p-day-box').hidden = !show;
+        $('#p-day-label').innerHTML = (c.kind === 'income' ? 'Dan kad stiže' : 'Rok plaćanja (dan u mesecu)') + ' <span class="muted">(opciono)</span>';
+        $('#p-day-hint').textContent = c.kind === 'income' ? 'npr. plata stiže svakog 5.' : 'npr. struja do 15.';
+      };
+      $('#p-day').value = item?.day || '';
+      $('#p-cat').addEventListener('change', paintDay);
+      paintDay();
       const paintOwner = () => el.querySelectorAll('#p-owner button').forEach((b) => b.classList.toggle('on', b.dataset.v === v.owner));
       el.querySelectorAll('#p-owner button').forEach((b) => (b.onclick = () => { v.owner = b.dataset.v; paintOwner(); }));
       paintOwner();
@@ -279,7 +297,10 @@ export function openPlanItemSheet(key, item, kind = null, presetCat = null) {
         if (!amount) { toast('Upiši iznos', 'warn'); amt.focus(); return; }
         const applyForward = !!$('#p-fwd')?.checked;
         const snap = S.plansSnapshot();
-        await S.savePlanItem(key, { ...(item ? { id: item.id } : {}), name, amount, categoryId: $('#p-cat').value, owner: v.owner }, { applyForward });
+        const dayRaw = Number(($('#p-day')?.value || '').replace(/\D/g, ''));
+        const day = dayRaw >= 1 && dayRaw <= 31 ? dayRaw : null;
+        await S.savePlanItem(key, { ...(item ? { id: item.id } : {}), name, amount, categoryId: $('#p-cat').value, owner: v.owner, day }, { applyForward });
+        if (item && !applyForward && (item.day || null) !== day) await S.setLineDay(key, item.line, day);
         const what = item && Number(item.amount) !== amount ? `${esc(name)}: ${fmtNum(item.amount)} → <b>${fmtNum(amount)}</b>` : `${esc(name)} · ${fmtNum(amount)}`;
         toast(`Plan ${item ? 'izmenjen' : 'dopunjen'}: ${what}${applyForward ? '<br><small>i za naredne mesece</small>' : ''}`, 'ok', 6000,
           { label: 'Poništi', onClick: async () => { await S.restorePlans(snap); toast('Izmena plana poništena', 'ok'); } });

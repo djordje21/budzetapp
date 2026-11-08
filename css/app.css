@@ -1000,3 +1000,18 @@ b, strong { font-weight: 700; }
 .hero .tip-bad { background: rgba(242, 134, 124, .22); }
 .hero .tip-warn { background: rgba(232, 180, 92, .2); }
 .hero .tip-good { background: rgba(95, 208, 143, .18); }
+.day-row { display: flex; align-items: center; gap: 12px; }
+.day-input { width: 90px; text-align: center; font-weight: 700; }
+
+button.tip { width: 100%; text-align: left; align-items: center; }
+button.tip:active { background: var(--surface-2); }
+.tb-title { display: block; width: 100%; text-align: left; color: inherit; padding: 0; font-size: 14px; }
+.tb-more { opacity: .7; }
+/* Serija saveta */
+.lesson { padding: 4px 2px 0; }
+.ls-dots { display: flex; gap: 6px; margin: 4px 0 14px; }
+.ls-dots i { flex: 1; height: 4px; border-radius: 4px; background: var(--surface-2); transition: background .25s; }
+.ls-dots i.on { background: var(--gold); }
+.ls-h { font-size: 19px; font-weight: 700; letter-spacing: -.01em; margin-bottom: 8px; }
+.ls-t { font-size: 15.5px; line-height: 1.6; color: var(--text); min-height: 110px; }
+.lesson.ls-in .ls-h, .lesson.ls-in .ls-t { animation: fadeUp .3s ease-out; }

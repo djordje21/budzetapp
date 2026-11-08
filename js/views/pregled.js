@@ -1,20 +1,20 @@
 // Početni ekran: plan vs. stvarno za izabrani mesec.
-import { ico } from '../icons.js?v=20261108204516';
-import * as S from '../store.js?v=20261108204516';
-import { summarize, pace, monthPhase } from '../calc.js?v=20261108204516';
-import { esc, fmt, fmtNum, fmtSigned, monthLabel, addMonths, MONTH_GEN } from '../util.js?v=20261108204516';
-import { countUp, animateBars, pct, toast } from '../ui.js?v=20261108204516';
-import { openEntrySheet } from './entry.js?v=20261108204516';
-import { txRow, setHistoryFilter } from './istorija.js?v=20261108204516';
-import { isPayable, paidTx, payItem, PAY_LABELS } from '../pay.js?v=20261108204516';
-import { openDueSheet } from './due-detail.js?v=20261108204516';
-import { cumulativeData, cumulativeChart, bindCumulative } from '../charts.js?v=20261108204516';
-import { accountsBlock, bindAccounts } from './accounts.js?v=20261108204516';
-import { goalsBlock, bindGoals } from './goals.js?v=20261108204516';
-import { openCategoryDetail } from './category-detail.js?v=20261108204516';
-import { currentTip, hideTip } from './saveti.js?v=20261108204516';
-import { guideBlock, bindGuide } from './guide.js?v=20261108204516';
-import { openQuickEntry } from './quick.js?v=20261108204516';
+import { ico } from '../icons.js?v=20261108205259';
+import * as S from '../store.js?v=20261108205259';
+import { summarize, pace, monthPhase } from '../calc.js?v=20261108205259';
+import { esc, fmt, fmtNum, fmtSigned, monthLabel, addMonths, MONTH_GEN } from '../util.js?v=20261108205259';
+import { countUp, animateBars, pct, toast } from '../ui.js?v=20261108205259';
+import { openEntrySheet } from './entry.js?v=20261108205259';
+import { txRow, setHistoryFilter } from './istorija.js?v=20261108205259';
+import { isPayable, paidTx, payItem, PAY_LABELS } from '../pay.js?v=20261108205259';
+import { openDueSheet } from './due-detail.js?v=20261108205259';
+import { cumulativeData, cumulativeChart, bindCumulative } from '../charts.js?v=20261108205259';
+import { accountsBlock, bindAccounts } from './accounts.js?v=20261108205259';
+import { goalsBlock, bindGoals } from './goals.js?v=20261108205259';
+import { openCategoryDetail } from './category-detail.js?v=20261108205259';
+import { currentTip, hideTip, openTip } from './saveti.js?v=20261108205259';
+import { guideBlock, bindGuide } from './guide.js?v=20261108205259';
+import { openQuickEntry } from './quick.js?v=20261108205259';
 
 export function renderPregled(el, ctx) {
   const key = ctx.month;
@@ -207,7 +207,7 @@ function tipBox() {
   const t = c.tip;
   return `<div class="hint tip-box tip-${t.kind}" id="tip-box" data-tip="${esc(t.id)}">
     <button class="tip-x" aria-label="Skloni do sutra">✕</button>
-    <div class="tb-title">${t.icon} <b>${t.title}</b></div>
+    <button class="tb-title" data-open-tip>${t.icon} <b>${t.title}</b>${t.lesson || t.action ? ' <span class="tb-more">›</span>' : ''}</button>
     <div class="tb-text">${t.text}</div>
     <div class="tb-foot"><span>${c.pos} / ${c.total}</span><a href="#/saveti" class="tb-all">Svi saveti →</a></div>
   </div>`;
@@ -216,6 +216,7 @@ function bindTip(el) {
   const box = el.querySelector('#tip-box');
   if (!box) return;
   box.addEventListener('click', (e) => e.stopPropagation()); // ne otvaraj izveštaj
+  box.querySelector('[data-open-tip]').onclick = () => { const c = currentTip(tipSeq()); if (c && c.tip.id === box.dataset.tip) openTip(c.tip); };
   box.querySelector('.tip-x').onclick = () => {
     hideTip(box.dataset.tip);
     box.classList.add('tip-out');

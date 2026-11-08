@@ -1,5 +1,5 @@
 // Ekran za prijavu (kad je uključena zajednička baza).
-import * as Sync from '../sync.js?v=20261108204516';
+import * as Sync from '../sync.js?v=20261108205259';
 
 export function renderLogin(el, onDone) {
   document.body.classList.add('auth');

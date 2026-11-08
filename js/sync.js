@@ -5,8 +5,8 @@
 // razlika ide u red za slanje ("outbox"), a red se šalje čim ima interneta.
 // Promene drugog korisnika stižu preko Realtime kanala i pri svakom otvaranju aplikacije.
 
-import * as S from './store.js?v=20261108204516';
-import { SUPABASE_URL, SUPABASE_KEY } from './config.js?v=20261108204516';
+import * as S from './store.js?v=20261108205259';
+import { SUPABASE_URL, SUPABASE_KEY } from './config.js?v=20261108205259';
 
 const QKEY = 'budzetapp_outbox';
 const SHKEY = 'budzetapp_shadow';
@@ -38,7 +38,7 @@ const LISTS = {
 const TX_OPT = { goal_id: ['goalId', 'goals'], account: ['account', 'accounts'] };
 
 // Dok tabela za neku funkciju ne postoji, njeni podaci ostaju lokalno i šalju se kad migracija bude pokrenuta.
-const avail = { goals: true, accounts: true };
+const avail = { goals: true, accounts: true, planday: false }; // planday: kolona plan_items.day (migracija 005)
 export const isAvailable = (f) => avail[f];
 const tableOn = (t) => !LISTS[t] || avail[LISTS[t].feature];
 
@@ -79,7 +79,11 @@ function rowsFromState(st) {
     out.categories[c.id] = { id: c.id, name: c.name, kind: c.kind, icon: c.icon || null, color: c.color || null, fixed: !!c.fixed, archived: !!c.archived };
   for (const [month, items] of Object.entries(st.plans))
     for (const p of items)
-      out.plan_items[p.id] = { id: p.id, month, line: p.line, category_id: p.categoryId, name: p.name, amount: Number(p.amount) || 0, owner: p.owner || 'zaj' };
+      {
+        const r = { id: p.id, month, line: p.line, category_id: p.categoryId, name: p.name, amount: Number(p.amount) || 0, owner: p.owner || 'zaj' };
+        if ('day' in p && avail.planday) r.day = p.day || null;
+        out.plan_items[p.id] = r;
+      }
   for (const t of st.transactions) {
     const r = { id: t.id, date: t.date, kind: t.kind, category_id: t.categoryId, amount: Number(t.amount) || 0, note: t.note || '', by_member: t.by, created_at: t.createdAt };
     if (t.planLine) r.plan_line = t.planLine;
@@ -92,7 +96,7 @@ function rowsFromState(st) {
 }
 
 const catFromRow = (r) => ({ id: r.id, name: r.name, kind: r.kind, icon: r.icon || '📌', color: r.color || '#94a3b8', fixed: !!r.fixed, archived: !!r.archived });
-const planFromRow = (r) => ({ id: r.id, line: r.line, categoryId: r.category_id, name: r.name, amount: Number(r.amount), owner: r.owner });
+const planFromRow = (r) => ({ id: r.id, line: r.line, categoryId: r.category_id, name: r.name, amount: Number(r.amount), owner: r.owner, ...(r.day ? { day: Number(r.day) } : {}) });
 function txFromRow(r) {
   const t = { id: r.id, date: r.date, kind: r.kind, categoryId: r.category_id, amount: Number(r.amount), note: r.note || '', by: r.by_member, createdAt: r.created_at };
   if (r.plan_line) t.planLine = r.plan_line;
@@ -199,12 +203,23 @@ export async function pull() {
     if (queue.length) { scheduleFlush(0); return; } // korisnik je nešto menjao u međuvremenu
     const optRes = Object.fromEntries(listNames.map((t, i) => [t, opt[i]]));
     const newAvail = {};
-    for (const f of Object.keys(avail)) newAvail[f] = listNames.filter((t) => LISTS[t].feature === f).every((t) => optRes[t] !== null);
+    for (const f of Object.keys(avail)) if (f !== 'planday') newAvail[f] = listNames.filter((t) => LISTS[t].feature === f).every((t) => optRes[t] !== null);
+    // Kolona plan_items.day postoji ako je vraćena u redovima (posle migracije 005).
+    newAvail.planday = plans.length ? 'day' in plans[0] : avail.planday;
 
-    const planMap = {};
-    for (const r of plans) (planMap[r.month] ||= []).push(planFromRow(r));
+    const remotePlanMap = {};
+    for (const r of plans) (remotePlanMap[r.month] ||= []).push(planFromRow(r));
     const needDefaults = S.missingDefaults(cats);
     const st0 = S.getState();
+    // Dan uplate/roka: dok baza nema kolonu (ili je tek dobila), sačuvaj lokalne vrednosti.
+    const keepDay = !newAvail.planday || !avail.planday;
+    let planMap = remotePlanMap, newlyOnDay = false;
+    if (keepDay) {
+      const localDay = new Map();
+      for (const items of Object.values(st0.plans)) for (const it of items) if (it.day) localDay.set(it.id, it.day);
+      planMap = Object.fromEntries(Object.entries(remotePlanMap).map(([m, items]) => [m, items.map((it) => (!it.day && localDay.has(it.id) ? { ...it, day: localDay.get(it.id) } : it))]));
+      newlyOnDay = newAvail.planday && localDay.size > 0;
+    }
 
     // Liste (ciljevi, provere stanja, prebacivanja): lokalni redovi koje baza još nema se čuvaju i šalju.
     const lists = {}, localOnly = {}, remoteLists = {};
@@ -241,13 +256,13 @@ export async function pull() {
     Object.assign(avail, newAvail);
 
     // Shadow = ono što baza zaista ima.
-    const remoteState = { ...S.getState(), categories: cats.map(catFromRow), transactions: remoteTx, ...remoteLists };
+    const remoteState = { ...S.getState(), categories: cats.map(catFromRow), transactions: remoteTx, plans: remotePlanMap, ...remoteLists };
     shadow = toJSONMap(rowsFromState(remoteState));
     save(SHKEY, shadow);
 
     const anyLocalOnly = Object.values(localOnly).some((a) => a.length);
     if (anyLocalOnly) S.applyRemote((st) => { for (const [k, arr] of Object.entries(localOnly)) st[k] = [...(st[k] || []), ...arr]; });
-    if (anyLocalOnly || newlyOnWithData || needDefaults) onLocalChange();
+    if (anyLocalOnly || newlyOnWithData || newlyOnDay || needDefaults) onLocalChange();
     lastPull = Date.now();
     setStatus('synced');
   } catch (e) {
@@ -285,8 +300,13 @@ function onRemote(payload) {
       st.categories = st.categories.filter((c) => c.id !== key);
       if (!isDelete) st.categories.push(catFromRow(row));
     } else if (table === 'plan_items') {
-      for (const m of Object.keys(st.plans)) st.plans[m] = st.plans[m].filter((p) => p.id !== key);
-      if (!isDelete) (st.plans[row.month] ||= []).push(planFromRow(row));
+      let oldDay = null;
+      for (const m of Object.keys(st.plans)) { const o = st.plans[m].find((p) => p.id === key); if (o?.day) oldDay = o.day; st.plans[m] = st.plans[m].filter((p) => p.id !== key); }
+      if (!isDelete) {
+        const it = planFromRow(row);
+        if (!('day' in row) && oldDay) it.day = oldDay; // baza bez kolone ne briše lokalni dan
+        (st.plans[row.month] ||= []).push(it);
+      }
     } else if (table === 'transactions') {
       const old = st.transactions.find((t) => t.id === key);
       st.transactions = st.transactions.filter((t) => t.id !== key);

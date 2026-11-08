@@ -161,6 +161,8 @@ begin
 exception when duplicate_object then null;
 end $$;
 
+alter table public.plan_items add column if not exists day smallint check (day between 1 and 31);
+
 -- >>> ZAMENI EMAIL ADRESE <<<
 insert into public.members (email, member_id, name) values
   ('djordje@primer.com',   'dj', 'Đorđe'),
