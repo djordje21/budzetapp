@@ -1,12 +1,12 @@
 // Plan za mesec: očekivani prihodi, troškovi i štednja.
-import * as S from '../store.js?v=20261108082237';
-import { summarize } from '../calc.js?v=20261108082237';
-import { esc, fmt, fmtNum, fmtSigned, monthLabel, addMonths, digitsOnly, MONTH_GEN } from '../util.js?v=20261108082237';
-import { openSheet, toast, confirmSheet, moneyInput } from '../ui.js?v=20261108082237';
-import { isPayable, paidTx, payItem, PAY_LABELS } from '../pay.js?v=20261108082237';
-import { openEntrySheet } from './entry.js?v=20261108082237';
-import { openQuickEntry } from './quick.js?v=20261108082237';
-import { monthPhase } from '../calc.js?v=20261108082237';
+import * as S from '../store.js?v=20261108084202';
+import { summarize } from '../calc.js?v=20261108084202';
+import { esc, fmt, fmtNum, fmtSigned, monthLabel, addMonths, digitsOnly, MONTH_GEN } from '../util.js?v=20261108084202';
+import { openSheet, toast, confirmSheet, moneyInput } from '../ui.js?v=20261108084202';
+import { isPayable, paidTx, payItem, PAY_LABELS } from '../pay.js?v=20261108084202';
+import { openEntrySheet } from './entry.js?v=20261108084202';
+import { openQuickEntry } from './quick.js?v=20261108084202';
+import { monthPhase } from '../calc.js?v=20261108084202';
 
 export function renderPlan(el, ctx) {
   const key = ctx.month;
@@ -48,7 +48,13 @@ export function renderPlan(el, ctx) {
       </section>`;
   };
 
+  const misplaced = findMisplacedPocket(plan);
   el.innerHTML = `
+    ${misplaced.length ? `<div class="hint hint-warn fix-banner">
+      <div>🧔👩 <b>Džeparac je u kategoriji „${esc(S.cat(misplaced[0].item.categoryId).name)}“.</b> Da bi se pravilno računao (po osobi, dnevni limit), treba da bude u kategoriji Džeparac.</div>
+      <div class="fix-list">${misplaced.map((m) => `<span>${esc(m.item.name)} → ${S.cat(m.to).icon} ${esc(S.cat(m.to).name)}</span>`).join('')}</div>
+      <button class="btn btn-primary btn-sm" id="fix-pocket">Prebaci</button>
+    </div>` : ''}
     <section class="card plan-summary">
       <div class="ps-row"><span>Planirani prihodi</span><b class="t-green">${fmtNum(sum.tot.income.plan)}</b></div>
       <div class="ps-row"><span>Planirani troškovi</span><b class="t-red">${sum.tot.expense.plan ? '−' : ''}${fmtNum(sum.tot.expense.plan)}</b></div>
@@ -74,6 +80,11 @@ export function renderPlan(el, ctx) {
     const item = plan.find((p) => p.id === r.dataset.item);
     if (item) openPlanItemActions(key, item);
   }));
+  el.querySelector('#fix-pocket')?.addEventListener('click', async () => {
+    let moved = 0;
+    for (const m of misplaced) moved += await S.moveLineToCategory(key, m.item.line, m.item.categoryId, m.to, m.item.name);
+    toast(`✅ Džeparac prebačen${moved ? ` · i ${moved} ${moved === 1 ? 'unos' : 'unosa'}` : ''}`, 'ok', 3500);
+  });
   el.querySelectorAll('[data-quick]').forEach((b) => (b.onclick = (e) => {
     e.stopPropagation();
     const item = plan.find((p) => p.id === b.dataset.quick);
@@ -261,4 +272,18 @@ export function openPlanItemActions(key, item) {
       el.querySelector('#a-edit').onclick = then(() => openPlanItemSheet(key, item));
     },
   });
+}
+
+// Stavke plana koje se zovu "džeparac", a nisu u kategoriji Džeparac.
+function findMisplacedPocket(plan) {
+  const norm = (x) => String(x || '').toLowerCase().replace(/đ/g, 'dj').normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  const ids = new Set(S.getState().categories.map((c) => c.id));
+  return plan
+    .filter((p) => /dzeparac/.test(norm(p.name)) && !String(p.categoryId).startsWith('licno-'))
+    .map((p) => {
+      const n = norm(p.name);
+      const who = p.owner === 'm' || /maksijan/.test(n) ? 'm' : p.owner === 'dj' || /djordj|djole/.test(n) ? 'dj' : null;
+      return who && ids.has('licno-' + who) ? { item: p, to: 'licno-' + who } : null;
+    })
+    .filter(Boolean);
 }

@@ -1,10 +1,10 @@
 // Stavka iz "Čeka evidenciju": plati tačno, plati drugačije, izmeni plan ili preskoči mesec.
-import * as S from '../store.js?v=20261108082237';
-import { esc, fmt, fmtNum, addMonths, dayLabel, monthLabel, currentMonthKey } from '../util.js?v=20261108082237';
-import { openSheet, confirmSheet, toast } from '../ui.js?v=20261108082237';
-import { payItem, PAY_LABELS } from '../pay.js?v=20261108082237';
-import { openEntrySheet } from './entry.js?v=20261108082237';
-import { openPlanItemSheet } from './plan.js?v=20261108082237';
+import * as S from '../store.js?v=20261108084202';
+import { esc, fmt, fmtNum, addMonths, dayLabel, monthLabel, currentMonthKey, fmtDate } from '../util.js?v=20261108084202';
+import { openSheet, confirmSheet, toast } from '../ui.js?v=20261108084202';
+import { payItem, PAY_LABELS } from '../pay.js?v=20261108084202';
+import { openEntrySheet } from './entry.js?v=20261108084202';
+import { openPlanItemSheet } from './plan.js?v=20261108084202';
 
 export function openDueSheet(key, item) {
   const c = S.cat(item.categoryId);
@@ -28,7 +28,7 @@ export function openDueSheet(key, item) {
 
       <div class="dd-meta">
         <div><span>Čije je</span><span>${esc(owner.name)}</span></div>
-        <div><span>Prošli mesec</span><span>${prev ? `${fmtNum(prev.amount)} RSD · ${Number(prev.date.slice(8))}.${Number(prev.date.slice(5, 7))}.` : 'nije evidentirano'}</span></div>
+        <div><span>Prošli mesec</span><span>${prev ? `${fmtNum(prev.amount)} RSD · ${fmtDate(prev.date)}` : 'nije evidentirano'}</span></div>
         ${prev && Math.round(prev.amount) !== Math.round(item.amount) ? `<div><span>Prošli mesec vs plan</span><span>${prev.amount > item.amount ? '+' : '−'}${fmtNum(Math.abs(prev.amount - item.amount))}</span></div>` : ''}
       </div>
 

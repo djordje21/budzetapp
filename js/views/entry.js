@@ -1,9 +1,9 @@
 // Brzi unos stvarnog troška / prihoda / štednje (i izmena postojećeg unosa).
-import * as S from '../store.js?v=20261108082237';
-import { openSheet, toast, confirmSheet, moneyInput } from '../ui.js?v=20261108082237';
-import { esc, fmt, fmtNum, digitsOnly, todayISO, isoOf } from '../util.js?v=20261108082237';
-import { summarize } from '../calc.js?v=20261108082237';
-import { suggestCategory } from '../suggest.js?v=20261108082237';
+import * as S from '../store.js?v=20261108084202';
+import { openSheet, toast, confirmSheet, moneyInput, dateInputHTML, syncDateShow } from '../ui.js?v=20261108084202';
+import { esc, fmt, fmtNum, digitsOnly, todayISO, isoOf } from '../util.js?v=20261108084202';
+import { summarize } from '../calc.js?v=20261108084202';
+import { suggestCategory } from '../suggest.js?v=20261108084202';
 
 const ICONS = ['📌', '☕', '🍕', '🎬', '✈️', '🐶', '👶', '📚', '💊', '🎮', '🔧', '💇'];
 const COLORS = ['#0ea5e9', '#d946ef', '#f97316', '#22c55e', '#6366f1', '#f43f5e', '#14b8a6', '#eab308'];
@@ -28,8 +28,8 @@ export function openEntrySheet({ tx = null, kind = 'expense', date = null, categ
   const yesterday = (() => { const d = new Date(); d.setDate(d.getDate() - 1); return isoOf(d); })();
 
   const body = `
-    <div class="seg seg-3" data-k="kind">
-      ${Object.entries(S.KINDS).map(([k, x]) => `<button data-v="${k}">${x.label}</button>`).join('')}
+    <div class="seg ${isEdit ? 'seg-3' : 'seg-4'}" data-k="kind">
+      ${Object.entries(S.KINDS).map(([k, x]) => `<button data-v="${k}">${x.label}</button>`).join('')}${isEdit ? '' : '<button data-v="transfer">⇄ Prebaci</button>'}
     </div>
 
     ${isEdit ? '' : '<button class="scan-btn" id="e-scan"><span>📷</span> Skeniraj QR sa računa</button>'}
@@ -52,7 +52,7 @@ export function openEntrySheet({ tx = null, kind = 'expense', date = null, categ
     <div class="date-row">
       <button class="chip" data-d="${todayISO()}">Danas</button>
       <button class="chip" data-d="${yesterday}">Juče</button>
-      <input type="date" id="e-date" class="input input-date">
+      ${dateInputHTML('e-date', '')}
     </div>
 
     <div class="field-label">Uneo/la</div>
@@ -83,6 +83,7 @@ export function openEntrySheet({ tx = null, kind = 'expense', date = null, categ
       const paintSeg = (k) => el.querySelectorAll(`[data-k="${k}"] button`).forEach((b) => b.classList.toggle('on', b.dataset.v === v[k]));
       const paintDate = () => {
         dateEl.value = v.date;
+        syncDateShow(el, 'e-date');
         el.querySelectorAll('[data-d]').forEach((b) => b.classList.toggle('on', b.dataset.d === v.date));
       };
 
@@ -190,6 +191,12 @@ export function openEntrySheet({ tx = null, kind = 'expense', date = null, categ
 
       el.querySelectorAll('.seg[data-k] button').forEach((b) => (b.onclick = () => {
         const k = b.closest('.seg').dataset.k;
+        if (k === 'kind' && b.dataset.v === 'transfer') {
+          // Prebacivanje između računa ima svoj formular (nije trošak ni prihod).
+          close();
+          setTimeout(() => import('./accounts.js?v=20261108084202').then((m) => m.openTransferForm({ amount: v.amount })), 220);
+          return;
+        }
         v[k] = b.dataset.v;
         paintSeg(k);
         if (k === 'kind') { v.picked = false; paintCats(); runSuggest(); paintAccLabel(); }
@@ -223,7 +230,7 @@ export function openEntrySheet({ tx = null, kind = 'expense', date = null, categ
       if (v.note && !v.picked) runSuggest(); // npr. naziv prodavnice sa skeniranog računa
       $('#e-scan')?.addEventListener('click', () => {
         close();
-        setTimeout(() => import('./scanner.js?v=20261108082237').then((m) => m.openScanner()), 220);
+        setTimeout(() => import('./scanner.js?v=20261108084202').then((m) => m.openScanner()), 220);
       });
       if (!isEdit) setTimeout(() => amountEl.focus(), 280);
 
@@ -242,7 +249,7 @@ export function openEntrySheet({ tx = null, kind = 'expense', date = null, categ
         else await S.addTransaction(data);
         feedback(data, isEdit);
         if (g && !wasDone && S.goalSaved(g) >= g.target) {
-          import('./goals.js?v=20261108082237').then((m) => m.celebrate());
+          import('./goals.js?v=20261108084202').then((m) => m.celebrate());
           setTimeout(() => toast(`🎉 <b>Cilj ostvaren: ${esc(g.name)}!</b>`, 'ok', 4500), 400);
         }
         if (again) {

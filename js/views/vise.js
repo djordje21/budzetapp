@@ -1,8 +1,8 @@
 // Podešavanja: korisnik, tema, kategorije, backup.
-import * as S from '../store.js?v=20261108082237';
-import { esc, todayISO } from '../util.js?v=20261108082237';
-import { openSheet, toast, confirmSheet } from '../ui.js?v=20261108082237';
-import * as Sync from '../sync.js?v=20261108082237';
+import * as S from '../store.js?v=20261108084202';
+import { esc, todayISO, fmtDate, isoOf } from '../util.js?v=20261108084202';
+import { openSheet, toast, confirmSheet } from '../ui.js?v=20261108084202';
+import * as Sync from '../sync.js?v=20261108084202';
 
 export function renderVise(el, ctx) {
   const st = S.getState();
@@ -165,7 +165,7 @@ function accountBlock() {
   const me = S.member(S.getState().settings.currentUser);
   const label = { synced: 'Sinhronizovano', syncing: 'Sinhronizujem…', pending: 'Čeka slanje', offline: 'Bez interneta — izmene čekaju', error: 'Greška pri sinhronizaciji', idle: 'Povezivanje…' }[st.state] || st.state;
   const dot = st.state === 'error' ? 'dot-error' : st.state === 'offline' || st.pending ? 'dot-pending' : 'dot-ok';
-  const when = st.lastSync ? new Date(st.lastSync).toLocaleString('sr-RS', { day: 'numeric', month: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—';
+  const when = st.lastSync ? `${fmtDate(isoOf(new Date(st.lastSync)))} ${new Date(st.lastSync).toTimeString().slice(0, 5)}` : '—';
   return `
     <div class="section-head"><h3>Nalog i sinhronizacija</h3></div>
     <section class="card list" data-sync-text>

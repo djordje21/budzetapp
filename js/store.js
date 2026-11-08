@@ -1,7 +1,7 @@
 // Skladište podataka. Za sada lokalno (localStorage); kasnije se ovde uključuje Supabase
 // bez menjanja ekrana — svi ekrani koriste samo funkcije iz ovog fajla.
 
-import { uid, addMonths } from './util.js?v=20261108082237';
+import { uid, addMonths } from './util.js?v=20261108084202';
 
 const KEY = 'budzetapp_v2';
 
@@ -213,6 +213,22 @@ export async function deletePlanItem(key, id, { applyForward = false } = {}) {
   persist();
 }
 
+// Prebacivanje stavke plana (i unosa sa istim nazivom) u drugu kategoriju, od datog meseca nadalje.
+export async function moveLineToCategory(fromKey, line, oldCat, newCat, itemName) {
+  const norm = (x) => String(x || '').trim().toLowerCase();
+  for (const k of Object.keys(state.plans)) {
+    if (k < fromKey) continue;
+    state.plans[k] = state.plans[k].map((p) => (p.line === line ? { ...p, categoryId: newCat } : p));
+  }
+  let moved = 0;
+  state.transactions = state.transactions.map((t) => {
+    if (t.categoryId === oldCat && norm(t.note) === norm(itemName)) { moved++; return { ...t, categoryId: newCat }; }
+    return t;
+  });
+  persist();
+  return moved;
+}
+
 // Za "Poništi": snimak celog plana pre izmene.
 export const plansSnapshot = () => structuredClone(state.plans);
 export async function restorePlans(snap) {
@@ -301,6 +317,10 @@ export async function deleteBalanceCheck(id) {
 export async function addTransfer(x) {
   state.transfers ||= [];
   state.transfers.push({ note: '', ...x, id: uid(), by: state.settings.currentUser || 'dj', createdAt: new Date().toISOString() });
+  persist();
+}
+export async function updateTransfer(id, patch) {
+  state.transfers = (state.transfers || []).map((x) => (x.id === id ? { ...x, ...patch } : x));
   persist();
 }
 export async function deleteTransfer(id) {

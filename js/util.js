@@ -46,14 +46,17 @@ export const daysInMonth = (key) => {
   return new Date(y, m, 0).getDate();
 };
 
+// Datum u formatu dd/mm/yyyy.
+export const fmtDate = (iso) => (iso ? `${iso.slice(8, 10)}/${iso.slice(5, 7)}/${iso.slice(0, 4)}` : '');
+
 export function dayLabel(iso) {
   const today = new Date();
-  if (iso === isoOf(today)) return 'Danas';
+  if (iso === isoOf(today)) return `Danas, ${fmtDate(iso)}`;
   const y = new Date(today);
   y.setDate(y.getDate() - 1);
-  if (iso === isoOf(y)) return 'Juče';
+  if (iso === isoOf(y)) return `Juče, ${fmtDate(iso)}`;
   const d = parseISO(iso);
-  return `${DAY_NAMES[d.getDay()]}, ${d.getDate()}. ${MONTH_GEN[d.getMonth()]}`;
+  return `${DAY_NAMES[d.getDay()]}, ${fmtDate(iso)}`;
 }
 
 export const digitsOnly = (s) => String(s ?? '').replace(/\D/g, '');

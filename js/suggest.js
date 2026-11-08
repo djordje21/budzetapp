@@ -1,7 +1,7 @@
 // Predlog kategorije na osnovu naziva mesta/napomene.
 // 1) Istorija: gde je isto mesto ranije uneto (uči iz vaših izbora).
 // 2) Ključne reči: poznati lanci i tipovi objekata u Srbiji.
-import * as S from './store.js?v=20261108082237';
+import * as S from './store.js?v=20261108084202';
 
 const norm = (s) =>
   String(s || '').toLowerCase()

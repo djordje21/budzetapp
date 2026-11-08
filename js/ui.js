@@ -1,5 +1,5 @@
 // UI pomoćnici: donji panel (sheet), potvrda, obaveštenja, animacija brojeva.
-import { esc, fmtNum, digitsOnly } from './util.js?v=20261108082237';
+import { esc, fmtNum, digitsOnly, fmtDate } from './util.js?v=20261108084202';
 
 const reduceMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -137,4 +137,12 @@ export function moneyInput(inp, onChange, maxLen = 11) {
     format();
   });
   inp.addEventListener('blur', format);
+}
+
+// Polje za datum: prikazuje dd/mm/yyyy bez obzira na jezik telefona; dodir otvara izbor datuma telefona.
+export const dateInputHTML = (id, value = '') =>
+  `<label class="input date-field"><span class="date-show" id="${id}-show">${value ? fmtDate(value) : 'izaberi datum'}</span><span class="date-ico">📅</span><input type="date" id="${id}" value="${value}" aria-label="Datum"></label>`;
+export function syncDateShow(root, id) {
+  const i = root.querySelector('#' + id), show = root.querySelector('#' + id + '-show');
+  if (i && show) show.textContent = i.value ? fmtDate(i.value) : 'izaberi datum';
 }

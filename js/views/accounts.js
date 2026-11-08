@@ -1,9 +1,9 @@
 // Stanje na računima: Đorđe (OTP), Maksijana (OTP), Keš i zbir.
-import * as S from '../store.js?v=20261108082237';
-import * as Sync from '../sync.js?v=20261108082237';
-import { esc, fmt, fmtNum, digitsOnly, todayISO, dayLabel, currentMonthKey, daysInMonth } from '../util.js?v=20261108082237';
-import { openEntrySheet } from './entry.js?v=20261108082237';
-import { openSheet, toast, confirmSheet, countUp, moneyInput } from '../ui.js?v=20261108082237';
+import * as S from '../store.js?v=20261108084202';
+import * as Sync from '../sync.js?v=20261108084202';
+import { esc, fmt, fmtNum, digitsOnly, todayISO, dayLabel, currentMonthKey, daysInMonth } from '../util.js?v=20261108084202';
+import { openEntrySheet } from './entry.js?v=20261108084202';
+import { openSheet, toast, confirmSheet, countUp, moneyInput, dateInputHTML, syncDateShow } from '../ui.js?v=20261108084202';
 
 const signed = (n) => (n < 0 ? '−' : '') + fmtNum(Math.abs(n));
 
@@ -88,7 +88,7 @@ export function openAccounts() {
     onMount(el, close) {
       const then = (fn) => () => { close(); setTimeout(fn, 200); };
       el.querySelectorAll('[data-check]').forEach((b) => (b.onclick = then(() => openCheckForm(b.dataset.check))));
-      el.querySelector('#acc-transfer').onclick = then(() => openTransferForm());
+      el.querySelector('#acc-transfer').onclick = then(() => openTransferForm({ to: 'kes' }));
       el.querySelectorAll('[data-tr-del]').forEach((b) => (b.onclick = async () => {
         if (!(await confirmSheet({ title: 'Obriši prebacivanje?', text: 'Stanja računa će se preračunati.', ok: 'Obriši', danger: true }))) return;
         await S.deleteTransfer(b.dataset.trDel);
@@ -131,12 +131,14 @@ export function openCheckForm(accId) {
 }
 
 // ---- Prebacivanje između računa ----
-export function openTransferForm() {
+export function openTransferForm({ amount = '', tr = null, to = null } = {}) {
   const me = S.getState().settings.currentUser || 'dj';
-  const v = { from: me, to: 'kes', amount: '', date: todayISO() };
+  const v = tr
+    ? { from: tr.from, to: tr.to, amount: String(Math.round(tr.amount)), date: tr.date }
+    : { from: me, to: to || (me === 'm' ? 'dj' : 'm'), amount: amount || '', date: todayISO() };
   const seg = (k) => `<div class="seg seg-3" data-k="${k}">${S.ACCOUNTS.map((a) => `<button data-v="${a.id}">${esc(a.name)}</button>`).join('')}</div>`;
   openSheet({
-    title: 'Prebaci između računa',
+    title: tr ? 'Izmena prebacivanja' : 'Prebaci između računa',
     body: `
       <label class="amount-field"><input id="t-amount" inputmode="numeric" placeholder="0" aria-label="Iznos"><span>RSD</span></label>
       <div class="field-label">Sa računa</div>${seg('from')}
@@ -144,22 +146,32 @@ export function openTransferForm() {
       <div class="field-label">Napomena <span class="muted">(opciono)</span></div>
       <input class="input" id="t-note" maxlength="60" placeholder="npr. Bankomat">
       <div class="field-label">Datum</div>
-      <input class="input" type="date" id="t-date">
+      ${dateInputHTML('t-date', v.date)}
       <p class="muted small mt">Prebacivanje nije trošak — ne ulazi u plan ni u izveštaje, samo menja stanje računa.</p>
-      <div class="btn-row sticky-actions"><button class="btn btn-primary" id="t-save">Prebaci</button></div>`,
+      <div class="btn-row sticky-actions">${tr ? '<button class="btn btn-ghost btn-danger-text" id="t-del">Obriši</button>' : ''}<button class="btn btn-primary" id="t-save">${tr ? 'Sačuvaj izmene' : 'Prebaci'}</button></div>`,
     onMount(el, close) {
       const paint = () => ['from', 'to'].forEach((k) => el.querySelectorAll(`[data-k="${k}"] button`).forEach((b) => b.classList.toggle('on', b.dataset.v === v[k])));
       el.querySelectorAll('.seg button').forEach((b) => (b.onclick = () => { v[b.closest('.seg').dataset.k] = b.dataset.v; paint(); }));
       paint();
       const inp = el.querySelector('#t-amount');
       moneyInput(inp, (d) => (v.amount = d));
-      el.querySelector('#t-date').value = v.date;
+      el.querySelector('#t-date').addEventListener('change', () => syncDateShow(el, 't-date'));
+      if (v.amount) inp.value = fmtNum(v.amount);
+      if (tr) el.querySelector('#t-note').value = tr.note || '';
+      el.querySelector('#t-del')?.addEventListener('click', async () => {
+        if (!(await confirmSheet({ title: 'Obriši prebacivanje?', text: 'Stanja računa će se preračunati.', ok: 'Obriši', danger: true }))) return;
+        await S.deleteTransfer(tr.id);
+        toast('Prebacivanje obrisano', 'ok');
+        close();
+      });
       setTimeout(() => inp.focus(), 280);
       el.querySelector('#t-save').onclick = async () => {
         const amount = Number(v.amount);
         if (!amount) { toast('Upiši iznos', 'warn'); return; }
         if (v.from === v.to) { toast('Izaberi dva različita računa', 'warn'); return; }
-        await S.addTransfer({ from: v.from, to: v.to, amount, date: el.querySelector('#t-date').value || todayISO(), note: el.querySelector('#t-note').value.trim() });
+        const data = { from: v.from, to: v.to, amount, date: el.querySelector('#t-date').value || todayISO(), note: el.querySelector('#t-note').value.trim() };
+        if (tr) await S.updateTransfer(tr.id, data);
+        else await S.addTransfer(data);
         toast(`⇄ ${esc(S.account(v.from).name)} → ${esc(S.account(v.to).name)} · ${fmtNum(amount)}`, 'ok');
         close();
       };
