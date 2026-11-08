@@ -912,7 +912,8 @@ b, strong { font-weight: 700; }
 
 /* Dugme + i aktivni elementi: tamnoplava */
 .fab { background: linear-gradient(135deg, var(--hero-1), var(--hero-2)); box-shadow: 0 8px 22px rgba(26, 50, 84, .35); border-radius: 18px; }
-:root[data-theme="dark"] .fab { background: linear-gradient(135deg, var(--gold), var(--gold-2)); color: #1A1406; }
+:root[data-theme="dark"] .fab { background: linear-gradient(135deg, #2A4C7A, #3B6399); color: #fff; box-shadow: 0 8px 22px rgba(0, 0, 0, .45); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .fab { background: linear-gradient(135deg, #2A4C7A, #3B6399); color: #fff; } }
 .avatar { background: var(--c, var(--accent)); }
 .month-pill.is-now::after { background: var(--gold); }
 .pay-btn { background: var(--accent-soft); color: var(--accent); border-radius: 10px; font-weight: 600; }

@@ -1,19 +1,19 @@
 // Početni ekran: plan vs. stvarno za izabrani mesec.
-import { ico } from '../icons.js?v=20261108124130';
-import * as S from '../store.js?v=20261108124130';
-import { summarize, pace, monthPhase } from '../calc.js?v=20261108124130';
-import { esc, fmt, fmtNum, fmtSigned, monthLabel, addMonths, MONTH_GEN } from '../util.js?v=20261108124130';
-import { countUp, animateBars, pct, toast } from '../ui.js?v=20261108124130';
-import { openEntrySheet } from './entry.js?v=20261108124130';
-import { txRow, setHistoryFilter } from './istorija.js?v=20261108124130';
-import { isPayable, paidTx, payItem, PAY_LABELS } from '../pay.js?v=20261108124130';
-import { openDueSheet } from './due-detail.js?v=20261108124130';
-import { cumulativeData, cumulativeChart, bindCumulative } from '../charts.js?v=20261108124130';
-import { accountsBlock, bindAccounts } from './accounts.js?v=20261108124130';
-import { goalsBlock, bindGoals } from './goals.js?v=20261108124130';
-import { openCategoryDetail } from './category-detail.js?v=20261108124130';
-import { guideBlock, bindGuide } from './guide.js?v=20261108124130';
-import { openQuickEntry } from './quick.js?v=20261108124130';
+import { ico } from '../icons.js?v=20261108134417';
+import * as S from '../store.js?v=20261108134417';
+import { summarize, pace, monthPhase } from '../calc.js?v=20261108134417';
+import { esc, fmt, fmtNum, fmtSigned, monthLabel, addMonths, MONTH_GEN } from '../util.js?v=20261108134417';
+import { countUp, animateBars, pct, toast } from '../ui.js?v=20261108134417';
+import { openEntrySheet } from './entry.js?v=20261108134417';
+import { txRow, setHistoryFilter } from './istorija.js?v=20261108134417';
+import { isPayable, paidTx, payItem, PAY_LABELS } from '../pay.js?v=20261108134417';
+import { openDueSheet } from './due-detail.js?v=20261108134417';
+import { cumulativeData, cumulativeChart, bindCumulative } from '../charts.js?v=20261108134417';
+import { accountsBlock, bindAccounts } from './accounts.js?v=20261108134417';
+import { goalsBlock, bindGoals } from './goals.js?v=20261108134417';
+import { openCategoryDetail } from './category-detail.js?v=20261108134417';
+import { guideBlock, bindGuide } from './guide.js?v=20261108134417';
+import { openQuickEntry } from './quick.js?v=20261108134417';
 
 export function renderPregled(el, ctx) {
   const key = ctx.month;
