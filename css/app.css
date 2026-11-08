@@ -944,3 +944,46 @@ b, strong { font-weight: 700; }
 [hidden] { display: none !important; }
 .acc-empty-ico, .goal-empty-ico { width: 42px; height: 42px; font-size: 0; }
 .sub-label { padding: 10px 14px 4px; font-size: 11.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--faint); background: var(--surface-2); }
+
+/* ===== Bočni meni ===== */
+.menu-btn { margin-left: auto; position: relative; color: var(--text); }
+.menu-btn[data-sync]:not([data-sync=""])::after {
+  content: ''; position: absolute; right: 6px; top: 7px; width: 9px; height: 9px; border-radius: 50%;
+  border: 2px solid var(--bg); background: var(--green);
+}
+.menu-btn[data-sync="pending"]::after, .menu-btn[data-sync="offline"]::after { background: var(--amber); }
+.menu-btn[data-sync="error"]::after { background: var(--red); }
+.drawer-wrap { position: fixed; inset: 0; z-index: 55; }
+.drawer-backdrop { position: absolute; inset: 0; background: rgba(10, 16, 28, .45); opacity: 0; transition: opacity .25s; }
+.drawer {
+  position: absolute; top: 0; bottom: 0; right: 0; width: min(86vw, 360px);
+  background: var(--surface); box-shadow: -10px 0 40px rgba(16, 24, 40, .18);
+  transform: translateX(100%); transition: transform .28s cubic-bezier(.2, .9, .25, 1);
+  display: flex; flex-direction: column; padding-top: env(safe-area-inset-top);
+}
+.drawer-wrap.open .drawer-backdrop { opacity: 1; }
+.drawer-wrap.open .drawer { transform: none; }
+.drawer-head { display: flex; align-items: center; gap: 12px; padding: 18px 12px 14px 18px; border-bottom: 1px solid var(--border); }
+.drawer-head .dot { display: inline-block; width: 8px; height: 8px; margin: 0 2px 0 0; box-shadow: none; vertical-align: middle; }
+.who-xl { width: 44px; height: 44px; font-size: 17px; }
+.drawer-list { flex: 1; overflow-y: auto; padding: 8px 8px calc(16px + env(safe-area-inset-bottom)); }
+.drawer-list hr { border: none; border-top: 1px solid var(--border); margin: 8px 10px; }
+.drawer-item { display: flex; align-items: center; gap: 14px; width: 100%; text-align: left; padding: 11px 10px; border-radius: 12px; font-size: 15px; }
+.drawer-item:active, .drawer-item.on { background: var(--accent-soft); }
+.drawer-ico { width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center; background: var(--surface-2); color: var(--accent); flex-shrink: 0; }
+.drawer-ico .ico { width: 20px; height: 20px; }
+.drawer-foot { padding-bottom: calc(14px + env(safe-area-inset-bottom)); }
+/* Domaćinstvo i saveti */
+.hh-intro { font-size: 14px; color: var(--muted); line-height: 1.5; margin: 6px 2px 0; }
+.hh-list { display: grid; gap: 10px; }
+.hh-member { display: flex; align-items: center; gap: 14px; padding: 14px; }
+.hh-name { font-weight: 700; font-size: 16px; }
+.hh-sync { display: flex; align-items: center; gap: 10px; font-size: 14px; }
+.hh-sync .dot { margin-top: 0; }
+.tip { display: flex; gap: 12px; padding: 12px 14px; font-size: 14px; line-height: 1.4; }
+.tip-i { font-size: 20px; flex-shrink: 0; }
+.tip-bad { background: var(--red-soft); }
+.tip-warn { background: var(--amber-soft); }
+.tip-good { background: var(--green-soft); }
+.goals-page .goal-scroll { flex-direction: column; margin: 0; padding: 0; overflow: visible; }
+.goals-page .goal-card { flex: none; max-width: none; width: 100%; }

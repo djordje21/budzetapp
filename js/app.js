@@ -1,24 +1,36 @@
 // Ulazna tačka: navigacija, izbor meseca, tema.
-import * as S from './store.js?v=20261108134417';
-import { currentMonthKey, addMonths, monthLabel, MONTH_SHORT, esc } from './util.js?v=20261108134417';
-import { openSheet, toast } from './ui.js?v=20261108134417';
-import { renderPregled } from './views/pregled.js?v=20261108134417';
-import { renderPlan } from './views/plan.js?v=20261108134417';
-import { renderIstorija } from './views/istorija.js?v=20261108134417';
-import { renderVise } from './views/vise.js?v=20261108134417';
-import { renderIzvestaji } from './views/izvestaji.js?v=20261108134417';
-import { openEntrySheet } from './views/entry.js?v=20261108134417';
-import { renderLogin } from './views/login.js?v=20261108134417';
-import * as Sync from './sync.js?v=20261108134417';
-import { VERSION } from './version.js?v=20261108134417';
+import * as S from './store.js?v=20261108134755';
+import { currentMonthKey, addMonths, monthLabel, MONTH_SHORT, esc } from './util.js?v=20261108134755';
+import { openSheet, toast } from './ui.js?v=20261108134755';
+import { renderPregled } from './views/pregled.js?v=20261108134755';
+import { renderPlan } from './views/plan.js?v=20261108134755';
+import { renderIstorija } from './views/istorija.js?v=20261108134755';
+import { renderVise } from './views/vise.js?v=20261108134755';
+import { renderDomacinstvo } from './views/domacinstvo.js?v=20261108134755';
+import { renderSaveti } from './views/saveti.js?v=20261108134755';
+import { renderCiljevi } from './views/ciljevi.js?v=20261108134755';
+import { svg } from './icons.js?v=20261108134755';
+import { setHistoryFilter } from './views/istorija.js?v=20261108134755';
+import { renderIzvestaji } from './views/izvestaji.js?v=20261108134755';
+import { openEntrySheet } from './views/entry.js?v=20261108134755';
+import { renderLogin } from './views/login.js?v=20261108134755';
+import * as Sync from './sync.js?v=20261108134755';
+import { VERSION } from './version.js?v=20261108134755';
 
 const views = {
   pregled: { render: renderPregled, title: 'Pregled' },
   plan: { render: renderPlan, title: 'Plan' },
   istorija: { render: renderIstorija, title: 'Istorija' },
   izvestaji: { render: renderIzvestaji, title: 'Izveštaji' },
-  vise: { render: renderVise, title: 'Više' },
+  vise: { render: renderVise, title: 'Podešavanja' },
+  nalog: { render: renderVise, title: 'Nalog' },
+  kategorije: { render: renderVise, title: 'Kategorije' },
+  domacinstvo: { render: renderDomacinstvo, title: 'Domaćinstvo' },
+  saveti: { render: renderSaveti, title: 'Saveti' },
+  ciljevi: { render: renderCiljevi, title: 'Ciljevi štednje' },
 };
+// Ekrani sa izborom meseca u gornjoj traci; ostali imaju naslov.
+const MONTH_ROUTES = new Set(['pregled', 'plan', 'istorija']);
 
 const ctx = { month: currentMonthKey(), route: 'pregled' };
 const $ = (s) => document.querySelector(s);
@@ -44,12 +56,9 @@ function render() {
   const st = S.getState();
   $('#month-label').textContent = monthLabel(ctx.month);
   $('#month-label').classList.toggle('is-now', ctx.month === currentMonthKey());
-  const me = S.MEMBERS.find((m) => m.id === st.settings.currentUser);
-  const who = $('#who-btn');
-  who.textContent = me ? me.short : '?';
-  who.style.setProperty('--c', me ? me.color : '#64748b');
-  document.querySelector('.topbar').classList.toggle('hide-month', ctx.route === 'vise' || ctx.route === 'izvestaji');
-  document.querySelector('.topbar').dataset.title = ctx.route === 'izvestaji' ? 'Izveštaji' : ctx.route === 'vise' ? 'Podešavanja' : '';
+  void st;
+  document.querySelector('.topbar').classList.toggle('hide-month', !MONTH_ROUTES.has(ctx.route));
+  document.querySelector('.topbar').dataset.title = MONTH_ROUTES.has(ctx.route) ? '' : views[ctx.route].title;
 
   document.querySelectorAll('.tabbar [data-route]').forEach((a) => a.classList.toggle('on', a.dataset.route === ctx.route));
   const view = $('#view');
@@ -112,6 +121,64 @@ function askWho() {
   });
 }
 
+// ---- Bočni meni ----
+function openMenu() {
+  const st = S.getState();
+  const me = S.MEMBERS.find((m) => m.id === st.settings.currentUser);
+  const sync = Sync.getStatus();
+  const items = [
+    ['nalog', 'user', 'Nalog', me ? `${me.name}${sync.email ? ' · ' + sync.email : ''}` : ''],
+    ['domacinstvo', 'users', 'Domaćinstvo', 'Đorđe i Maksijana · povezani nalozi'],
+    ['saveti', 'bulb', 'Saveti', 'Predlozi na osnovu vaše potrošnje'],
+    '-',
+    ['@accounts', 'bank', 'Stanje na računima', 'Đorđe, Maksijana, keš'],
+    ['ciljevi', 'goal', 'Ciljevi štednje', ''],
+    ['@income', 'income', 'Prihodi', 'Svi prihodi ovog meseca'],
+    ['@expense', 'expense', 'Rashodi', 'Svi rashodi ovog meseca'],
+    '-',
+    ['kategorije', 'tag', 'Kategorije', ''],
+    ['vise', 'settings', 'Podešavanja', 'Izgled, rezervna kopija'],
+    ['@help', 'help', 'Kako koristiti', 'Prikaži vodič za početak'],
+  ];
+  const wrap = document.createElement('div');
+  wrap.className = 'drawer-wrap';
+  wrap.innerHTML = `<div class="drawer-backdrop"></div>
+    <aside class="drawer" role="dialog" aria-label="Meni">
+      <div class="drawer-head">
+        <span class="who who-xl" style="--c:${me ? me.color : '#64748b'}">${me ? me.short : '?'}</span>
+        <div class="grow"><b>${esc(me ? me.name : 'Budžet')}</b><br>
+          <span class="muted small"><i class="dot ${sync.state === 'error' ? 'dot-error' : sync.state === 'offline' || sync.pending ? 'dot-pending' : 'dot-ok'}"></i> ${sync.state === 'error' ? 'Greška pri čuvanju' : sync.state === 'offline' ? 'Nema interneta' : 'Sve je sačuvano'}</span></div>
+        <button class="icon-btn" data-close aria-label="Zatvori">✕</button>
+      </div>
+      <nav class="drawer-list">${items.map((it) => it === '-' ? '<hr>' : `
+        <button class="drawer-item ${ctx.route === it[0] ? 'on' : ''}" data-go="${it[0]}">
+          <span class="drawer-ico">${svg(it[1])}</span>
+          <span class="grow"><b>${it[2]}</b>${it[3] ? `<br><span class="muted small">${esc(it[3])}</span>` : ''}</span>
+        </button>`).join('')}</nav>
+      <p class="muted small center drawer-foot">Budžet 3.0</p>
+    </aside>`;
+  document.body.appendChild(wrap);
+  document.body.classList.add('no-scroll');
+  requestAnimationFrame(() => wrap.classList.add('open'));
+  const close = () => {
+    wrap.classList.remove('open');
+    setTimeout(() => { wrap.remove(); document.body.classList.remove('no-scroll'); }, 250);
+    document.removeEventListener('keydown', onKey);
+  };
+  const onKey = (e) => e.key === 'Escape' && close();
+  document.addEventListener('keydown', onKey);
+  wrap.querySelector('.drawer-backdrop').onclick = close;
+  wrap.querySelector('[data-close]').onclick = close;
+  wrap.querySelectorAll('[data-go]').forEach((b) => (b.onclick = () => {
+    const g = b.dataset.go;
+    close();
+    if (g === '@accounts') return import('./views/accounts.js?v=20261108134755').then((m) => m.openAccounts());
+    if (g === '@income' || g === '@expense') { setHistoryFilter({ kind: g.slice(1) }); location.hash = '#/istorija'; return; }
+    if (g === '@help') { try { localStorage.removeItem('budzet_guide_hidden'); } catch {} location.hash = '#/pregled'; ctx.route = 'pregled'; render(); window.scrollTo({ top: 0 }); return; }
+    location.hash = '#/' + g;
+  }));
+}
+
 // Prevlačenje levo/desno na pregledu menja mesec.
 function enableSwipe() {
   let x0 = null, y0 = null;
@@ -127,17 +194,16 @@ function enableSwipe() {
 }
 
 function paintSync(st = Sync.getStatus()) {
-  const who = $('#who-btn');
+  const who = $('#menu-btn');
   who.dataset.sync = !Sync.enabled ? '' : st.state === 'error' ? 'error' : st.state === 'offline' ? 'offline' : st.pending ? 'pending' : 'ok';
-  if (ctx.route === 'vise') document.querySelector('[data-sync-text]') && render();
+  if (ctx.route === 'nalog') document.querySelector('[data-sync-text]') && render();
 }
 
 function init() {
   $('#prev-month').onclick = () => setMonth(addMonths(ctx.month, -1));
   $('#next-month').onclick = () => setMonth(addMonths(ctx.month, 1));
   $('#month-label').onclick = openMonthPicker;
-  $('#who-btn').onclick = () => (location.hash = '#/vise');
-  $('#gear-btn').onclick = () => (location.hash = '#/vise');
+  $('#menu-btn').onclick = openMenu;
   $('#fab').onclick = () => {
     // Ako gledaš drugi mesec, predloži datum u tom mesecu.
     const cur = currentMonthKey();

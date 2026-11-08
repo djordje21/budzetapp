@@ -1,15 +1,23 @@
 // Podešavanja: korisnik, tema, kategorije, backup.
-import { ico } from '../icons.js?v=20261108134417';
-import * as S from '../store.js?v=20261108134417';
-import { esc, todayISO, fmtDate, isoOf } from '../util.js?v=20261108134417';
-import { openSheet, toast, confirmSheet } from '../ui.js?v=20261108134417';
-import * as Sync from '../sync.js?v=20261108134417';
+import { ico } from '../icons.js?v=20261108134755';
+import * as S from '../store.js?v=20261108134755';
+import { esc, todayISO, fmtDate, isoOf } from '../util.js?v=20261108134755';
+import { openSheet, toast, confirmSheet } from '../ui.js?v=20261108134755';
+import * as Sync from '../sync.js?v=20261108134755';
 
+// Jedan ekran, tri dela: Nalog, Kategorije, Podešavanja (bira se rutom iz menija).
 export function renderVise(el, ctx) {
+  renderViseAll(el, ctx);
+  const part = { nalog: 'nalog', kategorije: 'kategorije' }[ctx.route] || 'podesavanja';
+  el.querySelectorAll('[data-part]').forEach((n) => { if (n.dataset.part !== part) n.remove(); });
+}
+
+function renderViseAll(el, ctx) {
   const st = S.getState();
   const me = st.settings.currentUser;
 
   el.innerHTML = `
+    <div data-part="nalog">
     ${Sync.enabled ? accountBlock() : `
     <div class="section-head"><h3>Ko koristi ovaj uređaj</h3></div>
     <section class="card pad">
@@ -18,7 +26,9 @@ export function renderVise(el, ctx) {
       </div>
       <p class="muted small mt">Novi unosi sa ovog telefona biće označeni ovim imenom.</p>
     </section>`}
+    </div>
 
+    <div data-part="podesavanja">
     <div class="section-head"><h3>Izgled</h3></div>
     <section class="card pad">
       <div class="seg seg-3" id="theme">
@@ -27,6 +37,8 @@ export function renderVise(el, ctx) {
       </div>
     </section>
 
+    </div>
+    <div data-part="kategorije">
     <div class="section-head"><h3>Kategorije</h3></div>
     ${Object.entries(S.KINDS).map(([kind, k]) => `
       <section class="card list">
@@ -40,6 +52,8 @@ export function renderVise(el, ctx) {
         <button class="add-line" data-newcat="${kind}">+ Nova kategorija</button>
       </section>`).join('')}
 
+    </div>
+    <div data-part="podesavanja">
     <div class="section-head"><h3>Podaci</h3></div>
     <section class="card list">
       ${Sync.enabled ? '' : '<div class="sync-row"><span class="dot dot-pending"></span><span class="grow"><b>Lokalno</b><br><span class="muted small">Podaci su samo na ovom uređaju.</span></span></div>'}
@@ -56,7 +70,8 @@ export function renderVise(el, ctx) {
       </section>
     </details>
 
-    <p class="muted small center mt-lg">Budžet · verzija 2.1</p>
+    <p class="muted small center mt-lg">Budžet · verzija 3.0</p>
+    </div>
   `;
 
   el.querySelector('#sync-now')?.addEventListener('click', async () => {

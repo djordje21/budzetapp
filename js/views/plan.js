@@ -1,13 +1,13 @@
 // Plan za mesec: očekivani prihodi, troškovi i štednja.
-import { ico } from '../icons.js?v=20261108134417';
-import * as S from '../store.js?v=20261108134417';
-import { summarize } from '../calc.js?v=20261108134417';
-import { esc, fmt, fmtNum, fmtSigned, monthLabel, addMonths, digitsOnly, MONTH_GEN , dayLabel } from '../util.js?v=20261108134417';
-import { openSheet, toast, confirmSheet, moneyInput } from '../ui.js?v=20261108134417';
-import { isPayable, paidTx, payItem, PAY_LABELS } from '../pay.js?v=20261108134417';
-import { openEntrySheet } from './entry.js?v=20261108134417';
-import { openQuickEntry } from './quick.js?v=20261108134417';
-import { monthPhase } from '../calc.js?v=20261108134417';
+import { ico } from '../icons.js?v=20261108134755';
+import * as S from '../store.js?v=20261108134755';
+import { summarize } from '../calc.js?v=20261108134755';
+import { esc, fmt, fmtNum, fmtSigned, monthLabel, addMonths, digitsOnly, MONTH_GEN , dayLabel } from '../util.js?v=20261108134755';
+import { openSheet, toast, confirmSheet, moneyInput } from '../ui.js?v=20261108134755';
+import { isPayable, paidTx, payItem, PAY_LABELS } from '../pay.js?v=20261108134755';
+import { openEntrySheet } from './entry.js?v=20261108134755';
+import { openQuickEntry } from './quick.js?v=20261108134755';
+import { monthPhase } from '../calc.js?v=20261108134755';
 
 // Sekcija kao padajući meni: naslov sa zbirom uvek vidljiv; zatvorene sekcije se trajno pamte.
 const SEC_KEY = 'budzet_sec_closed';
