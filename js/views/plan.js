@@ -1,12 +1,12 @@
 // Plan za mesec: očekivani prihodi, troškovi i štednja.
-import * as S from '../store.js?v=20261108091458';
-import { summarize } from '../calc.js?v=20261108091458';
-import { esc, fmt, fmtNum, fmtSigned, monthLabel, addMonths, digitsOnly, MONTH_GEN } from '../util.js?v=20261108091458';
-import { openSheet, toast, confirmSheet, moneyInput } from '../ui.js?v=20261108091458';
-import { isPayable, paidTx, payItem, PAY_LABELS } from '../pay.js?v=20261108091458';
-import { openEntrySheet } from './entry.js?v=20261108091458';
-import { openQuickEntry } from './quick.js?v=20261108091458';
-import { monthPhase } from '../calc.js?v=20261108091458';
+import * as S from '../store.js?v=20261108110650';
+import { summarize } from '../calc.js?v=20261108110650';
+import { esc, fmt, fmtNum, fmtSigned, monthLabel, addMonths, digitsOnly, MONTH_GEN , dayLabel } from '../util.js?v=20261108110650';
+import { openSheet, toast, confirmSheet, moneyInput } from '../ui.js?v=20261108110650';
+import { isPayable, paidTx, payItem, PAY_LABELS } from '../pay.js?v=20261108110650';
+import { openEntrySheet } from './entry.js?v=20261108110650';
+import { openQuickEntry } from './quick.js?v=20261108110650';
+import { monthPhase } from '../calc.js?v=20261108110650';
 
 export function renderPlan(el, ctx) {
   const key = ctx.month;
@@ -270,7 +270,9 @@ export function openPlanItemActions(key, item) {
   let primary = '';
   if (!future) {
     if (!payable) primary = `<button class="btn btn-primary" id="a-quick">+ Unesi trošak</button>`;
-    else if (paid) primary = `<button class="btn btn-soft" id="a-paid">✓ ${L.done} · ${fmtNum(paid.amount)} — otvori unos</button>`;
+    else if (paid) primary = `<div class="hint hint-good">✓ ${L.done} ${fmtNum(paid.amount)} RSD · ${dayLabel(paid.date)}</div>
+      <button class="btn btn-ghost btn-danger-text" id="a-undo">↩ Poništi plaćanje (greškom označeno)</button>
+      <button class="btn btn-ghost" id="a-paid">Izmeni iznos ili datum plaćanja</button>`;
     else primary = `<button class="btn btn-primary" id="a-pay">${L.act} ${fmtNum(item.amount)} RSD</button>`;
   }
   openSheet({
@@ -293,6 +295,13 @@ export function openPlanItemActions(key, item) {
       el.querySelector('#a-quick')?.addEventListener('click', then(() => openQuickEntry({ categoryId: item.categoryId, name: item.name, key })));
       el.querySelector('#a-pay')?.addEventListener('click', () => { close(); payItem(key, item); });
       el.querySelector('#a-paid')?.addEventListener('click', then(() => openEntrySheet({ tx: paid })));
+      el.querySelector('#a-undo')?.addEventListener('click', async () => {
+        const ok = await confirmSheet({ title: 'Poništi plaćanje?', text: `${esc(item.name)} · ${fmtNum(paid.amount)} RSD biće obrisano iz unosa, a stavka se vraća u „Za plaćanje“.`, ok: 'Poništi', danger: true });
+        if (!ok) return;
+        await S.deleteTransaction(paid.id);
+        close();
+        toast(`↩ Plaćanje poništeno: ${esc(item.name)}`, 'ok');
+      });
       el.querySelector('#a-edit').onclick = then(() => openPlanItemSheet(key, item));
     },
   });

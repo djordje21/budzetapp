@@ -1,12 +1,12 @@
 // Detalj kategorije za mesec: plan, unosi i brze akcije (otvara se iz Pregleda).
-import * as S from '../store.js?v=20261108091458';
-import { summarize } from '../calc.js?v=20261108091458';
-import { esc, fmt, fmtNum, monthLabel, currentMonthKey } from '../util.js?v=20261108091458';
-import { openSheet, animateBars, pct } from '../ui.js?v=20261108091458';
-import { openEntrySheet } from './entry.js?v=20261108091458';
-import { openQuickEntry } from './quick.js?v=20261108091458';
-import { openPlanItemSheet, openPlanItemActions } from './plan.js?v=20261108091458';
-import { txRow } from './istorija.js?v=20261108091458';
+import * as S from '../store.js?v=20261108110650';
+import { summarize } from '../calc.js?v=20261108110650';
+import { esc, fmt, fmtNum, monthLabel, currentMonthKey } from '../util.js?v=20261108110650';
+import { openSheet, animateBars, pct } from '../ui.js?v=20261108110650';
+import { openEntrySheet } from './entry.js?v=20261108110650';
+import { openQuickEntry } from './quick.js?v=20261108110650';
+import { openPlanItemSheet, openPlanItemActions } from './plan.js?v=20261108110650';
+import { txRow } from './istorija.js?v=20261108110650';
 
 export function openCategoryDetail(key, catId) {
   const c = S.cat(catId);
