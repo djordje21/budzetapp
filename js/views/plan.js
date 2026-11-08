@@ -1,12 +1,12 @@
 // Plan za mesec: očekivani prihodi, troškovi i štednja.
-import * as S from '../store.js?v=20261108053527';
-import { summarize } from '../calc.js?v=20261108053527';
-import { esc, fmt, fmtNum, fmtSigned, monthLabel, addMonths, digitsOnly, MONTH_GEN } from '../util.js?v=20261108053527';
-import { openSheet, toast, confirmSheet, moneyInput } from '../ui.js?v=20261108053527';
-import { isPayable, paidTx, payItem, PAY_LABELS } from '../pay.js?v=20261108053527';
-import { openEntrySheet } from './entry.js?v=20261108053527';
-import { openQuickEntry } from './quick.js?v=20261108053527';
-import { monthPhase } from '../calc.js?v=20261108053527';
+import * as S from '../store.js?v=20261108053932';
+import { summarize } from '../calc.js?v=20261108053932';
+import { esc, fmt, fmtNum, fmtSigned, monthLabel, addMonths, digitsOnly, MONTH_GEN } from '../util.js?v=20261108053932';
+import { openSheet, toast, confirmSheet, moneyInput } from '../ui.js?v=20261108053932';
+import { isPayable, paidTx, payItem, PAY_LABELS } from '../pay.js?v=20261108053932';
+import { openEntrySheet } from './entry.js?v=20261108053932';
+import { openQuickEntry } from './quick.js?v=20261108053932';
+import { monthPhase } from '../calc.js?v=20261108053932';
 
 export function renderPlan(el, ctx) {
   const key = ctx.month;
@@ -69,7 +69,7 @@ export function renderPlan(el, ctx) {
 
   el.querySelectorAll('[data-item]').forEach((r) => (r.onclick = () => {
     const item = plan.find((p) => p.id === r.dataset.item);
-    if (item) openPlanItemSheet(key, item);
+    if (item) openPlanItemActions(key, item);
   }));
   el.querySelectorAll('[data-quick]').forEach((b) => (b.onclick = (e) => {
     e.stopPropagation();
@@ -154,8 +154,10 @@ export function openPlanItemSheet(key, item, kind = null, presetCat = null) {
   const isDec = key.endsWith('-12');
 
   openSheet({
-    title: item ? 'Izmena stavke plana' : `Nova stavka — ${S.KINDS[kind].label.toLowerCase()}`,
+    title: item ? '✏️ Izmena plana' : `Nova stavka plana — ${S.KINDS[kind].label.toLowerCase()}`,
     body: `
+      <div class="hint hint-warn plan-edit-hint">Menjaš koliko je <b>planirano</b> za mesec — ovo <b>nije unos troška</b>.
+        ${item && kind === 'expense' ? '<button class="link" id="p-to-entry">Hteo si da uneseš trošak? →</button>' : ''}</div>
       <div class="field-label">Naziv</div>
       <input class="input" id="p-name" maxlength="40" placeholder="${kind === 'income' ? 'npr. Plata Đ' : kind === 'saving' ? 'npr. Mesečna štednja' : 'npr. Struja, Kredit, Namirnice'}">
 
@@ -191,23 +193,67 @@ export function openPlanItemSheet(key, item, kind = null, presetCat = null) {
       paintOwner();
       if (!item) setTimeout(() => $('#p-name').focus(), 280);
 
+      $('#p-to-entry')?.addEventListener('click', () => { close(); setTimeout(() => openQuickEntry({ categoryId: item.categoryId, name: item.name, key }), 220); });
       $('#p-save').onclick = async () => {
         const name = $('#p-name').value.trim() || S.cat($('#p-cat').value).name;
         const amount = Number(v.amount);
         if (!amount) { toast('Upiši iznos', 'warn'); amt.focus(); return; }
         const applyForward = !!$('#p-fwd')?.checked;
+        const snap = S.plansSnapshot();
         await S.savePlanItem(key, { ...(item ? { id: item.id } : {}), name, amount, categoryId: $('#p-cat').value, owner: v.owner }, { applyForward });
-        toast(applyForward ? 'Sačuvano i za naredne mesece' : 'Sačuvano', 'ok');
+        const what = item && Number(item.amount) !== amount ? `${esc(name)}: ${fmtNum(item.amount)} → <b>${fmtNum(amount)}</b>` : `${esc(name)} · ${fmtNum(amount)}`;
+        toast(`Plan ${item ? 'izmenjen' : 'dopunjen'}: ${what}${applyForward ? '<br><small>i za naredne mesece</small>' : ''}`, 'ok', 6000,
+          { label: 'Poništi', onClick: async () => { await S.restorePlans(snap); toast('Izmena plana poništena', 'ok'); } });
         close();
       };
       $('#p-del')?.addEventListener('click', async () => {
         const applyForward = !!$('#p-fwd')?.checked;
         const ok = await confirmSheet({ title: 'Obriši stavku?', text: `${esc(item.name)}${applyForward ? ' — i iz narednih meseci' : ''}`, ok: 'Obriši', danger: true });
         if (!ok) return;
+        const snap = S.plansSnapshot();
         await S.deletePlanItem(key, item.id, { applyForward });
-        toast('Stavka obrisana', 'ok');
+        toast(`Iz plana obrisano: ${esc(item.name)}`, 'ok', 6000, { label: 'Poništi', onClick: async () => { await S.restorePlans(snap); toast('Brisanje poništeno', 'ok'); } });
         close();
       });
+    },
+  });
+}
+
+// Dodir na stavku plana: jasan izbor između UNOSA troška i IZMENE plana.
+export function openPlanItemActions(key, item) {
+  const c = S.cat(item.categoryId);
+  const future = monthPhase(key) === 'future';
+  const payable = isPayable(item);
+  const paid = payable ? paidTx(key, item) : null;
+  const r = summarize(key).cats.find((x) => x.cat.id === c.id) || { plan: 0, actual: 0 };
+  const L = PAY_LABELS[c.kind];
+  let primary = '';
+  if (!future) {
+    if (!payable) primary = `<button class="btn btn-primary" id="a-quick">+ Unesi trošak</button>`;
+    else if (paid) primary = `<button class="btn btn-soft" id="a-paid">✓ ${L.done} · ${fmtNum(paid.amount)} — otvori unos</button>`;
+    else primary = `<button class="btn btn-primary" id="a-pay">${L.act} ${fmtNum(item.amount)} RSD</button>`;
+  }
+  openSheet({
+    title: item.name,
+    body: `
+      <div class="cd-head">
+        <span class="cat-ico" style="--c:${c.color}">${c.icon}</span>
+        <div class="grow">
+          <div class="cd-big">${fmt(item.amount)}</div>
+          <div class="cd-sub">planirano · ${esc(c.name)}${!payable && r.plan ? ` · potrošeno ${fmtNum(r.actual)} od ${fmtNum(r.plan)}` : ''}</div>
+        </div>
+      </div>
+      <div class="dd-actions">
+        ${primary}
+        ${future ? '<p class="muted small center">Budući mesec — trošak se unosi kad mesec počne.</p>' : ''}
+        <button class="btn btn-ghost" id="a-edit">✏️ Izmeni plan (iznos, naziv)</button>
+      </div>`,
+    onMount(el, close) {
+      const then = (fn) => () => { close(); setTimeout(fn, 220); };
+      el.querySelector('#a-quick')?.addEventListener('click', then(() => openQuickEntry({ categoryId: item.categoryId, name: item.name, key })));
+      el.querySelector('#a-pay')?.addEventListener('click', () => { close(); payItem(key, item); });
+      el.querySelector('#a-paid')?.addEventListener('click', then(() => openEntrySheet({ tx: paid })));
+      el.querySelector('#a-edit').onclick = then(() => openPlanItemSheet(key, item));
     },
   });
 }

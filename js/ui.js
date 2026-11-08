@@ -1,20 +1,25 @@
 // UI pomoćnici: donji panel (sheet), potvrda, obaveštenja, animacija brojeva.
-import { esc, fmtNum, digitsOnly } from './util.js?v=20261108053527';
+import { esc, fmtNum, digitsOnly } from './util.js?v=20261108053932';
 
 const reduceMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 // ---- Toast ----
-export function toast(msg, type = 'ok', ms = 2600) {
+export function toast(msg, type = 'ok', ms = 2600, action = null) {
   const root = document.getElementById('toast-root');
   const el = document.createElement('div');
-  el.className = `toast toast-${type}`;
-  el.innerHTML = msg;
+  el.className = `toast toast-${type}${action ? ' has-action' : ''}`;
+  el.innerHTML = `<span class="toast-msg">${msg}</span>`;
+  const hide = () => { el.classList.remove('show'); setTimeout(() => el.remove(), 300); };
+  if (action) {
+    const b = document.createElement('button');
+    b.className = 'toast-btn';
+    b.textContent = action.label;
+    b.onclick = () => { hide(); action.onClick(); };
+    el.appendChild(b);
+  }
   root.appendChild(el);
   requestAnimationFrame(() => el.classList.add('show'));
-  setTimeout(() => {
-    el.classList.remove('show');
-    setTimeout(() => el.remove(), 300);
-  }, ms);
+  setTimeout(hide, action ? Math.max(ms, 6000) : ms);
 }
 
 // ---- Sheet ----

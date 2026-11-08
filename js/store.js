@@ -1,7 +1,7 @@
 // Skladište podataka. Za sada lokalno (localStorage); kasnije se ovde uključuje Supabase
 // bez menjanja ekrana — svi ekrani koriste samo funkcije iz ovog fajla.
 
-import { uid, addMonths } from './util.js?v=20261108053527';
+import { uid, addMonths } from './util.js?v=20261108053932';
 
 const KEY = 'budzetapp_v2';
 
@@ -210,6 +210,13 @@ export async function deletePlanItem(key, id, { applyForward = false } = {}) {
   if (applyForward) {
     for (const k of forwardKeys(key)) state.plans[k] = planOf(k).filter((x) => x.line !== item.line);
   }
+  persist();
+}
+
+// Za "Poništi": snimak celog plana pre izmene.
+export const plansSnapshot = () => structuredClone(state.plans);
+export async function restorePlans(snap) {
+  state.plans = snap;
   persist();
 }
 

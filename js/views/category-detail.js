@@ -1,12 +1,12 @@
 // Detalj kategorije za mesec: plan, unosi i brze akcije (otvara se iz Pregleda).
-import * as S from '../store.js?v=20261108053527';
-import { summarize } from '../calc.js?v=20261108053527';
-import { esc, fmt, fmtNum, monthLabel, currentMonthKey } from '../util.js?v=20261108053527';
-import { openSheet, animateBars, pct } from '../ui.js?v=20261108053527';
-import { openEntrySheet } from './entry.js?v=20261108053527';
-import { openQuickEntry } from './quick.js?v=20261108053527';
-import { openPlanItemSheet } from './plan.js?v=20261108053527';
-import { txRow } from './istorija.js?v=20261108053527';
+import * as S from '../store.js?v=20261108053932';
+import { summarize } from '../calc.js?v=20261108053932';
+import { esc, fmt, fmtNum, monthLabel, currentMonthKey } from '../util.js?v=20261108053932';
+import { openSheet, animateBars, pct } from '../ui.js?v=20261108053932';
+import { openEntrySheet } from './entry.js?v=20261108053932';
+import { openQuickEntry } from './quick.js?v=20261108053932';
+import { openPlanItemSheet, openPlanItemActions } from './plan.js?v=20261108053932';
+import { txRow } from './istorija.js?v=20261108053932';
 
 export function openCategoryDetail(key, catId) {
   const c = S.cat(catId);
@@ -56,7 +56,7 @@ export function openCategoryDetail(key, catId) {
       el.querySelector('#cd-plan').onclick = then(() => openPlanItemSheet(key, null, c.kind, catId));
       el.querySelectorAll('[data-pi]').forEach((b) => (b.onclick = then(() => {
         const it = items.find((p) => p.id === b.dataset.pi);
-        if (it) openPlanItemSheet(key, it);
+        if (it) openPlanItemActions(key, it);
       })));
       el.querySelectorAll('[data-tx]').forEach((b) => (b.onclick = then(() => {
         const tx = txs.find((t) => t.id === b.dataset.tx);

@@ -701,3 +701,11 @@ input, textarea, select, .input, [contenteditable] { -webkit-user-select: text; 
 .q-chips { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 10px; }
 .q-chips .chip { padding: 0; }
 .q-after { min-height: 18px; margin-top: 10px; text-align: center; }
+
+/* Toast sa dugmetom (Poništi) */
+#toast-root .toast.has-action { pointer-events: auto; display: flex; align-items: center; gap: 12px; }
+.toast-msg { flex: 1; min-width: 0; }
+.toast-btn { flex-shrink: 0; padding: 7px 12px; border-radius: 10px; font-weight: 700; font-size: 14px; background: color-mix(in srgb, var(--bg) 18%, transparent); color: inherit; }
+.toast-warn .toast-btn { background: var(--surface); }
+.plan-edit-hint { margin-top: 4px; }
+.plan-edit-hint .link { display: block; margin-top: 4px; padding: 0; font-size: 13px; }
