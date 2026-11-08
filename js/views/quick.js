@@ -1,9 +1,9 @@
 // Brzi unos troška za stavku/kategoriju iz plana: samo iznos (i po želji "gde").
-import * as S from '../store.js?v=20261108055649';
-import { summarize } from '../calc.js?v=20261108055649';
-import { esc, fmt, fmtNum, todayISO, currentMonthKey } from '../util.js?v=20261108055649';
-import { openSheet, toast, moneyInput, pct, animateBars } from '../ui.js?v=20261108055649';
-import { openEntrySheet } from './entry.js?v=20261108055649';
+import * as S from '../store.js?v=20261108081259';
+import { summarize } from '../calc.js?v=20261108081259';
+import { esc, fmt, fmtNum, todayISO, currentMonthKey } from '../util.js?v=20261108081259';
+import { openSheet, toast, moneyInput, pct, animateBars } from '../ui.js?v=20261108081259';
+import { openEntrySheet } from './entry.js?v=20261108081259';
 
 export function openQuickEntry({ categoryId, name = null, key = currentMonthKey() }) {
   const c = S.cat(categoryId);

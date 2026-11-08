@@ -714,3 +714,8 @@ input, textarea, select, .input, [contenteditable] { -webkit-user-select: text; 
 .plan-group-head { text-transform: uppercase; letter-spacing: .5px; font-size: 12px; background: var(--surface-2); padding: 8px 14px; }
 .plan-group-head em { font-style: normal; text-transform: none; letter-spacing: 0; font-weight: 500; }
 .plan-group + .plan-group { border-top: none; }
+
+.lims { margin-top: 8px; display: flex; flex-wrap: wrap; gap: 6px; }
+.lims-t { width: 100%; font-size: 12px; opacity: .85; }
+.lim { font-size: 12.5px; padding: 4px 9px; border-radius: 99px; background: color-mix(in srgb, var(--surface) 70%, transparent); white-space: nowrap; }
+.lim-over { color: var(--red); }

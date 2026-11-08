@@ -1,6 +1,9 @@
 // Proračuni: plan vs. stvarno za mesec.
-import * as S from './store.js?v=20261108055649';
-import { daysInMonth, currentMonthKey, todayISO } from './util.js?v=20261108055649';
+import * as S from './store.js?v=20261108081259';
+import { daysInMonth, currentMonthKey, todayISO } from './util.js?v=20261108081259';
+
+export const DAILY = new Set(['hrana', 'auto', 'izlasci', 'licno-dj', 'licno-m']);
+export const isDaily = (c) => c.kind === 'expense' && DAILY.has(c.id);
 
 export const txOfMonth = (key) => S.getState().transactions.filter((t) => t.date.startsWith(key));
 
@@ -32,10 +35,11 @@ export function summarize(key) {
     r.count++;
   }
 
-  // Promenljivi troškovi (bez rata i računa) — za ritam potrošnje.
+  // Svakodnevni troškovi (hrana, gorivo, izlasci, džeparac) — za ritam potrošnje.
+  // Pokloni, kuća, odeća i sl. su povremene veće kupovine i ne dele se na dane.
   let varPlan = 0, varActual = 0;
   for (const r of byCat.values()) {
-    if (r.cat.kind === 'expense' && !r.cat.fixed) {
+    if (isDaily(r.cat)) {
       varPlan += r.plan;
       varActual += r.actual;
     }
@@ -58,12 +62,17 @@ export function pace(sum) {
   if (phase !== 'current' || sum.varPlan <= 0) return null;
   const dim = daysInMonth(sum.key);
   const day = Number(todayISO().slice(8, 10));
+  const daysLeft = dim - day + 1; // uključujući danas
   const timePct = day / dim;
   const spentPct = sum.varActual / sum.varPlan;
   const remaining = sum.varPlan - sum.varActual;
-  const perDay = Math.max(0, remaining) / (dim - day + 1);
   let status = 'good';
   if (remaining < 0) status = 'over';
   else if (spentPct > timePct + 0.1) status = 'fast';
-  return { day, dim, timePct, spentPct, remaining, perDay, status };
+  // Dnevni limit po kategoriji do kraja meseca (samo kategorije koje imaju plan).
+  const limits = sum.cats
+    .filter((r) => isDaily(r.cat) && r.plan > 0)
+    .map((r) => ({ cat: r.cat, left: r.plan - r.actual, perDay: Math.max(0, r.plan - r.actual) / daysLeft }))
+    .sort((a, b) => b.perDay - a.perDay);
+  return { day, dim, daysLeft, timePct, spentPct, remaining, status, limits };
 }
