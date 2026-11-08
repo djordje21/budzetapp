@@ -1,18 +1,19 @@
 // Početni ekran: plan vs. stvarno za izabrani mesec.
-import * as S from '../store.js?v=20261108114937';
-import { summarize, pace, monthPhase } from '../calc.js?v=20261108114937';
-import { esc, fmt, fmtNum, fmtSigned, monthLabel, addMonths, MONTH_GEN } from '../util.js?v=20261108114937';
-import { countUp, animateBars, pct, toast } from '../ui.js?v=20261108114937';
-import { openEntrySheet } from './entry.js?v=20261108114937';
-import { txRow, setHistoryFilter } from './istorija.js?v=20261108114937';
-import { isPayable, paidTx, payItem, PAY_LABELS } from '../pay.js?v=20261108114937';
-import { openDueSheet } from './due-detail.js?v=20261108114937';
-import { cumulativeData, cumulativeChart, bindCumulative } from '../charts.js?v=20261108114937';
-import { accountsBlock, bindAccounts } from './accounts.js?v=20261108114937';
-import { goalsBlock, bindGoals } from './goals.js?v=20261108114937';
-import { openCategoryDetail } from './category-detail.js?v=20261108114937';
-import { guideBlock, bindGuide } from './guide.js?v=20261108114937';
-import { openQuickEntry } from './quick.js?v=20261108114937';
+import { ico } from '../icons.js?v=20261108120001';
+import * as S from '../store.js?v=20261108120001';
+import { summarize, pace, monthPhase } from '../calc.js?v=20261108120001';
+import { esc, fmt, fmtNum, fmtSigned, monthLabel, addMonths, MONTH_GEN } from '../util.js?v=20261108120001';
+import { countUp, animateBars, pct, toast } from '../ui.js?v=20261108120001';
+import { openEntrySheet } from './entry.js?v=20261108120001';
+import { txRow, setHistoryFilter } from './istorija.js?v=20261108120001';
+import { isPayable, paidTx, payItem, PAY_LABELS } from '../pay.js?v=20261108120001';
+import { openDueSheet } from './due-detail.js?v=20261108120001';
+import { cumulativeData, cumulativeChart, bindCumulative } from '../charts.js?v=20261108120001';
+import { accountsBlock, bindAccounts } from './accounts.js?v=20261108120001';
+import { goalsBlock, bindGoals } from './goals.js?v=20261108120001';
+import { openCategoryDetail } from './category-detail.js?v=20261108120001';
+import { guideBlock, bindGuide } from './guide.js?v=20261108120001';
+import { openQuickEntry } from './quick.js?v=20261108120001';
 
 export function renderPregled(el, ctx) {
   const key = ctx.month;
@@ -147,7 +148,7 @@ function dueBlock(key, sum, phase) {
       ${due.map((p, i) => {
         const c = S.cat(p.categoryId);
         return `<div class="due-row clickable ${i >= 4 ? 'due-extra' : ''}" role="button" tabindex="0" data-due="${p.id}">
-          <span class="cat-ico" style="--c:${c.color}">${c.icon}</span>
+          <span class="cat-ico" style="--c:${c.color}">${ico(c)}</span>
           <span class="tx-main"><span class="tx-title">${esc(p.name)}</span><span class="tx-sub">${esc(c.name)}</span></span>
           <span class="tx-amt ${c.kind === 'income' ? 't-green' : ''}">${fmtNum(p.amount)}</span>
           <button class="pay-btn" data-pay="${p.id}">${PAY_LABELS[c.kind].act}</button>
@@ -182,7 +183,7 @@ function catRow(r) {
     sub = `${items.length} ${w}${r.cat.fixed && items.length && !rowFuture ? ` · plaćeno ${paidN} od ${items.length}` : ''}`;
   }
   return `<div class="cat-row clickable" role="button" tabindex="0" data-cat="${r.cat.id}">
-    <span class="cat-ico" style="--c:${r.cat.color}">${r.cat.icon}</span>
+    <span class="cat-ico" style="--c:${r.cat.color}">${ico(r.cat)}</span>
     <div class="cat-main">
       <div class="cat-top"><span class="cat-name">${esc(r.cat.name)}</span>${note}
         <span class="cat-amt"><b>${fmtNum(r.actual)}</b><span class="muted"> od ${fmtNum(r.plan)}</span></span></div>
@@ -205,7 +206,7 @@ function paceMsg(p, phase, sum) {
   }
   if (!p) return '';
   const r50 = (n) => Math.round(n / 50) * 50;
-  const name = (c) => `${c.icon} ${esc(longName(c))}`;
+  const name = (c) => esc(longName(c));
   const perDayOk = (c) => c.id === 'hrana' || c.id.startsWith('licno-'); // troši se zaista svakog dana
   const over = p.limits.filter((l) => l.left < 0);
   // "Po planu do danas" = mesečni plan srazmerno proteklim danima.

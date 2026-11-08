@@ -1,9 +1,10 @@
 // Stanje na računima: Đorđe (OTP), Maksijana (OTP), Keš i zbir.
-import * as S from '../store.js?v=20261108114937';
-import * as Sync from '../sync.js?v=20261108114937';
-import { esc, fmt, fmtNum, digitsOnly, todayISO, dayLabel, currentMonthKey, daysInMonth } from '../util.js?v=20261108114937';
-import { openEntrySheet } from './entry.js?v=20261108114937';
-import { openSheet, toast, confirmSheet, countUp, moneyInput, dateInputHTML, syncDateShow } from '../ui.js?v=20261108114937';
+import { ico } from '../icons.js?v=20261108120001';
+import * as S from '../store.js?v=20261108120001';
+import * as Sync from '../sync.js?v=20261108120001';
+import { esc, fmt, fmtNum, digitsOnly, todayISO, dayLabel, currentMonthKey, daysInMonth } from '../util.js?v=20261108120001';
+import { openEntrySheet } from './entry.js?v=20261108120001';
+import { openSheet, toast, confirmSheet, countUp, moneyInput, dateInputHTML, syncDateShow } from '../ui.js?v=20261108120001';
 
 const signed = (n) => (n < 0 ? '−' : '') + fmtNum(Math.abs(n));
 
@@ -27,7 +28,7 @@ export function accountsBlock() {
     ? '<div class="hint hint-warn">Stanja se za sada čuvaju samo na ovom telefonu. Za zajedničko čuvanje pokreni SQL iz <b>supabase/migrations/004_accounts.sql</b>.</div>' : '';
   if (!known) {
     return `${warn}<button class="card acc-empty" data-acc-open>
-      <span class="acc-empty-ico">🏦</span>
+      <span class="cat-ico acc-empty-ico" style="--c:#1F3A5F">${ico('krediti')}</span>
       <span class="grow"><b>Stanje na računima</b><br><span class="muted small">Upiši koliko imate na računima i u kešu — dalje se računa samo.</span></span>
       <span class="chev">›</span></button>`;
   }
@@ -61,7 +62,7 @@ export function openAccounts() {
       <section class="list">
         ${rows.map(({ a, b }) => `
           <div class="acc-item">
-            <span class="cat-ico" style="--c:${a.color}">${a.icon}</span>
+            <span class="cat-ico" style="--c:${a.color}">${ico(a)}</span>
             <div class="grow">
               <div class="acc-item-top"><b>${esc(a.name)}</b><span class="muted small">${esc(a.bank)}</span></div>
               <div class="acc-item-amt ${b && b.amount < 0 ? 't-red' : ''}">${b ? fmt(b.amount) : 'stanje nije upisano'}</div>

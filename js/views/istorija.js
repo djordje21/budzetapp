@@ -1,8 +1,9 @@
 // Istorija stvarnih unosa za mesec, grupisano po danima, sa filterima.
-import * as S from '../store.js?v=20261108114937';
-import { txOfMonth } from '../calc.js?v=20261108114937';
-import { esc, fmtNum, dayLabel, monthLabel } from '../util.js?v=20261108114937';
-import { openEntrySheet } from './entry.js?v=20261108114937';
+import { ico } from '../icons.js?v=20261108120001';
+import * as S from '../store.js?v=20261108120001';
+import { txOfMonth } from '../calc.js?v=20261108120001';
+import { esc, fmtNum, dayLabel, monthLabel } from '../util.js?v=20261108120001';
+import { openEntrySheet } from './entry.js?v=20261108120001';
 
 const filters = { who: 'all', kind: 'all', cat: 'all' };
 export const setHistoryFilter = (f) => Object.assign(filters, { who: 'all', kind: 'all', cat: 'all' }, f);
@@ -14,7 +15,7 @@ export function txRow(t, { showDate = false } = {}) {
   const cls = t.kind === 'income' ? 't-green' : t.kind === 'saving' ? 't-cyan' : '';
   const sub = [showDate ? dayLabel(t.date) : '', t.note ? esc(t.note) : ''].filter(Boolean).join(' · ');
   return `<button class="tx-row" data-tx="${t.id}">
-    <span class="cat-ico" style="--c:${c.color}">${c.icon}</span>
+    <span class="cat-ico" style="--c:${c.color}">${ico(c)}</span>
     <span class="tx-main">
       <span class="tx-title">${esc(c.name)}</span>
       ${sub ? `<span class="tx-sub">${sub}</span>` : ''}
@@ -71,7 +72,7 @@ export function renderIstorija(el, ctx) {
           `<button class="chip ${filters.kind === v ? 'on' : ''}" data-f="kind" data-v="${v}">${esc(l)}</button>`).join('')}
         <select class="chip chip-select" id="f-cat" aria-label="Kategorija">
           <option value="all">Sve kategorije</option>
-          ${usedCats.map((c) => `<option value="${c.id}" ${filters.cat === c.id ? 'selected' : ''}>${c.icon} ${esc(c.name)}</option>`).join('')}
+          ${usedCats.map((c) => `<option value="${c.id}" ${filters.cat === c.id ? 'selected' : ''}>${esc(c.name)}</option>`).join('')}
         </select>
       </div>
     </div>
@@ -103,7 +104,7 @@ export function renderIstorija(el, ctx) {
   el.querySelector('#add-first')?.addEventListener('click', () => openEntrySheet());
   el.querySelectorAll('[data-tr]').forEach((r) => (r.onclick = () => {
     const x = (S.getState().transfers || []).find((t) => t.id === r.dataset.tr);
-    if (x) import('./accounts.js?v=20261108114937').then((m) => m.openTransferForm({ tr: x }));
+    if (x) import('./accounts.js?v=20261108120001').then((m) => m.openTransferForm({ tr: x }));
   }));
   el.querySelectorAll('[data-tx]').forEach((r) => (r.onclick = () => {
     const tx = S.getState().transactions.find((t) => t.id === r.dataset.tx);

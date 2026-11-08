@@ -1,7 +1,7 @@
 // Grafikoni (SVG, bez biblioteka): tok potrošnje kroz mesec i raspodela po kategorijama.
-import * as S from './store.js?v=20261108114937';
-import { esc, fmtNum, daysInMonth, todayISO, currentMonthKey, pad } from './util.js?v=20261108114937';
-import { isDaily } from './calc.js?v=20261108114937';
+import * as S from './store.js?v=20261108120001';
+import { esc, fmtNum, daysInMonth, todayISO, currentMonthKey, pad } from './util.js?v=20261108120001';
+import { isDaily } from './calc.js?v=20261108120001';
 
 const shortNum = (n) => (n >= 1e6 ? (n / 1e6).toFixed(1).replace('.0', '').replace('.', ',') + 'M' : n >= 1e3 ? Math.round(n / 1e3) + 'k' : String(Math.round(n)));
 function niceMax(v) {
@@ -130,7 +130,7 @@ export function bindDonut(root, { rows, total }) {
     root.querySelectorAll('.dl-item').forEach((s) => s.classList.toggle('on', Number(s.dataset.i) === active));
     if (active === null) { center.innerHTML = reset; return; }
     const r = rows[active];
-    center.innerHTML = `<span>${r.c.icon} ${esc(r.c.name)}</span><b>${fmtNum(r.v)}</b><em>${Math.round((r.v / total) * 100)}%</em>`;
+    center.innerHTML = `<span>${esc(r.c.name)}</span><b>${fmtNum(r.v)}</b><em>${Math.round((r.v / total) * 100)}%</em>`;
   };
   root.querySelectorAll('.seg, .dl-item').forEach((el) => el.addEventListener('click', () => pick(Number(el.dataset.i))));
 }

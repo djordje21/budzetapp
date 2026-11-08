@@ -1,12 +1,13 @@
 // Detalj kategorije za mesec: plan, unosi i brze akcije (otvara se iz Pregleda).
-import * as S from '../store.js?v=20261108114937';
-import { summarize } from '../calc.js?v=20261108114937';
-import { esc, fmt, fmtNum, monthLabel, currentMonthKey } from '../util.js?v=20261108114937';
-import { openSheet, animateBars, pct } from '../ui.js?v=20261108114937';
-import { openEntrySheet } from './entry.js?v=20261108114937';
-import { openQuickEntry } from './quick.js?v=20261108114937';
-import { openPlanItemSheet, openPlanItemActions } from './plan.js?v=20261108114937';
-import { txRow } from './istorija.js?v=20261108114937';
+import { ico } from '../icons.js?v=20261108120001';
+import * as S from '../store.js?v=20261108120001';
+import { summarize } from '../calc.js?v=20261108120001';
+import { esc, fmt, fmtNum, monthLabel, currentMonthKey } from '../util.js?v=20261108120001';
+import { openSheet, animateBars, pct } from '../ui.js?v=20261108120001';
+import { openEntrySheet } from './entry.js?v=20261108120001';
+import { openQuickEntry } from './quick.js?v=20261108120001';
+import { openPlanItemSheet, openPlanItemActions } from './plan.js?v=20261108120001';
+import { txRow } from './istorija.js?v=20261108120001';
 
 export function openCategoryDetail(key, catId) {
   const c = S.cat(catId);
@@ -22,7 +23,7 @@ export function openCategoryDetail(key, catId) {
     title: `${c.name} · ${monthLabel(key)}`,
     body: `
       <div class="cd-head">
-        <span class="cat-ico" style="--c:${c.color}">${c.icon}</span>
+        <span class="cat-ico" style="--c:${c.color}">${ico(c)}</span>
         <div class="grow">
           <div class="cd-big">${fmt(r.actual)}</div>
           <div class="cd-sub">${r.plan ? `od plana ${fmtNum(r.plan)} · ${left >= 0 ? `ostalo <b>${fmtNum(left)}</b>` : `<span class="t-red">preko ${fmtNum(-left)}</span>`}` : 'nije u planu za ovaj mesec'}</div>
@@ -77,7 +78,7 @@ export function openCategoryPeriod(p, catId) {
     title: `${c.name}`,
     body: `
       <div class="cd-head">
-        <span class="cat-ico" style="--c:${c.color}">${c.icon}</span>
+        <span class="cat-ico" style="--c:${c.color}">${ico(c)}</span>
         <div class="grow">
           <div class="cd-big">${fmt(total)}</div>
           <div class="cd-sub">${esc(p.label)} · ${txs.length} ${txs.length === 1 ? 'unos' : 'unosa'}${txs.length ? ` · prosek ${fmtNum(total / txs.length)}` : ''}</div>

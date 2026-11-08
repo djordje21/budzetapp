@@ -1,16 +1,16 @@
 // Ulazna tačka: navigacija, izbor meseca, tema.
-import * as S from './store.js?v=20261108114937';
-import { currentMonthKey, addMonths, monthLabel, MONTH_SHORT, esc } from './util.js?v=20261108114937';
-import { openSheet, toast } from './ui.js?v=20261108114937';
-import { renderPregled } from './views/pregled.js?v=20261108114937';
-import { renderPlan } from './views/plan.js?v=20261108114937';
-import { renderIstorija } from './views/istorija.js?v=20261108114937';
-import { renderVise } from './views/vise.js?v=20261108114937';
-import { renderIzvestaji } from './views/izvestaji.js?v=20261108114937';
-import { openEntrySheet } from './views/entry.js?v=20261108114937';
-import { renderLogin } from './views/login.js?v=20261108114937';
-import * as Sync from './sync.js?v=20261108114937';
-import { VERSION } from './version.js?v=20261108114937';
+import * as S from './store.js?v=20261108120001';
+import { currentMonthKey, addMonths, monthLabel, MONTH_SHORT, esc } from './util.js?v=20261108120001';
+import { openSheet, toast } from './ui.js?v=20261108120001';
+import { renderPregled } from './views/pregled.js?v=20261108120001';
+import { renderPlan } from './views/plan.js?v=20261108120001';
+import { renderIstorija } from './views/istorija.js?v=20261108120001';
+import { renderVise } from './views/vise.js?v=20261108120001';
+import { renderIzvestaji } from './views/izvestaji.js?v=20261108120001';
+import { openEntrySheet } from './views/entry.js?v=20261108120001';
+import { renderLogin } from './views/login.js?v=20261108120001';
+import * as Sync from './sync.js?v=20261108120001';
+import { VERSION } from './version.js?v=20261108120001';
 
 const views = {
   pregled: { render: renderPregled, title: 'Pregled' },
@@ -24,6 +24,13 @@ const ctx = { month: currentMonthKey(), route: 'pregled' };
 const $ = (s) => document.querySelector(s);
 
 function applyTheme() {
+  // Jednom: nova premium tema je svetla — prebaci "Automatski" na "Svetla" (tamna i dalje može u podešavanjima).
+  try {
+    if (!localStorage.getItem('budzet_theme_v2')) {
+      localStorage.setItem('budzet_theme_v2', '1');
+      if (S.getState().settings.theme === 'auto') S.getState().settings.theme = 'light';
+    }
+  } catch {}
   const t = S.getState().settings.theme;
   if (t === 'auto') document.documentElement.removeAttribute('data-theme');
   else document.documentElement.setAttribute('data-theme', t);

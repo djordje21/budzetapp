@@ -1,10 +1,11 @@
 // Brzi unos stvarnog troška / prihoda / štednje (i izmena postojećeg unosa).
-import * as S from '../store.js?v=20261108114937';
-import { openSheet, toast, confirmSheet, moneyInput, dateInputHTML, syncDateShow } from '../ui.js?v=20261108114937';
-import { esc, fmt, fmtNum, digitsOnly, todayISO, isoOf } from '../util.js?v=20261108114937';
-import { summarize } from '../calc.js?v=20261108114937';
-import { unpaidBills, afterBillPaid } from '../pay.js?v=20261108114937';
-import { suggestCategory } from '../suggest.js?v=20261108114937';
+import { ico } from '../icons.js?v=20261108120001';
+import * as S from '../store.js?v=20261108120001';
+import { openSheet, toast, confirmSheet, moneyInput, dateInputHTML, syncDateShow } from '../ui.js?v=20261108120001';
+import { esc, fmt, fmtNum, digitsOnly, todayISO, isoOf } from '../util.js?v=20261108120001';
+import { summarize } from '../calc.js?v=20261108120001';
+import { unpaidBills, afterBillPaid } from '../pay.js?v=20261108120001';
+import { suggestCategory } from '../suggest.js?v=20261108120001';
 
 const ICONS = ['📌', '☕', '🍕', '🎬', '✈️', '🐶', '👶', '📚', '💊', '🎮', '🔧', '💇'];
 const COLORS = ['#0ea5e9', '#d946ef', '#f97316', '#22c55e', '#6366f1', '#f43f5e', '#14b8a6', '#eab308'];
@@ -94,7 +95,7 @@ export function openEntrySheet({ tx = null, kind = 'expense', date = null, categ
 
       const tile = (c) => `
         <button class="cat-pick ${c.id === v.categoryId ? 'on' : ''}" data-c="${c.id}" style="--c:${c.color}">
-          <span class="cat-ico">${c.icon}</span><span>${esc(c.name)}</span>
+          <span class="cat-ico">${ico(c)}</span><span>${esc(c.name)}</span>
         </button>`;
 
       const paintCats = () => {
@@ -109,8 +110,8 @@ export function openEntrySheet({ tx = null, kind = 'expense', date = null, categ
         $('#e-cats').innerHTML =
           main.map(tile).join('') +
           (v.showFixed ? fixed.map(tile).join('') : '') +
-          (fixed.length && !v.showFixed ? `<button class="cat-pick cat-more" id="e-fixed"><span class="cat-ico">🧾</span><span>Fiksni: rate, računi, štednja</span></button>` : '') +
-          `<button class="cat-pick cat-more" id="e-add"><span class="cat-ico">＋</span><span>Nova kategorija</span></button>`;
+          (fixed.length && !v.showFixed ? `<button class="cat-pick cat-more" id="e-fixed"><span class="cat-ico">${ico('racuni')}</span><span>Fiksni: rate, računi, štednja</span></button>` : '') +
+          `<button class="cat-pick cat-more" id="e-add"><span class="cat-ico">${ico('plus')}</span><span>Nova kategorija</span></button>`;
         el.querySelectorAll('[data-c]').forEach((b) => (b.onclick = () => {
           v.categoryId = b.dataset.c;
           v.kind = S.cat(v.categoryId).kind; // trošak, štednja ili prihod
@@ -202,7 +203,7 @@ export function openEntrySheet({ tx = null, kind = 'expense', date = null, categ
         if (k === 'mode' && b.dataset.v === 'transfer') {
           // Prebacivanje između računa ima svoj formular (nije trošak ni prihod).
           close();
-          setTimeout(() => import('./accounts.js?v=20261108114937').then((m) => m.openTransferForm({ amount: v.amount })), 220);
+          setTimeout(() => import('./accounts.js?v=20261108120001').then((m) => m.openTransferForm({ amount: v.amount })), 220);
           return;
         }
         v[k] = b.dataset.v;
@@ -237,7 +238,7 @@ export function openEntrySheet({ tx = null, kind = 'expense', date = null, categ
       if (v.note && !v.picked) runSuggest(); // npr. naziv prodavnice sa skeniranog računa
       $('#e-scan')?.addEventListener('click', () => {
         close();
-        setTimeout(() => import('./scanner.js?v=20261108114937').then((m) => m.openScanner()), 220);
+        setTimeout(() => import('./scanner.js?v=20261108120001').then((m) => m.openScanner()), 220);
       });
       if (!isEdit) setTimeout(() => amountEl.focus(), 280);
 
@@ -260,7 +261,7 @@ export function openEntrySheet({ tx = null, kind = 'expense', date = null, categ
         if (billKey) afterBillPaid(billKey, billsBefore);
         feedback(data, isEdit);
         if (g && !wasDone && S.goalSaved(g) >= g.target) {
-          import('./goals.js?v=20261108114937').then((m) => m.celebrate());
+          import('./goals.js?v=20261108120001').then((m) => m.celebrate());
           setTimeout(() => toast(`🎉 <b>Cilj ostvaren: ${esc(g.name)}!</b>`, 'ok', 4500), 400);
         }
         if (again) {
@@ -296,7 +297,7 @@ function shake(el) {
 function feedback(data, isEdit) {
   const c = S.cat(data.categoryId);
   const sign = data.kind === 'income' ? '+' : '−';
-  let msg = `<b>${isEdit ? 'Izmenjeno' : 'Uneto'}</b> ${c.icon} ${esc(c.name)} ${sign}${fmtNum(data.amount)}`;
+  let msg = `<b>${isEdit ? 'Izmenjeno' : 'Uneto'}</b> ${esc(c.name)} ${sign}${fmtNum(data.amount)}`;
   let type = 'ok';
   if (data.kind === 'expense') {
     const r = summarize(data.date.slice(0, 7)).cats.find((x) => x.cat.id === c.id);

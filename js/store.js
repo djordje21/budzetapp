@@ -1,7 +1,7 @@
 // Skladište podataka. Za sada lokalno (localStorage); kasnije se ovde uključuje Supabase
 // bez menjanja ekrana — svi ekrani koriste samo funkcije iz ovog fajla.
 
-import { uid, addMonths } from './util.js?v=20261108114937';
+import { uid, addMonths } from './util.js?v=20261108120001';
 
 const KEY = 'budzetapp_v2';
 
@@ -50,7 +50,7 @@ function emptyState() {
     goals: [], // { id, name, icon, target, startAmount, due:'YYYY-MM'|null, archived, createdAt }
     balanceChecks: [], // { id, account:'dj'|'m'|'kes', amount, at: ISO, by }
     transfers: [], // { id, date, from, to, amount, note, by, createdAt }
-    settings: { currentUser: null, theme: 'auto' },
+    settings: { currentUser: null, theme: 'light' },
   };
 }
 

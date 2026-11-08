@@ -1,10 +1,11 @@
 // Ciljevi štednje: kartice na Pregledu, detalj, forma, proslava.
-import * as S from '../store.js?v=20261108114937';
-import * as Sync from '../sync.js?v=20261108114937';
-import { esc, fmt, fmtNum, digitsOnly, currentMonthKey, monthLabel, MONTH_GEN } from '../util.js?v=20261108114937';
-import { openSheet, toast, confirmSheet, animateBars, pct, moneyInput, confetti } from '../ui.js?v=20261108114937';
-import { txRow } from './istorija.js?v=20261108114937';
-import { openEntrySheet } from './entry.js?v=20261108114937';
+import { ico } from '../icons.js?v=20261108120001';
+import * as S from '../store.js?v=20261108120001';
+import * as Sync from '../sync.js?v=20261108120001';
+import { esc, fmt, fmtNum, digitsOnly, currentMonthKey, monthLabel, MONTH_GEN } from '../util.js?v=20261108120001';
+import { openSheet, toast, confirmSheet, animateBars, pct, moneyInput, confetti } from '../ui.js?v=20261108120001';
+import { txRow } from './istorija.js?v=20261108120001';
+import { openEntrySheet } from './entry.js?v=20261108120001';
 
 const ICONS = ['🎯', '🏖️', '✈️', '🚗', '🏠', '💍', '👶', '🎓', '💻', '🛋️', '🩺', '🎁'];
 
@@ -35,7 +36,7 @@ export function goalsBlock() {
     ${warn}
     ${goals.length ? `<div class="goal-scroll">${goals.map(goalCard).join('')}</div>` : `
       <button class="card goal-empty" data-goal-new>
-        <span class="goal-empty-ico">🎯</span>
+        <span class="cat-ico goal-empty-ico" style="--c:#A8833F">${ico('goal')}</span>
         <span><b>Postavi cilj štednje</b><br><span class="muted small">npr. Letovanje 2027 · 300.000 RSD</span></span>
       </button>`}`;
 }

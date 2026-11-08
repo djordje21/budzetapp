@@ -1,8 +1,9 @@
 // Podešavanja: korisnik, tema, kategorije, backup.
-import * as S from '../store.js?v=20261108114937';
-import { esc, todayISO, fmtDate, isoOf } from '../util.js?v=20261108114937';
-import { openSheet, toast, confirmSheet } from '../ui.js?v=20261108114937';
-import * as Sync from '../sync.js?v=20261108114937';
+import { ico } from '../icons.js?v=20261108120001';
+import * as S from '../store.js?v=20261108120001';
+import { esc, todayISO, fmtDate, isoOf } from '../util.js?v=20261108120001';
+import { openSheet, toast, confirmSheet } from '../ui.js?v=20261108120001';
+import * as Sync from '../sync.js?v=20261108120001';
 
 export function renderVise(el, ctx) {
   const st = S.getState();
@@ -21,7 +22,7 @@ export function renderVise(el, ctx) {
     <div class="section-head"><h3>Izgled</h3></div>
     <section class="card pad">
       <div class="seg seg-3" id="theme">
-        ${[['auto', 'Automatski'], ['light', 'Svetla'], ['dark', 'Tamna']].map(([v, l]) =>
+        ${[['light', 'Svetla'], ['dark', 'Tamna'], ['auto', 'Kao telefon']].map(([v, l]) =>
           `<button data-v="${v}" class="${st.settings.theme === v ? 'on' : ''}">${l}</button>`).join('')}
       </div>
     </section>
@@ -32,7 +33,7 @@ export function renderVise(el, ctx) {
         <div class="list-title">${k.plural}</div>
         ${S.categoriesOf(kind, { includeArchived: true }).filter((c) => c.id !== 'iscurelo').map((c) => `
           <button class="tool-row cat-edit ${c.archived ? 'archived' : ''}" data-cat="${c.id}">
-            <span class="cat-ico" style="--c:${c.color}">${c.icon}</span>
+            <span class="cat-ico" style="--c:${c.color}">${ico(c)}</span>
             <span class="grow">${esc(c.name)}${c.fixed ? ' <span class="tag">mesečni račun</span>' : ''}${c.archived ? ' <span class="tag">sakriveno</span>' : ''}</span>
             <span class="muted">›</span>
           </button>`).join('')}

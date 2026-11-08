@@ -1,7 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7c3aed"/><stop offset="1" stop-color="#c084fc"/></linearGradient></defs>
+  <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1A3254"/><stop offset="1" stop-color="#2A4C7A"/></linearGradient>
+  <linearGradient id="au" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#E3C88C"/><stop offset="1" stop-color="#A8833F"/></linearGradient></defs>
   <rect width="512" height="512" rx="112" fill="url(#g)"/>
-  <rect x="120" y="290" width="56" height="102" rx="16" fill="#fff" opacity=".7"/>
-  <rect x="228" y="220" width="56" height="172" rx="16" fill="#fff" opacity=".85"/>
-  <rect x="336" y="130" width="56" height="262" rx="16" fill="#fff"/>
+  <rect x="120" y="290" width="56" height="102" rx="14" fill="#fff" opacity=".55"/>
+  <rect x="228" y="220" width="56" height="172" rx="14" fill="#fff" opacity=".8"/>
+  <rect x="336" y="130" width="56" height="262" rx="14" fill="url(#au)"/>
 </svg>

@@ -1,13 +1,14 @@
 // Izveštaji: dan, nedelja, mesec, kvartal, polugodište, godina.
-import * as S from '../store.js?v=20261108114937';
-import { PERIODS, periodOf, shiftAnchor, prevPeriod, txInPeriod, planInPeriod, monthsCovered } from '../period.js?v=20261108114937';
-import { esc, fmt, fmtNum, fmtSigned, todayISO, currentMonthKey, parseISO, isoOf, MONTH_SHORT, pad, fmtDate } from '../util.js?v=20261108114937';
-import { animateBars, pct } from '../ui.js?v=20261108114937';
-import { donutData, donutChart, bindDonut } from '../charts.js?v=20261108114937';
-import { txRow } from './istorija.js?v=20261108114937';
-import { isDaily } from '../calc.js?v=20261108114937';
-import { openCategoryDetail, openCategoryPeriod } from './category-detail.js?v=20261108114937';
-import { openEntrySheet } from './entry.js?v=20261108114937';
+import { ico } from '../icons.js?v=20261108120001';
+import * as S from '../store.js?v=20261108120001';
+import { PERIODS, periodOf, shiftAnchor, prevPeriod, txInPeriod, planInPeriod, monthsCovered } from '../period.js?v=20261108120001';
+import { esc, fmt, fmtNum, fmtSigned, todayISO, currentMonthKey, parseISO, isoOf, MONTH_SHORT, pad, fmtDate } from '../util.js?v=20261108120001';
+import { animateBars, pct } from '../ui.js?v=20261108120001';
+import { donutData, donutChart, bindDonut } from '../charts.js?v=20261108120001';
+import { txRow } from './istorija.js?v=20261108120001';
+import { isDaily } from '../calc.js?v=20261108120001';
+import { openCategoryDetail, openCategoryPeriod } from './category-detail.js?v=20261108120001';
+import { openEntrySheet } from './entry.js?v=20261108120001';
 
 const R = { type: 'month', anchor: null };
 // 1 trošak, 2–4 troška, 5+ troškova (21 trošak, 22 troška...)
@@ -247,7 +248,7 @@ function categoryRows(txs, plan, short, total) {
     if (!short && p > 0) tag = a > p ? `<span class="tag tag-red">+${fmtNum(a - p)}</span>` : '';
     else if (!short && p === 0 && a > 0) tag = '<span class="tag tag-warn">nije u planu</span>';
     return `<div class="cat-row clickable" role="button" tabindex="0" data-rcat="${c.id}">
-      <span class="cat-ico" style="--c:${c.color}">${c.icon}</span>
+      <span class="cat-ico" style="--c:${c.color}">${ico(c)}</span>
       <div class="cat-main">
         <div class="cat-top"><span class="cat-name">${esc(c.name)}</span>${tag}
           <span class="cat-amt"><b>${fmtNum(a)}</b><span class="muted"> ${short ? `· ${share}%` : `/ ${fmtNum(p)}`}</span></span></div>

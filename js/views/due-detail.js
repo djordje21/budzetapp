@@ -1,10 +1,11 @@
 // Stavka iz "Čeka evidenciju": plati tačno, plati drugačije, izmeni plan ili preskoči mesec.
-import * as S from '../store.js?v=20261108114937';
-import { esc, fmt, fmtNum, addMonths, dayLabel, monthLabel, currentMonthKey, fmtDate } from '../util.js?v=20261108114937';
-import { openSheet, confirmSheet, toast } from '../ui.js?v=20261108114937';
-import { payItem, PAY_LABELS } from '../pay.js?v=20261108114937';
-import { openEntrySheet } from './entry.js?v=20261108114937';
-import { openPlanItemSheet } from './plan.js?v=20261108114937';
+import { ico } from '../icons.js?v=20261108120001';
+import * as S from '../store.js?v=20261108120001';
+import { esc, fmt, fmtNum, addMonths, dayLabel, monthLabel, currentMonthKey, fmtDate } from '../util.js?v=20261108120001';
+import { openSheet, confirmSheet, toast } from '../ui.js?v=20261108120001';
+import { payItem, PAY_LABELS } from '../pay.js?v=20261108120001';
+import { openEntrySheet } from './entry.js?v=20261108120001';
+import { openPlanItemSheet } from './plan.js?v=20261108120001';
 
 export function openDueSheet(key, item) {
   const c = S.cat(item.categoryId);
@@ -19,7 +20,7 @@ export function openDueSheet(key, item) {
     title: item.name,
     body: `
       <div class="cd-head">
-        <span class="cat-ico" style="--c:${c.color}">${c.icon}</span>
+        <span class="cat-ico" style="--c:${c.color}">${ico(c)}</span>
         <div class="grow">
           <div class="cd-big">${fmt(item.amount)}</div>
           <div class="cd-sub">${esc(c.name)} · plan za ${month}</div>

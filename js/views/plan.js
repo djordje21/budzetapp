@@ -1,12 +1,13 @@
 // Plan za mesec: očekivani prihodi, troškovi i štednja.
-import * as S from '../store.js?v=20261108114937';
-import { summarize } from '../calc.js?v=20261108114937';
-import { esc, fmt, fmtNum, fmtSigned, monthLabel, addMonths, digitsOnly, MONTH_GEN , dayLabel } from '../util.js?v=20261108114937';
-import { openSheet, toast, confirmSheet, moneyInput } from '../ui.js?v=20261108114937';
-import { isPayable, paidTx, payItem, PAY_LABELS } from '../pay.js?v=20261108114937';
-import { openEntrySheet } from './entry.js?v=20261108114937';
-import { openQuickEntry } from './quick.js?v=20261108114937';
-import { monthPhase } from '../calc.js?v=20261108114937';
+import { ico } from '../icons.js?v=20261108120001';
+import * as S from '../store.js?v=20261108120001';
+import { summarize } from '../calc.js?v=20261108120001';
+import { esc, fmt, fmtNum, fmtSigned, monthLabel, addMonths, digitsOnly, MONTH_GEN , dayLabel } from '../util.js?v=20261108120001';
+import { openSheet, toast, confirmSheet, moneyInput } from '../ui.js?v=20261108120001';
+import { isPayable, paidTx, payItem, PAY_LABELS } from '../pay.js?v=20261108120001';
+import { openEntrySheet } from './entry.js?v=20261108120001';
+import { openQuickEntry } from './quick.js?v=20261108120001';
+import { monthPhase } from '../calc.js?v=20261108120001';
 
 // Sekcija kao padajući meni: naslov sa zbirom uvek vidljiv; zatvorene sekcije se trajno pamte.
 const SEC_KEY = 'budzet_sec_closed';
@@ -48,7 +49,7 @@ export function renderPlan(el, ctx) {
           // Grupa sa više stavki: padajući meni (zatvoren), pamti se šta je otvoreno.
           return `<details class="plan-fold" data-fold="${c.id}" ${openFolds().has(c.id) ? 'open' : ''}>
             <summary class="plan-item fold-head">
-              <span class="cat-ico" style="--c:${c.color}">${c.icon}</span>
+              <span class="cat-ico" style="--c:${c.color}">${ico(c)}</span>
               <span class="pi-name">${esc(c.name)}<small>${arr.length} ${w}</small></span>
               <span class="pi-amt">${fmtNum(sumOf(arr))}</span>
               <span class="chev fold-chev">›</span>
@@ -91,7 +92,7 @@ export function renderPlan(el, ctx) {
   el.innerHTML = `
     ${misplaced.length ? `<div class="hint hint-warn fix-banner">
       <div>🧔👩 <b>Džeparac je u kategoriji „${esc(S.cat(misplaced[0].item.categoryId).name)}“.</b> Da bi se pravilno računao (po osobi, dnevni limit), treba da bude u kategoriji Džeparac.</div>
-      <div class="fix-list">${misplaced.map((m) => `<span>${esc(m.item.name)} → ${S.cat(m.to).icon} ${esc(S.cat(m.to).name)}</span>`).join('')}</div>
+      <div class="fix-list">${misplaced.map((m) => `<span>${esc(m.item.name)} → ${esc(S.cat(m.to).name)}</span>`).join('')}</div>
       <button class="btn btn-primary btn-sm" id="fix-pocket">Prebaci</button>
     </div>` : ''}
     ${!plan.length ? '<div class="hint plan-intro">📋 <b>Plan</b> je koliko očekujete da <b>zaradite</b> i <b>potrošite</b> ovog meseca. Dodajte plate, račune, hranu, gorivo... Stvarne troškove kasnije unosite preko dugmeta <b>+</b>.</div>' : ''}
@@ -187,7 +188,7 @@ function itemRow(p, key, single = null) {
   }
   const sameName = single && p.name.trim().toLowerCase() === single.name.trim().toLowerCase();
   return `<div class="plan-item" role="button" tabindex="0" data-item="${p.id}">
-    ${single ? `<span class="cat-ico" style="--c:${single.color}">${single.icon}</span>` : ''}
+    ${single ? `<span class="cat-ico" style="--c:${single.color}">${ico(single)}</span>` : ''}
     <span class="pi-name">${esc(p.name)}${single && !sameName ? `<small>${esc(single.name)}</small>` : ''}</span>
     ${p.owner && p.owner !== 'zaj' ? `<span class="who" style="--c:${o.color}">${o.short}</span>` : ''}
     <span class="pi-amt">${fmtNum(p.amount)}</span>
@@ -235,7 +236,7 @@ export function openPlanItemSheet(key, item, kind = null, presetCat = null) {
 
       <div class="field-label">Kategorija</div>
       <select class="input" id="p-cat">
-        ${cats.map((c) => `<option value="${c.id}">${c.icon} ${esc(c.name)}</option>`).join('')}
+        ${cats.map((c) => `<option value="${c.id}">${esc(c.name)}</option>`).join('')}
       </select>
 
       <div class="field-label">Čije je</div>
@@ -308,7 +309,7 @@ export function openPlanItemActions(key, item) {
     title: item.name,
     body: `
       <div class="cd-head">
-        <span class="cat-ico" style="--c:${c.color}">${c.icon}</span>
+        <span class="cat-ico" style="--c:${c.color}">${ico(c)}</span>
         <div class="grow">
           <div class="cd-big">${fmt(item.amount)}</div>
           <div class="cd-sub">planirano · ${esc(c.name)}${!payable && r.plan ? ` · potrošeno ${fmtNum(r.actual)} od ${fmtNum(r.plan)}` : ''}</div>

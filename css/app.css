@@ -814,3 +814,131 @@ input, textarea, select, .input, [contenteditable] { -webkit-user-select: text; 
 .sec[open] .sec-chev { transform: rotate(90deg); }
 .sec:not([open]) .sec-head { padding-bottom: 6px; border-bottom: 1px solid var(--border); }
 .sec > .card, .sec > .paid-box { animation: fadeUp .2s ease-out; }
+
+/* =====================================================================
+   PREMIUM TEMA — svetla bankarska (tamnoplava + zlatni akcenat)
+   ===================================================================== */
+:root {
+  --bg: #F4F5F7;
+  --surface: #FFFFFF;
+  --surface-2: #F0F2F5;
+  --border: #E3E6EB;
+  --text: #0E1A2B;
+  --muted: #5E6878;
+  --faint: #98A1AE;
+  --accent: #1F3A5F;
+  --accent-2: #2E5283;
+  --accent-soft: #E8EEF6;
+  --on-accent: #FFFFFF;
+  --gold: #A8833F;
+  --gold-2: #C9A35C;
+  --gold-soft: #F6EFDF;
+  --green: #1E7B4A;
+  --red: #B42318;
+  --amber: #9A5B07;
+  --cyan: #0E6F86;
+  --green-soft: #E6F4EC;
+  --red-soft: #FCECEA;
+  --amber-soft: #FCF3E3;
+  --cyan-soft: #E3F2F5;
+  --shadow: 0 1px 2px rgba(16, 24, 40, .04), 0 2px 8px rgba(16, 24, 40, .05);
+  --shadow-lg: 0 -10px 40px rgba(16, 24, 40, .16);
+  --radius: 14px;
+  --radius-sm: 10px;
+  --topbar-bg: rgba(244, 245, 247, .88);
+  --tabbar-bg: rgba(255, 255, 255, .94);
+  --hero-1: #1A3254;
+  --hero-2: #2A4C7A;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0F1115; --surface: #171A20; --surface-2: #1F232B; --border: #2A2F38;
+    --text: #ECEFF4; --muted: #9AA3B2; --faint: #5E6675;
+    --accent: #8FB0E0; --accent-2: #A9C3EA; --accent-soft: #1C2636; --on-accent: #0F1115;
+    --gold: #D4B26A; --gold-2: #E3C88C; --gold-soft: #2A2416;
+    --green: #5FD08F; --red: #F2867C; --amber: #E8B45C; --cyan: #5CC6DB;
+    --green-soft: #14281D; --red-soft: #2E1715; --amber-soft: #2B2112; --cyan-soft: #10262B;
+    --shadow: none; --shadow-lg: 0 -10px 40px rgba(0, 0, 0, .6);
+    --topbar-bg: rgba(15, 17, 21, .88); --tabbar-bg: rgba(23, 26, 32, .94);
+    --hero-1: #1B2A42; --hero-2: #24395A;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0F1115; --surface: #171A20; --surface-2: #1F232B; --border: #2A2F38;
+  --text: #ECEFF4; --muted: #9AA3B2; --faint: #5E6675;
+  --accent: #8FB0E0; --accent-2: #A9C3EA; --accent-soft: #1C2636; --on-accent: #0F1115;
+  --gold: #D4B26A; --gold-2: #E3C88C; --gold-soft: #2A2416;
+  --green: #5FD08F; --red: #F2867C; --amber: #E8B45C; --cyan: #5CC6DB;
+  --green-soft: #14281D; --red-soft: #2E1715; --amber-soft: #2B2112; --cyan-soft: #10262B;
+  --shadow: none; --shadow-lg: 0 -10px 40px rgba(0, 0, 0, .6);
+  --topbar-bg: rgba(15, 17, 21, .88); --tabbar-bg: rgba(23, 26, 32, .94);
+  --hero-1: #1B2A42; --hero-2: #24395A;
+  color-scheme: dark;
+}
+
+body { font-family: 'Manrope', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; letter-spacing: -.005em; }
+b, strong { font-weight: 700; }
+
+/* Tipografija: mirnije težine, bez "debelih" naslova */
+.hero-value, .stat-val, .acc-total, .cd-big, .acc-item-amt, .amount-field input, .acc-sheet-total b, .goal-hero b { font-weight: 700; letter-spacing: -.02em; }
+.month-pill, .sheet-head h2, .empty h2, .login h1 { font-weight: 700; letter-spacing: -.01em; }
+.section-head h3 { font-size: 12px; letter-spacing: .08em; font-weight: 700; color: var(--muted); }
+.btn { font-weight: 600; border-radius: 12px; }
+.chip { border-radius: 10px; font-weight: 600; }
+.seg { border-radius: 12px; }
+.seg button { border-radius: 9px; }
+.seg button.on { box-shadow: 0 1px 2px rgba(16, 24, 40, .1); }
+
+/* Glavna kartica: tamnoplava, kao bankarska kartica */
+.hero, .hero-over {
+  background: linear-gradient(135deg, var(--hero-1), var(--hero-2));
+  border: none; color: #fff; box-shadow: 0 8px 24px rgba(26, 50, 84, .22);
+}
+.hero-over { background: linear-gradient(135deg, #5B1A16, #8A2A22); }
+.hero .hero-label, .hero .hero-sub { color: rgba(255, 255, 255, .72); }
+.hero .hero-sub b { color: #fff; }
+.hero .hero-value, .hero-over .hero-value { color: #fff; }
+.hero .bar { background: rgba(255, 255, 255, .16); }
+.hero .bar-lg .bar-fill { background: linear-gradient(90deg, var(--gold), var(--gold-2)); }
+.hero .bar-lg .bar-fill.is-over { background: #F2867C; }
+.hero .hint { background: rgba(255, 255, 255, .1); color: #fff; }
+.hero .hint b { color: #fff; }
+.hero .tag { background: rgba(255, 255, 255, .14); color: #fff; }
+.hero .tag-red { background: rgba(242, 134, 124, .25); }
+.hero .tag-good { background: rgba(95, 208, 143, .22); }
+.hero .lim { background: rgba(255, 255, 255, .12); }
+
+/* Dugme + i aktivni elementi: tamnoplava */
+.fab { background: linear-gradient(135deg, var(--hero-1), var(--hero-2)); box-shadow: 0 8px 22px rgba(26, 50, 84, .35); border-radius: 18px; }
+:root[data-theme="dark"] .fab { background: linear-gradient(135deg, var(--gold), var(--gold-2)); color: #1A1406; }
+.avatar { background: var(--c, var(--accent)); }
+.month-pill.is-now::after { background: var(--gold); }
+.pay-btn { background: var(--accent-soft); color: var(--accent); border-radius: 10px; font-weight: 600; }
+.quick-add { border-radius: 10px; }
+
+/* Ikonice kategorija: tanke linije u boji kategorije, na blagoj podlozi */
+.cat-ico { border-radius: 11px; color: color-mix(in srgb, var(--c, var(--accent)) 82%, #000); background: color-mix(in srgb, var(--c, var(--accent)) 11%, var(--surface)); }
+:root[data-theme="dark"] .cat-ico { color: color-mix(in srgb, var(--c, var(--accent)) 85%, #fff); background: color-mix(in srgb, var(--c, var(--accent)) 16%, var(--surface)); }
+.cat-ico .ico { width: 20px; height: 20px; }
+.cat-pick .cat-ico .ico { width: 19px; height: 19px; }
+.cd-head .cat-ico .ico { width: 24px; height: 24px; }
+.cat-pick { border-radius: 12px; font-weight: 600; }
+.cat-pick.on { border-color: var(--accent); background: var(--accent-soft); }
+
+/* Kartice i liste: tanje ivice, mirnije senke */
+.card { border-color: var(--border); }
+.acc-card .acc-total { color: var(--text); }
+.goal-pct { color: var(--gold); }
+.ring-fg { stroke: var(--gold); }
+.chart .bar-mark, .lg-bar { fill: var(--accent); background: var(--accent); }
+.chart .line { stroke: var(--accent); }
+.chart .area { fill: color-mix(in srgb, var(--accent) 12%, transparent); }
+.guide { border-color: color-mix(in srgb, var(--gold) 45%, var(--border)); }
+.gs-num { background: var(--gold-soft); color: var(--gold); }
+.login-logo { box-shadow: 0 12px 30px rgba(26, 50, 84, .3); }
+
+/* Sakriveni elementi moraju ostati sakriveni bez obzira na display u stilu */
+[hidden] { display: none !important; }
+.acc-empty-ico, .goal-empty-ico { width: 42px; height: 42px; font-size: 0; }
